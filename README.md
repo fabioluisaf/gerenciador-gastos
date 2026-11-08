@@ -15,3 +15,7 @@ retorna HTTP 204 sem corpo. A documentação interativa está em `/swagger`.
 Erros tratados pela API retornam `ApiResponse` com `dados` contendo `status`,
 `mensagem`, `caminho` e `instante`. Erros inesperados são registrados no log e
 retornam uma mensagem genérica ao cliente.
+
+Para erros de validação, `dados.errosValidacao` lista `campo` e `codigo` (por
+exemplo, `NotBlank`, `NotNull`, `Min` ou `Max`), permitindo que o cliente
+produza suas próprias mensagens. Em erros globais de validação, `campo` é nulo.
