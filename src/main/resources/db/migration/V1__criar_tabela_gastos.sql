@@ -5,5 +5,6 @@ CREATE TABLE gastos (
     valor NUMERIC(19, 2) NOT NULL,
     categoria VARCHAR(255) NOT NULL,
     metodo_pagamento VARCHAR(255) NOT NULL,
-    descricao TEXT
+    descricao TEXT,
+    realizado BOOLEAN NOT NULL
 );

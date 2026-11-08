@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 
 import jakarta.persistence.Column;
@@ -26,7 +25,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GastoEntity implements Gasto {
+public class Gasto {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -51,20 +50,23 @@ public class GastoEntity implements Gasto {
 	@Column(columnDefinition = "text")
 	private String descricao;
 
+	@Column(nullable = false)
+	private boolean realizado;
+
 	@Override
 	public boolean equals(Object objeto) {
 		if (this == objeto) {
 			return true;
 		}
-		if (!(objeto instanceof GastoEntity outro)) {
+		if (!(objeto instanceof Gasto outro)) {
 			return false;
 		}
-		UUID identificador = getId();
+		final var identificador = getId();
 		return identificador != null && identificador.equals(outro.getId());
 	}
 
 	@Override
 	public int hashCode() {
-		return GastoEntity.class.hashCode();
+		return Gasto.class.hashCode();
 	}
 }
