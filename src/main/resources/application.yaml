@@ -1,3 +1,6 @@
+server:
+  port: ${PORTA_APP}
+
 spring:
   application:
     name: gerenciador-gastos

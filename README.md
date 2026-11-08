@@ -1,5 +1,8 @@
 # gerenciador-gastos
 
+A porta da aplicação é definida pela variável de ambiente `PORTA_APP`. Na
+configuração de execução local do VS Code, ela está definida como `8080`.
+
 ## API de gastos
 
 - `POST /gastos`: cria um gasto.
