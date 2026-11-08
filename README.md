@@ -11,3 +11,7 @@
 
 As respostas de consulta e alteração incluem a versão da aplicação; a exclusão
 retorna HTTP 204 sem corpo. A documentação interativa está em `/swagger`.
+
+Erros tratados pela API retornam `ApiResponse` com `dados` contendo `status`,
+`mensagem`, `caminho` e `instante`. Erros inesperados são registrados no log e
+retornam uma mensagem genérica ao cliente.
