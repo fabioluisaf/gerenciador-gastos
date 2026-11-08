@@ -8,4 +8,5 @@ public final class FormatoData {
 
 	public static final String DIA_MES_ANO = "dd/MM/yyyy";
 	public static final String DIA_MES_ANO_HIFEN = "dd-MM-yyyy";
+	public static final String ANO_MES_DIA_HIFEN = "yyyy-MM-dd";
 }

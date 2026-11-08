@@ -15,8 +15,9 @@ import jakarta.validation.constraints.PositiveOrZero;
 public record CriarGastoRequest(
     @NotNull
     @JsonFormat(
-        pattern = "[" + FormatoData.DIA_MES_ANO + "][" 
-                      + FormatoData.DIA_MES_ANO_HIFEN + "]"
+        pattern = "[" + FormatoData.DIA_MES_ANO + "]["
+                      + FormatoData.DIA_MES_ANO_HIFEN + "]["
+                      + FormatoData.ANO_MES_DIA_HIFEN + "]"
     )
     LocalDate data,
 
