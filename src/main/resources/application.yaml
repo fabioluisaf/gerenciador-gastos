@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: gerenciador-gastos
+  output:
+    ansi:
+      enabled: always
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gerenciador_gastos_des
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        "[format_sql]": true
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
