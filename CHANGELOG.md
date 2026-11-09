@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+- Cadastro, consulta, atualização e exclusão de compras parceladas.
+- Geração de parcelas como gastos realizados no primeiro dia de cada mês.
+- Alterações e exclusões de parcelas feitas pela compra parcelada.
+
 ## 1.0.1
 
 - Aceito o formato de data `yyyy-MM-dd` nas requisições de gastos.

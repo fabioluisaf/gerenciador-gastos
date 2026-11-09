@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.BuscarGastosPorMesEAnoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
@@ -43,6 +44,7 @@ public class GastoService {
 	@Transactional
 	public Gasto atualizar(UUID id, AtualizarGastoRequest request) {
 		final var entidade = buscarEntidadePorId(id);
+		validarGastoAvulso(entidade);
 		entidade.setData(request.data());
 		entidade.setNome(request.nome());
 		entidade.setValor(request.valor());
@@ -56,7 +58,15 @@ public class GastoService {
 
 	@Transactional
 	public void excluir(UUID id) {
-		gastoRepository.delete(buscarEntidadePorId(id));
+		final var gasto = buscarEntidadePorId(id);
+		validarGastoAvulso(gasto);
+		gastoRepository.delete(gasto);
+	}
+
+	private void validarGastoAvulso(Gasto gasto) {
+		if (gasto.getCompraParcelada() != null) {
+			throw new ParcelaOperacaoInvalidaException();
+		}
 	}
 
 	private Gasto buscarEntidadePorId(UUID id) {

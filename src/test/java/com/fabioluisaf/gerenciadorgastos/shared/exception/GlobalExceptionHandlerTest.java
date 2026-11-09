@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.controller.GastoController;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
@@ -100,6 +101,20 @@ class GlobalExceptionHandlerTest {
 				.andExpect(header().exists("Allow"));
 		mvc.perform(post("/gastos").contentType(MediaType.TEXT_PLAIN).content("texto"))
 				.andExpect(status().isUnsupportedMediaType());
+	}
+
+	@Test
+	void retornaConflitoParaOperacoesDiretasEmParcelas() throws Exception {
+		doThrow(new ParcelaOperacaoInvalidaException()).when(service).excluir(id);
+		when(service.atualizar(eq(id), any())).thenThrow(new ParcelaOperacaoInvalidaException());
+		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isConflict())
+				.andExpect(jsonPath("$.dados.status").value(409))
+				.andExpect(jsonPath("$.dados.mensagem")
+						.value("Parcelas devem ser alteradas ou excluídas pela compra parcelada."));
+		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
+				{"data":"15/02/2026","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
+				"metodoPagamento":"PIX_CAIXA","realizado":true}
+				""")).andExpect(status().isConflict());
 	}
 
 	@Test

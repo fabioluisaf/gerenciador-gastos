@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,7 +24,9 @@ import org.springframework.data.domain.PageRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.BuscarGastosPorMesEAnoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
@@ -92,6 +95,18 @@ class GastoServiceTest {
 		service.excluir(id);
 		verify(repository).save(gasto);
 		verify(repository).delete(gasto);
+	}
+
+	@Test
+	void impedeAlteracaoEExclusaoDeParcelaPeloCrudDeGastos() {
+		final var id = UUID.randomUUID();
+		final var parcela = new Gasto();
+		parcela.setCompraParcelada(new CompraParcelada());
+		when(repository.findById(id)).thenReturn(Optional.of(parcela));
+		assertThrows(ParcelaOperacaoInvalidaException.class, () -> service.atualizar(id, null));
+		assertThrows(ParcelaOperacaoInvalidaException.class, () -> service.excluir(id));
+		verify(repository, never()).save(parcela);
+		verify(repository, never()).delete(parcela);
 	}
 
 	@Test

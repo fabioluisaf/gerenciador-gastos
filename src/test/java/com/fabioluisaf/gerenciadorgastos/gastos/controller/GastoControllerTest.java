@@ -47,10 +47,15 @@ class GastoControllerTest {
 	void configurar() {
 		service = mock(GastoService.class);
 		id = UUID.randomUUID();
-		gasto = new Gasto(
-				id, LocalDate.of(2026, 2, 15), "Mercado", new BigDecimal("25.50"),
-				"Alimentacao", MetodoPagamento.PIX_CAIXA, null, false
-		);
+		gasto = new Gasto();
+		gasto.setId(id);
+		gasto.setData(LocalDate.of(2026, 2, 15));
+		gasto.setNome("Mercado");
+		gasto.setValor(new BigDecimal("25.50"));
+		gasto.setCategoria("Alimentacao");
+		gasto.setMetodoPagamento(MetodoPagamento.PIX_CAIXA);
+		gasto.setDescricao(null);
+		gasto.setRealizado(false);
 		final var validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
 		mvc = MockMvcBuilders.standaloneSetup(
@@ -102,10 +107,16 @@ class GastoControllerTest {
 		when(service.buscarPorId(id)).thenReturn(gasto);
 		when(service.atualizar(eq(id), any())).thenAnswer(invocation -> {
 			final var request = invocation.getArgument(1, AtualizarGastoRequest.class);
-			return new Gasto(
-					id, request.data(), request.nome(), request.valor(), request.categoria(),
-					request.metodoPagamento(), request.descricao(), request.realizado()
-			);
+			final var atualizado = new Gasto();
+			atualizado.setId(id);
+			atualizado.setData(request.data());
+			atualizado.setNome(request.nome());
+			atualizado.setValor(request.valor());
+			atualizado.setCategoria(request.categoria());
+			atualizado.setMetodoPagamento(request.metodoPagamento());
+			atualizado.setDescricao(request.descricao());
+			atualizado.setRealizado(request.realizado());
+			return atualizado;
 		});
 		mvc.perform(get("/gastos/{id}", id)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.id").value(id.toString()));

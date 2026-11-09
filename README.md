@@ -1,5 +1,7 @@
 # gerenciador-gastos
 
+Confira o [changelog](CHANGELOG.md) para acompanhar as alterações do projeto.
+
 A porta da aplicação é definida pela variável de ambiente `PORTA_APP`. Na
 configuração de execução local do VS Code, ela está definida como `8080`.
 
@@ -11,6 +13,36 @@ configuração de execução local do VS Code, ela está definida como `8080`.
 - `GET /gastos/{id}`: consulta um gasto.
 - `PUT /gastos/{id}`: atualiza todos os campos de um gasto.
 - `DELETE /gastos/{id}`: exclui um gasto.
+
+## API de compras parceladas
+
+- `POST /compras-parceladas`: cria uma compra e seus gastos.
+- `GET /compras-parceladas/{id}`: consulta uma compra e suas parcelas.
+- `PUT /compras-parceladas/{id}`: atualiza os dados de todas as parcelas; se o
+  valor total ou a quantidade mudar, recria as parcelas e seus identificadores.
+- `DELETE /compras-parceladas/{id}`: exclui a compra e suas parcelas.
+
+As parcelas são registradas no primeiro dia de cada mês, sempre como
+realizadas. A data enviada na criação determina o mês inicial. As parcelas não
+podem ser alteradas ou excluídas individualmente pela API de gastos.
+
+Exemplo de corpo para criar uma compra:
+
+```json
+{
+  "data": "2026-01-31",
+  "nome": "Compra",
+  "valorTotal": 100.00,
+  "quantidadeParcelas": 3,
+  "categoria": "Casa",
+  "metodoPagamento": "CREDITO_NUBANK",
+  "descricao": "Compra parcelada"
+}
+```
+
+Para atualizar, envie os mesmos campos, exceto `data`. A descrição é opcional.
+As respostas incluem o valor total e as parcelas ordenadas pelo número,
+com seus identificadores, datas e valores.
 
 As respostas de consulta e alteração incluem a versão da aplicação; a exclusão
 retorna HTTP 204 sem corpo. A documentação interativa está em `/swagger`.

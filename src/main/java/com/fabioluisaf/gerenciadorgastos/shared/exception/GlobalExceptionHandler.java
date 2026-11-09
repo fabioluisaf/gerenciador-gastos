@@ -21,6 +21,7 @@ import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ErroResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ErroValidacao;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +35,15 @@ import tools.jackson.databind.exc.MismatchedInputException;
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	private final ApiResponsePresenter presenter;
+
+	@ExceptionHandler(ParcelaOperacaoInvalidaException.class)
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarOperacaoEmParcela(
+        ParcelaOperacaoInvalidaException excecao, HttpServletRequest request
+    ) {
+		final var status = HttpStatus.CONFLICT;
+		return ResponseEntity.status(status)
+				.body(criarResposta(status, excecao.getMessage(), request.getRequestURI()));
+	}
 
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<ApiResponse<ErroResponse>> tratarNaoEncontrado(

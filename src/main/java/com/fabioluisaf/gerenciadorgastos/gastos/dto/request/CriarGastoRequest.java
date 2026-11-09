@@ -40,6 +40,15 @@ public record CriarGastoRequest(
     Boolean realizado
 ) {
     public Gasto toEntity() {
-        return new Gasto(null, data, nome, valor, categoria, metodoPagamento, descricao, realizado);
+        final var gasto = new Gasto();
+        gasto.setData(data);
+        gasto.setNome(nome);
+        gasto.setValor(valor);
+        gasto.setCategoria(categoria);
+        gasto.setMetodoPagamento(metodoPagamento);
+        gasto.setDescricao(descricao);
+        gasto.setRealizado(realizado);
+        
+        return gasto;
     }
 }
