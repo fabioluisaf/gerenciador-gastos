@@ -21,12 +21,17 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResumidoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -53,9 +58,10 @@ public class GastoController {
 	@GetMapping
 	public ApiResponse<List<GastoResumidoResponse>> listar(
         @Valid @ModelAttribute BuscarGastosRequest request,
+        @ModelAttribute FiltrarGastosRequest filtros,
         @PageableDefault(sort = { "data", "id" }) Pageable pageable
     ) {
-		final var gastos = gastoService.listarPorMesEAno(request, pageable).map(GastoResumidoResponse::from);
+		final var gastos = gastoService.listarPorMesEAno(request, filtros, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}
@@ -63,9 +69,10 @@ public class GastoController {
 	@GetMapping("/fatura/{id}")
 	public ApiResponse<List<GastoResumidoResponse>> listarPorFatura(
 			@PathVariable("id") UUID faturaId,
+			@ModelAttribute FiltrarGastosRequest filtros,
 			@PageableDefault(sort = { "data", "id" }) Pageable pageable
 	) {
-		final var gastos = gastoService.listarPorFatura(faturaId, pageable).map(GastoResumidoResponse::from);
+		final var gastos = gastoService.listarPorFatura(faturaId, filtros, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}
@@ -73,6 +80,28 @@ public class GastoController {
 	@GetMapping("/{id}")
 	public ApiResponse<GastoResponse> buscarPorId(@PathVariable UUID id) {
 		return presenter.apresentar(GastoResponse.from(gastoService.buscarPorId(id)));
+	}
+
+	@GetMapping("/totais/categoria")
+	@Operation(summary = "Totais realizados e planejados por categoria",
+			description = "Considera todo o mes ou fatura, ignorando filtros de categoria e metodo. "
+					+ "A paginacao limita os grupos retornados, nao os gastos somados. Grupos sem gastos nao sao retornados.")
+	public ApiResponse<List<TotalCategoriaResponse>> totalizarPorCategoria(
+			@Valid @ModelAttribute TotalizarGastosRequest request,
+			@PageableDefault(sort = "categoria") Pageable pageable
+	) {
+		return presenter.apresentarPagina(gastoService.totalizarPorCategoria(request, pageable));
+	}
+
+	@GetMapping("/totais/metodo-pagamento")
+	@Operation(summary = "Totais realizados e planejados por metodo de pagamento",
+			description = "Agrupa pelo ID do metodo, considerando todo o mes ou fatura. "
+					+ "Ignora filtros de categoria e metodo. A paginacao limita os grupos, nao os gastos somados.")
+	public ApiResponse<List<TotalMetodoPagamentoResponse>> totalizarPorMetodoPagamento(
+			@Valid @ModelAttribute TotalizarGastosRequest request,
+			@PageableDefault(sort = "metodoPagamento.id") Pageable pageable
+	) {
+		return presenter.apresentarPagina(gastoService.totalizarPorMetodoPagamento(request, pageable));
 	}
 
 	@PutMapping("/{id}")

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0
+
+- Cadastro e manutenção de métodos de pagamento com tipo e instituição financeira.
+- Faturas mensais de crédito, com listagem por cartão e consulta paginada dos gastos por fatura.
+- Gastos resumidos nas listagens e alterações; informações completas apenas na consulta por ID.
+- Filtros por categoria e método de pagamento nas listagens do mês ou da fatura.
+- Totais realizados e planejados por categoria e método de pagamento, considerando todo o mês ou fatura.
+- Edição de compras parceladas com valores personalizados por parcela, mantendo a soma igual ao total da compra.
+- Gastos planejados podem ficar sem data; gastos realizados exigem data.
+- Respostas da API unificadas, com paginação nas listagens.
+- Refatorações internas e ajustes nos testes, sem uso de banco real.
+
 ## 1.1.4
 
 - Mensagens de erro e códigos de validação padronizados em português no formato `UPPER_SNAKE_CASE`.

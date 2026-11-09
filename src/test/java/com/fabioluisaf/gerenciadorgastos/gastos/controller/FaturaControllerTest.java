@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.data.core.TypedPropertyPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -26,6 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.FaturaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
@@ -36,6 +38,8 @@ import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresente
 
 import jakarta.persistence.EntityNotFoundException;
 
+// Eclipse cannot infer the non-null receiver of Spring Data property references.
+@SuppressWarnings("null")
 class FaturaControllerTest {
 
 	private FaturaRepository repository;
@@ -62,7 +66,8 @@ class FaturaControllerTest {
 	@Test
 	void listaResumosComPaginacao() throws Exception {
 		final var id = UUID.randomUUID();
-		final var pageable = PageRequest.of(1, 2, Sort.by("dataFechamento", "id"));
+		final var pageable = PageRequest.of(1, 2,
+				Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId)));
 		when(repository.listarResumosPorMetodoPagamentoId(metodoId, pageable)).thenReturn(new PageImpl<>(List.of(
 				new FaturaResumidaResponse(id, LocalDate.of(2026, 11, 10), new BigDecimal("125.50")),
 				new FaturaResumidaResponse(UUID.randomUUID(), LocalDate.of(2026, 12, 10), BigDecimal.ZERO)
@@ -87,7 +92,8 @@ class FaturaControllerTest {
 
 	@Test
 	void listaVaziaQuandoMetodoNaoTemFaturas() throws Exception {
-		final var pageable = PageRequest.of(0, 10, Sort.by("dataFechamento", "id"));
+		final var pageable = PageRequest.of(0, 10,
+				Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId)));
 		when(repository.listarResumosPorMetodoPagamentoId(metodoId, pageable)).thenReturn(Page.empty(pageable));
 		mvc.perform(get("/faturas/cartao/{id}", metodoId))
 				.andExpect(status().isOk())

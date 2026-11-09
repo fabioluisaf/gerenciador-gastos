@@ -12,6 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.TotalizarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
@@ -41,20 +45,41 @@ public class GastoService {
 		return gastoRepository.save(entidade);
 	}
 
-	public Page<Gasto> listarPorMesEAno(BuscarGastosRequest request, Pageable pageable) {
+	public Page<Gasto> listarPorMesEAno(BuscarGastosRequest request, FiltrarGastosRequest filtros, Pageable pageable) {
 		final var periodo = YearMonth.of(request.ano(), request.mes());
 
-		return gastoRepository.findByDataBetween(periodo.atDay(1), periodo.atEndOfMonth(), pageable);
+		return gastoRepository.listarPorPeriodo(periodo.atDay(1), periodo.atEndOfMonth(),
+				filtros.metodoPagamentoId(), filtros.categoria(), pageable);
 	}
 
 	public Gasto buscarPorId(UUID id) {
 		return buscarEntidadePorId(id);
 	}
 
-	public Page<Gasto> listarPorFatura(UUID faturaId, Pageable pageable) {
+	public Page<Gasto> listarPorFatura(UUID faturaId, FiltrarGastosRequest filtros, Pageable pageable) {
 		faturaService.validarExistencia(faturaId);
 
-		return gastoRepository.findByFaturaId(faturaId, pageable);
+		return gastoRepository.listarPorFatura(faturaId, filtros.metodoPagamentoId(), filtros.categoria(), pageable);
+	}
+
+	public Page<TotalCategoriaResponse> totalizarPorCategoria(TotalizarGastosRequest request, Pageable pageable) {
+		validarFaturaTotalizacao(request);
+
+		return gastoRepository.totalizarPorCategoria(request.inicio(), request.fim(), request.faturaId(), pageable);
+	}
+
+	public Page<TotalMetodoPagamentoResponse> totalizarPorMetodoPagamento(
+			TotalizarGastosRequest request, Pageable pageable
+	) {
+		validarFaturaTotalizacao(request);
+
+		return gastoRepository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), request.faturaId(), pageable);
+	}
+
+	private void validarFaturaTotalizacao(TotalizarGastosRequest request) {
+		if (request.faturaId() != null) {
+			faturaService.validarExistencia(request.faturaId());
+		}
 	}
 
 	@Transactional
