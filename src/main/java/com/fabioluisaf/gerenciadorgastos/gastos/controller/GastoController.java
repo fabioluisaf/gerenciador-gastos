@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,6 +27,7 @@ import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -66,6 +68,14 @@ public class GastoController {
         @Valid @RequestBody AtualizarGastoRequest request
     ) {
 		return presenter.apresentar(GastoResponse.from(gastoService.atualizar(id, request)));
+	}
+
+	@PatchMapping("/{id}/realizado")
+	public ApiResponse<GastoResponse> atualizarRealizado(
+			@PathVariable UUID id, 
+            @NotNull @RequestBody Boolean realizado
+	) {
+		return presenter.apresentar(GastoResponse.from(gastoService.atualizarRealizado(id, realizado)));
 	}
 
 	@DeleteMapping("/{id}")

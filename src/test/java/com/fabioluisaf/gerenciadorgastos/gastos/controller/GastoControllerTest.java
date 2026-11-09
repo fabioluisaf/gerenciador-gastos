@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -162,5 +163,34 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.parcela").doesNotExist());
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isNoContent());
 		verify(service).excluir(id);
+	}
+
+	@Test
+	void atualizaSomenteSeGastoFoiRealizado() throws Exception {
+		when(service.atualizarRealizado(id, true)).thenAnswer(invocation -> {
+			gasto.setRealizado(invocation.getArgument(1, Boolean.class));
+			return gasto;
+		});
+
+		mvc.perform(patch("/gastos/{id}/realizado", id)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						true
+						"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados.id").value(id.toString()))
+				.andExpect(jsonPath("$.dados.realizado").value(true));
+
+		verify(service).atualizarRealizado(id, true);
+	}
+
+	@Test
+	void rejeitaEstadoDeRealizacaoNulo() throws Exception {
+		mvc.perform(patch("/gastos/{id}/realizado", id)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("null"))
+				.andExpect(status().isBadRequest());
+
+		verify(service, org.mockito.Mockito.never()).atualizarRealizado(id, true);
 	}
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Atualização do estado de realização de gastos, incluindo parcelas, sem alterar os demais dados.
+
 ## 1.1.2
 
 - A primeira parcela usa a data informada; as seguintes ficam no primeiro dia dos meses subsequentes.

@@ -98,6 +98,23 @@ class GastoServiceTest {
 	}
 
 	@Test
+	void atualizaSomenteEstadoDeRealizacaoDoGasto() {
+		final var id = UUID.randomUUID();
+		final var gasto = new Gasto();
+		gasto.setId(id);
+		gasto.setNome("Mercado");
+		gasto.setRealizado(false);
+		when(repository.findById(id)).thenReturn(Optional.of(gasto));
+		when(repository.save(gasto)).thenReturn(gasto);
+
+		assertSame(gasto, service.atualizarRealizado(id, true));
+
+		assertEquals("Mercado", gasto.getNome());
+		assertEquals(true, gasto.isRealizado());
+		verify(repository).save(gasto);
+	}
+
+	@Test
 	void impedeAlteracaoEExclusaoDeParcelaPeloCrudDeGastos() {
 		final var id = UUID.randomUUID();
 		final var parcela = new Gasto();
@@ -115,6 +132,7 @@ class GastoServiceTest {
 		when(repository.findById(id)).thenReturn(Optional.empty());
 		assertThrows(EntityNotFoundException.class, () -> service.buscarPorId(id));
 		assertThrows(EntityNotFoundException.class, () -> service.atualizar(id, null));
+		assertThrows(EntityNotFoundException.class, () -> service.atualizarRealizado(id, true));
 		assertThrows(EntityNotFoundException.class, () -> service.excluir(id));
 	}
 }

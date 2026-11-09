@@ -57,6 +57,13 @@ public class GastoService {
 	}
 
 	@Transactional
+	public Gasto atualizarRealizado(UUID id, boolean realizado) {
+		final var entidade = buscarEntidadePorId(id);
+		entidade.setRealizado(realizado);
+		return gastoRepository.save(entidade);
+	}
+
+	@Transactional
 	public void excluir(UUID id) {
 		final var gasto = buscarEntidadePorId(id);
 		validarGastoAvulso(gasto);
