@@ -51,6 +51,12 @@ public class GastoService {
 		return buscarEntidadePorId(id);
 	}
 
+	public Page<Gasto> listarPorFatura(UUID faturaId, Pageable pageable) {
+		faturaService.validarExistencia(faturaId);
+
+		return gastoRepository.findByFaturaId(faturaId, pageable);
+	}
+
 	@Transactional
 	public Gasto atualizar(UUID id, AtualizarGastoRequest request) {
 		final var entidade = buscarEntidadePorId(id);

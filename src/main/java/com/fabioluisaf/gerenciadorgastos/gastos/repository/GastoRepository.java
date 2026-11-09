@@ -16,6 +16,9 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
 	Page<Gasto> findByDataBetween(LocalDate inicio, LocalDate fim, Pageable pageable);
 
+	@EntityGraph(attributePaths = { "metodoPagamento" })
+	Page<Gasto> findByFaturaId(UUID faturaId, Pageable pageable);
+
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
 
 	@Override

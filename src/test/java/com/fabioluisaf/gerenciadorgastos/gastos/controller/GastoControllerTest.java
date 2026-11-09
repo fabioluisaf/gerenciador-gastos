@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -24,8 +26,10 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,7 +46,11 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
+import com.fabioluisaf.gerenciadorgastos.shared.exception.GlobalExceptionHandler;
+import com.fabioluisaf.gerenciadorgastos.shared.exception.NegocioExceptionHandler;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
+
+import jakarta.persistence.EntityNotFoundException;
 
 class GastoControllerTest {
 
@@ -74,9 +82,74 @@ class GastoControllerTest {
 		gasto.setRealizado(false);
 		final var validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
+		final var presenter = new ApiResponsePresenter(new ApiProperties("v1"));
 		mvc = MockMvcBuilders.standaloneSetup(
-				new GastoController(service, new ApiResponsePresenter(new ApiProperties("v1")))
-		).setValidator(validator).setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver()).build();
+				new GastoController(service, presenter)
+		).setControllerAdvice(new GlobalExceptionHandler(presenter), new NegocioExceptionHandler(presenter))
+				.setValidator(validator)
+				.setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver()).build();
+	}
+
+	@Test
+	void listaGastosResumidosPorFaturaComPaginacao() throws Exception {
+		final var faturaId = UUID.randomUUID();
+		final var pageable = PageRequest.of(1, 2, Sort.by("data", "id"));
+		metodoPagamento.setTipo(TipoMetodoPagamento.CREDITO);
+		when(service.listarPorFatura(faturaId, pageable))
+				.thenReturn(new PageImpl<>(List.of(gasto), pageable, 3));
+
+		mvc.perform(get("/gastos/fatura/{id}", faturaId).param("page", "1").param("size", "2"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados.length()").value(1))
+				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
+				.andExpect(jsonPath("$.dados[0].data").value("15/02/2026"))
+				.andExpect(jsonPath("$.dados[0].nome").value("Mercado"))
+				.andExpect(jsonPath("$.dados[0].valor").value(25.50))
+				.andExpect(jsonPath("$.dados[0].categoria").value("Alimentacao"))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento").value(aMapWithSize(2)))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento.tipo").value("CREDITO"))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento.instituicaoFinanceira").value("CAIXA"))
+				.andExpect(jsonPath("$.versao").value("v1"))
+				.andExpect(jsonPath("$.paginacao.pagina").value(1))
+				.andExpect(jsonPath("$.paginacao.tamanho").value(2))
+				.andExpect(jsonPath("$.paginacao.totalElementos").value(3))
+				.andExpect(jsonPath("$.paginacao.totalPaginas").value(2));
+
+		verify(service).listarPorFatura(faturaId, pageable);
+	}
+
+	@Test
+	void listaFaturaSemGastos() throws Exception {
+		final var faturaId = UUID.randomUUID();
+		final var pageable = PageRequest.of(0, 10, Sort.by("data", "id"));
+		when(service.listarPorFatura(faturaId, pageable)).thenReturn(Page.empty(pageable));
+
+		mvc.perform(get("/gastos/fatura/{id}", faturaId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados").isArray())
+				.andExpect(jsonPath("$.dados").isEmpty())
+				.andExpect(jsonPath("$.paginacao.pagina").value(0))
+				.andExpect(jsonPath("$.paginacao.tamanho").value(10))
+				.andExpect(jsonPath("$.paginacao.totalElementos").value(0))
+				.andExpect(jsonPath("$.paginacao.totalPaginas").value(0));
+	}
+
+	@Test
+	void rejeitaIdentificadorDeFaturaInvalido() throws Exception {
+		mvc.perform(get("/gastos/fatura/invalido")).andExpect(status().isBadRequest());
+
+		verifyNoInteractions(service);
+	}
+
+	@Test
+	void retornaNaoEncontradoParaFaturaInexistente() throws Exception {
+		final var faturaId = UUID.randomUUID();
+		when(service.listarPorFatura(eq(faturaId), any())).thenThrow(new EntityNotFoundException());
+
+		mvc.perform(get("/gastos/fatura/{id}", faturaId))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"));
 	}
 
 	@Test
@@ -97,12 +170,13 @@ class GastoControllerTest {
 				.andExpect(header().string("Location", "http://localhost/gastos/" + id))
 				.andExpect(jsonPath("$.versao").value("v1"))
 				.andExpect(jsonPath("$.paginacao").doesNotHaveJsonPath())
-				.andExpect(jsonPath("$.dados").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados.id").value(id.toString()))
 				.andExpect(jsonPath("$.dados.data").value("15/02/2026"))
 				.andExpect(jsonPath("$.dados.nome").value("Mercado"))
 				.andExpect(jsonPath("$.dados.valor").value(25.50))
 				.andExpect(jsonPath("$.dados.categoria").value("Alimentacao"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
 				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
 				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
 	}
@@ -122,12 +196,15 @@ class GastoControllerTest {
 				"metodoPagamentoId":"%s","realizado":false}
 				""".formatted(metodoPagamentoId)))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.dados").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados.id").value(id.toString()))
 				.andExpect(jsonPath("$.dados.data").value(nullValue()))
 				.andExpect(jsonPath("$.dados.nome").value("Conta de luz"))
 				.andExpect(jsonPath("$.dados.valor").value(80))
 				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()));
+				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
+				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
+				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
 	}
 
 	@Test
@@ -138,7 +215,7 @@ class GastoControllerTest {
 				""".formatted(metodoPagamentoId)))
 				.andExpect(status().isBadRequest());
 
-		verify(service, org.mockito.Mockito.never()).criar(any());
+		verify(service, never()).criar(any());
 	}
 
 	@Test
@@ -147,12 +224,15 @@ class GastoControllerTest {
 				.thenReturn(new PageImpl<>(List.of(gasto), PageRequest.of(0, 10), 12));
 		mvc.perform(get("/gastos").param("mes", "2").param("ano", "2024").param("size", "10"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
 				.andExpect(jsonPath("$.dados[0].data").value("15/02/2026"))
 				.andExpect(jsonPath("$.dados[0].nome").value("Mercado"))
 				.andExpect(jsonPath("$.dados[0].valor").value(25.50))
 				.andExpect(jsonPath("$.dados[0].categoria").value("Alimentacao"))
-				.andExpect(jsonPath("$.dados[0].metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento").value(aMapWithSize(2)))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento.tipo").value("DEBITO"))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento.instituicaoFinanceira").value("CAIXA"))
 				.andExpect(jsonPath("$.paginacao.pagina").value(0))
 				.andExpect(jsonPath("$.paginacao.tamanho").value(10))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(12))
@@ -203,6 +283,7 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.valor").value(25.50))
 				.andExpect(jsonPath("$.dados.categoria").value("Alimentacao"))
 				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.metodoPagamento.nome").value("Debito Caixa"))
 				.andExpect(jsonPath("$.dados.descricao").value("Compra parcelada"))
 				.andExpect(jsonPath("$.dados.realizado").value(false))
 				.andExpect(jsonPath("$.dados.fatura.id").value(faturaId.toString()))
@@ -211,12 +292,15 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.parcela.compraParceladaId").value(compraId.toString()));
 		mvc.perform(get("/gastos").param("mes", "2").param("ano", "2026"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
 				.andExpect(jsonPath("$.dados[0].data").value("15/02/2026"))
 				.andExpect(jsonPath("$.dados[0].nome").value("Mercado"))
 				.andExpect(jsonPath("$.dados[0].valor").value(25.50))
 				.andExpect(jsonPath("$.dados[0].categoria").value("Alimentacao"))
-				.andExpect(jsonPath("$.dados[0].metodoPagamento.id").value(metodoPagamentoId.toString()));
+				.andExpect(jsonPath("$.dados[0].metodoPagamento").value(aMapWithSize(2)))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento.tipo").value("DEBITO"))
+				.andExpect(jsonPath("$.dados[0].metodoPagamento.instituicaoFinanceira").value("CAIXA"));
 	}
 
 	@Test
@@ -243,18 +327,22 @@ class GastoControllerTest {
 				"metodoPagamentoId":"%s","descricao":"atualizado","realizado":true}
 				""".formatted(metodoPagamentoId)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados.id").value(id.toString()))
 				.andExpect(jsonPath("$.dados.data").value("16/02/2026"))
 				.andExpect(jsonPath("$.dados.nome").value("Novo"))
 				.andExpect(jsonPath("$.dados.valor").value(0))
 				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()));
+				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
+				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
+				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":null,"nome":"Pendente","valor":0,"categoria":"Casa",
 				"metodoPagamentoId":"%s","realizado":false}
 				""".formatted(metodoPagamentoId)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados.id").value(id.toString()))
 				.andExpect(jsonPath("$.dados.data").value(nullValue()))
 				.andExpect(jsonPath("$.dados.nome").value("Pendente"));
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isNoContent());
@@ -276,12 +364,15 @@ class GastoControllerTest {
 						true
 						"""))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados").value(aMapWithSize(5)))
+				.andExpect(jsonPath("$.dados").value(aMapWithSize(6)))
+				.andExpect(jsonPath("$.dados.id").value(id.toString()))
 				.andExpect(jsonPath("$.dados.data").value("15/02/2026"))
 				.andExpect(jsonPath("$.dados.nome").value("Mercado"))
 				.andExpect(jsonPath("$.dados.valor").value(25.50))
 				.andExpect(jsonPath("$.dados.categoria").value("Alimentacao"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()));
+				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
+				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
+				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
 
 		verify(service).atualizarRealizado(id, true);
 		assertTrue(gasto.isRealizado());
@@ -294,6 +385,6 @@ class GastoControllerTest {
 				.content("null"))
 				.andExpect(status().isBadRequest());
 
-		verify(service, org.mockito.Mockito.never()).atualizarRealizado(id, true);
+		verify(service, never()).atualizarRealizado(id, true);
 	}
 }

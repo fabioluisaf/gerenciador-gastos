@@ -60,6 +60,16 @@ public class GastoController {
 		return presenter.apresentarPagina(gastos);
 	}
 
+	@GetMapping("/fatura/{id}")
+	public ApiResponse<List<GastoResumidoResponse>> listarPorFatura(
+			@PathVariable("id") UUID faturaId,
+			@PageableDefault(sort = { "data", "id" }) Pageable pageable
+	) {
+		final var gastos = gastoService.listarPorFatura(faturaId, pageable).map(GastoResumidoResponse::from);
+
+		return presenter.apresentarPagina(gastos);
+	}
+
 	@GetMapping("/{id}")
 	public ApiResponse<GastoResponse> buscarPorId(@PathVariable UUID id) {
 		return presenter.apresentar(GastoResponse.from(gastoService.buscarPorId(id)));

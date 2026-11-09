@@ -1,6 +1,5 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.controller;
 
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.aMapWithSize;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -13,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.FaturaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
@@ -74,7 +68,7 @@ class FaturaControllerTest {
 				new FaturaResumidaResponse(UUID.randomUUID(), LocalDate.of(2026, 12, 10), BigDecimal.ZERO)
 		), pageable, 5));
 
-		mvc.perform(get("/faturas/metodo-pagamento/{id}", metodoId).param("page", "1").param("size", "2"))
+		mvc.perform(get("/faturas/cartao/{id}", metodoId).param("page", "1").param("size", "2"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.length()").value(2))
 				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(3)))
@@ -95,7 +89,7 @@ class FaturaControllerTest {
 	void listaVaziaQuandoMetodoNaoTemFaturas() throws Exception {
 		final var pageable = PageRequest.of(0, 10, Sort.by("dataFechamento", "id"));
 		when(repository.listarResumosPorMetodoPagamentoId(metodoId, pageable)).thenReturn(Page.empty(pageable));
-		mvc.perform(get("/faturas/metodo-pagamento/{id}", metodoId))
+		mvc.perform(get("/faturas/cartao/{id}", metodoId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados").isArray())
 				.andExpect(jsonPath("$.dados").isEmpty())
@@ -110,67 +104,20 @@ class FaturaControllerTest {
 	void rejeitaMetodoInexistenteOuIdentificadorInvalido() throws Exception {
 		when(metodoService.buscarPorId(metodoId)).thenThrow(new EntityNotFoundException());
 
-		mvc.perform(get("/faturas/metodo-pagamento/{id}", metodoId))
+		mvc.perform(get("/faturas/cartao/{id}", metodoId))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"));
-		mvc.perform(get("/faturas/metodo-pagamento/invalid"))
+		mvc.perform(get("/faturas/cartao/invalid"))
 				.andExpect(status().isBadRequest());
 		verifyNoInteractions(repository);
 	}
 
 	@Test
-	void retornaUmaFaturaSemPaginacao() throws Exception {
-		final var metodo = new MetodoPagamento();
-		metodo.setId(metodoId);
-		metodo.setTipo(TipoMetodoPagamento.CREDITO);
-		metodo.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
-		metodo.setNome("Cartao");
-		metodo.setDiaFechamento(10);
-		final var fatura = new Fatura();
-		fatura.setId(UUID.randomUUID());
-		fatura.setMetodoPagamento(metodo);
-		fatura.setDataFechamento(LocalDate.of(2024, 2, 10));
-		when(repository.findByMetodoPagamentoIdAndDataFechamentoBetween(
-				metodoId, LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29)
-		)).thenReturn(Optional.of(fatura));
-
-		mvc.perform(get("/faturas").param("metodoPagamentoId", metodoId.toString())
-				.param("mes", "2").param("ano", "2024"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados").isMap())
-				.andExpect(jsonPath("$.dados.id").value(fatura.getId().toString()))
-				.andExpect(jsonPath("$.dados.dataFechamento").value("2024-02-10"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoId.toString()))
-				.andExpect(jsonPath("$.dados.gastos").isArray())
-				.andExpect(jsonPath("$.versao").value("v1"))
-				.andExpect(jsonPath("$.paginacao").doesNotHaveJsonPath());
-		verify(repository).findByMetodoPagamentoIdAndDataFechamentoBetween(
-				metodoId, LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29)
-		);
-	}
-
-	@Test
-	void retornaNaoEncontradoSemFaturaNoPeriodo() throws Exception {
+	void consultaUnicaNaoEstaMaisDisponivel() throws Exception {
 		mvc.perform(get("/faturas").param("metodoPagamentoId", metodoId.toString())
 				.param("mes", "12").param("ano", "2026"))
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"));
-		verify(repository).findByMetodoPagamentoIdAndDataFechamentoBetween(
-				metodoId, LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 31)
-		);
-	}
+				.andExpect(status().isNotFound());
 
-	@Test
-	void validaParametrosDaConsulta() throws Exception {
-		mvc.perform(get("/faturas"))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[*].campo",
-						hasItem("metodoPagamentoId")));
-		for (final var mes : List.of("0", "13")) {
-			mvc.perform(get("/faturas").param("metodoPagamentoId", metodoId.toString())
-					.param("mes", mes).param("ano", "1999"))
-					.andExpect(status().isBadRequest());
-		}
-		verifyNoInteractions(repository);
+		verifyNoInteractions(repository, metodoService);
 	}
 }

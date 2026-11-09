@@ -1,7 +1,9 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -18,7 +20,20 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
 class FaturaServiceTest {
+
+	@Test
+	void validaExistenciaDaFatura() {
+		final var repository = mock(FaturaRepository.class);
+		final var service = new FaturaService(repository, mock(MetodoPagamentoService.class));
+		final var id = UUID.randomUUID();
+		when(repository.existsById(id)).thenReturn(true, false);
+
+		assertDoesNotThrow(() -> service.validarExistencia(id));
+		assertThrows(EntityNotFoundException.class, () -> service.validarExistencia(id));
+	}
 
 	@Test
 	void reutilizaFaturaDoMesMesmoAposAlteracaoDoDiaDeFechamento() {

@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.fatura.BuscarFaturasRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
@@ -35,11 +34,10 @@ public class FaturaService {
 		return faturaRepository.listarResumosPorMetodoPagamentoId(metodoPagamentoId, pageable);
 	}
 
-	public Fatura buscar(BuscarFaturasRequest request) {
-		final var periodo = YearMonth.of(request.ano(), request.mes());
-
-		return buscarPorPeriodo(request.metodoPagamentoId(), periodo)
-				.orElseThrow(() -> new EntityNotFoundException("Fatura não encontrada: " + periodo));
+	public void validarExistencia(UUID id) {
+		if (!faturaRepository.existsById(id)) {
+			throw new EntityNotFoundException("Fatura não encontrada: " + id);
+		}
 	}
 
 	@Transactional

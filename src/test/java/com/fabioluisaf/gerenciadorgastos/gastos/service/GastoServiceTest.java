@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -83,6 +85,30 @@ class GastoServiceTest {
 		when(repository.findByDataBetween(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), pageable))
 				.thenReturn(pagina);
 		assertSame(pagina, service.listarPorMesEAno(new BuscarGastosRequest(2, 2024), pageable));
+	}
+
+	@Test
+	void listaPorFaturaComPaginacao() {
+		final var faturaId = UUID.randomUUID();
+		final var pageable = PageRequest.of(1, 10);
+		final var pagina = new PageImpl<>(List.of(new Gasto()), pageable, 11);
+		when(repository.findByFaturaId(faturaId, pageable)).thenReturn(pagina);
+
+		assertSame(pagina, service.listarPorFatura(faturaId, pageable));
+
+		verify(faturaService).validarExistencia(faturaId);
+		verify(repository).findByFaturaId(faturaId, pageable);
+	}
+
+	@Test
+	void naoListaGastosDeFaturaInexistente() {
+		final var faturaId = UUID.randomUUID();
+		final var pageable = PageRequest.of(0, 10);
+		doThrow(new EntityNotFoundException()).when(faturaService).validarExistencia(faturaId);
+
+		assertThrows(EntityNotFoundException.class, () -> service.listarPorFatura(faturaId, pageable));
+
+		verifyNoInteractions(repository);
 	}
 
 	@Test
