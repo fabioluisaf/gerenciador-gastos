@@ -116,7 +116,7 @@ class CompraParceladaControllerTest {
 		mvc.perform(post("/compras-parceladas").contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"2026-01-31","nome":"","valorTotal":-1,"quantidadeParcelas":0}
 				""")).andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.mensagem").value("Erro de validação."));
+				.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"));
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest());
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
@@ -124,7 +124,7 @@ class CompraParceladaControllerTest {
 				"categoria":"Casa","metodoPagamento":"CREDITO_NUBANK"}
 				""")).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo")
-						.value(org.hamcrest.Matchers.hasItem("NotNull")));
+						.value(org.hamcrest.Matchers.hasItem("CAMPO_OBRIGATORIO")));
 		when(service.buscarPorId(id)).thenThrow(new EntityNotFoundException());
 		when(service.atualizar(eq(id), any())).thenThrow(new EntityNotFoundException());
 		doThrow(new EntityNotFoundException()).when(service).excluir(id);

@@ -63,21 +63,39 @@ class GlobalExceptionHandlerTest {
 				.andExpect(jsonPath("$.dados.caminho").value("/gastos"))
 				.andExpect(jsonPath("$.dados.instante").isNotEmpty())
 				.andExpect(jsonPath("$.versao").value("v1"))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'nome')].codigo", hasItem("NotBlank")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'valor')].codigo", hasItem("PositiveOrZero")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo", hasItem("NotNull")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo", hasItem("NotNull")));
+				.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'nome')].codigo",
+						hasItem("CAMPO_NAO_PODE_FICAR_VAZIO")))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'valor')].codigo",
+						hasItem("DEVE_SER_ZERO_OU_POSITIVO")))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo",
+						hasItem("CAMPO_OBRIGATORIO")))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo",
+						hasItem("CAMPO_OBRIGATORIO")));
 		mvc.perform(get("/gastos").param("mes", "13").param("ano", "1999"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'mes')].codigo", hasItem("Max")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'ano')].codigo", hasItem("Min")));
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'mes')].codigo",
+						hasItem("ACIMA_DO_MAXIMO")))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'ano')].codigo",
+						hasItem("ABAIXO_DO_MINIMO")));
 		mvc.perform(get("/gastos"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'mes')].codigo", hasItem("NotNull")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'ano')].codigo", hasItem("NotNull")));
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'mes')].codigo",
+						hasItem("CAMPO_OBRIGATORIO")))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'ano')].codigo",
+						hasItem("CAMPO_OBRIGATORIO")));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'nome')].codigo", hasItem("NotBlank")));
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'nome')].codigo",
+						hasItem("CAMPO_NAO_PODE_FICAR_VAZIO")));
+		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
+				{"data":"data-invalida","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
+				"metodoPagamento":"PIX_CAIXA","realizado":true}
+				"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo",
+						hasItem("FORMATO_INVALIDO")));
 	}
 
 	@Test
@@ -88,19 +106,23 @@ class GlobalExceptionHandlerTest {
 		mvc.perform(get("/gastos/{id}", id))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.dados.status").value(404))
+				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"))
 				.andExpect(jsonPath("$.dados.errosValidacao").doesNotExist());
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isNotFound());
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"15/02/2026","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
 				"metodoPagamento":"PIX_CAIXA","realizado":true}
 				""")).andExpect(status().isNotFound());
-		mvc.perform(get("/gastos/uuid-invalido")).andExpect(status().isBadRequest());
+		mvc.perform(get("/gastos/uuid-invalido")).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.mensagem").value("REQUISICAO_INVALIDA"));
 		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("{"))
 				.andExpect(status().isBadRequest());
 		mvc.perform(patch("/gastos/{id}", id)).andExpect(status().isMethodNotAllowed())
+				.andExpect(jsonPath("$.dados.mensagem").value("METODO_HTTP_NAO_PERMITIDO"))
 				.andExpect(header().exists("Allow"));
 		mvc.perform(post("/gastos").contentType(MediaType.TEXT_PLAIN).content("texto"))
-				.andExpect(status().isUnsupportedMediaType());
+				.andExpect(status().isUnsupportedMediaType())
+				.andExpect(jsonPath("$.dados.mensagem").value("TIPO_DE_CONTEUDO_NAO_SUPORTADO"));
 	}
 
 	@Test
@@ -110,7 +132,7 @@ class GlobalExceptionHandlerTest {
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isConflict())
 				.andExpect(jsonPath("$.dados.status").value(409))
 				.andExpect(jsonPath("$.dados.mensagem")
-						.value("Parcelas devem ser alteradas ou excluídas pela compra parcelada."));
+						.value("PARCELA_DEVE_SER_ALTERADA_PELA_COMPRA"));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"15/02/2026","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
 				"metodoPagamento":"PIX_CAIXA","realizado":true}
@@ -123,6 +145,6 @@ class GlobalExceptionHandlerTest {
 		mvc.perform(get("/gastos/{id}", id))
 				.andExpect(status().isInternalServerError())
 				.andExpect(jsonPath("$.dados.status").value(500))
-				.andExpect(jsonPath("$.dados.mensagem").value("Erro interno do servidor."));
+				.andExpect(jsonPath("$.dados.mensagem").value("ERRO_INTERNO_DO_SERVIDOR"));
 	}
 }

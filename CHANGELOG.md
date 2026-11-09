@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4
+
+- Mensagens de erro e códigos de validação padronizados em português no formato `UPPER_SNAKE_CASE`.
+
 ## 1.1.3
 
 - Atualização do estado de realização de gastos, incluindo parcelas, sem alterar os demais dados.

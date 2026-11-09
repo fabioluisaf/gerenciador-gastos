@@ -3,6 +3,6 @@ package com.fabioluisaf.gerenciadorgastos.gastos.exception;
 public class ParcelaOperacaoInvalidaException extends RuntimeException {
 
 	public ParcelaOperacaoInvalidaException() {
-		super("Parcelas devem ser alteradas ou excluídas pela compra parcelada.");
+		super("PARCELA_DEVE_SER_ALTERADA_PELA_COMPRA");
 	}
 }

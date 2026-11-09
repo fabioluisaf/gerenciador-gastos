@@ -51,7 +51,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ) {
 		final var status = HttpStatus.NOT_FOUND;
 		return ResponseEntity.status(status)
-				.body(criarResposta(status, "Recurso não encontrado.", request.getRequestURI()));
+				.body(criarResposta(status, "RECURSO_NAO_ENCONTRADO", request.getRequestURI()));
 	}
 
 	@ExceptionHandler(Exception.class)
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		final var status = HttpStatus.INTERNAL_SERVER_ERROR;
         
 		return ResponseEntity.status(status)
-				.body(criarResposta(status, "Erro interno do servidor.", request.getRequestURI()));
+				.body(criarResposta(status, "ERRO_INTERNO_DO_SERVIDOR", request.getRequestURI()));
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		final var erros = excecao.getBindingResult().getAllErrors().stream()
 				.map(erro -> new ErroValidacao(
 						erro instanceof FieldError campo ? campo.getField() : null,
-						erro.getCode()
+						traduzirCodigoValidacao(erro.getCode())
 				))
 				.toList();
 		return responderErroValidacao(excecao, erros, headers, status, request);
@@ -92,7 +92,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		final var caminho = erroData.getPath();
 		final var campo = caminho.isEmpty() ? null : caminho.get(caminho.size() - 1).getPropertyName();
 		return responderErroValidacao(
-				excecao, List.of(new ErroValidacao(campo, "InvalidFormat")), headers, status, request
+				excecao, List.of(new ErroValidacao(campo, "FORMATO_INVALIDO")), headers, status, request
 		);
 	}
 
@@ -105,15 +105,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 		if (status.is5xxServerError()) {
 			log.error("Erro ao processar requisição", excecao);
-			mensagem = "Erro interno do servidor.";
+			mensagem = "ERRO_INTERNO_DO_SERVIDOR";
 		} else {
 			mensagem = switch (status.value()) {
-				case 400 -> "Requisição inválida.";
-				case 404 -> "Recurso não encontrado.";
-				case 405 -> "Método HTTP não permitido.";
-				case 406 -> "Formato de resposta não aceito.";
-				case 415 -> "Tipo de conteúdo não suportado.";
-				default -> "Não foi possível processar a requisição.";
+				case 400 -> "REQUISICAO_INVALIDA";
+				case 404 -> "RECURSO_NAO_ENCONTRADO";
+				case 405 -> "METODO_HTTP_NAO_PERMITIDO";
+				case 406 -> "FORMATO_DE_RESPOSTA_NAO_ACEITO";
+				case 415 -> "TIPO_DE_CONTEUDO_NAO_SUPORTADO";
+				default -> "NAO_FOI_POSSIVEL_PROCESSAR_A_REQUISICAO";
 			};
 		}
 
@@ -126,8 +126,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			Exception excecao, List<ErroValidacao> erros, HttpHeaders headers,
 			HttpStatusCode status, WebRequest request
 	) {
-		final var resposta = criarResposta(status, "Erro de validação.", obterCaminho(request), erros);
+		final var resposta = criarResposta(status, "ERRO_DE_VALIDACAO", obterCaminho(request), erros);
 		return super.handleExceptionInternal(excecao, resposta, headers, status, request);
+	}
+
+	private String traduzirCodigoValidacao(String codigo) {
+		if (codigo == null) {
+			return "ERRO_DE_VALIDACAO";
+		}
+		return switch (codigo) {
+			case "NotBlank" -> "CAMPO_NAO_PODE_FICAR_VAZIO";
+			case "NotNull" -> "CAMPO_OBRIGATORIO";
+			case "Positive" -> "DEVE_SER_POSITIVO";
+			case "PositiveOrZero" -> "DEVE_SER_ZERO_OU_POSITIVO";
+			case "Min" -> "ABAIXO_DO_MINIMO";
+			case "Max" -> "ACIMA_DO_MAXIMO";
+			case "Digits" -> "FORMATO_NUMERICO_INVALIDO";
+			default -> "ERRO_DE_VALIDACAO";
+		};
 	}
 
 	private String obterCaminho(WebRequest request) {
