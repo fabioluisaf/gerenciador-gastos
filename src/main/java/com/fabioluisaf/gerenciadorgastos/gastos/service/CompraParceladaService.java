@@ -47,15 +47,15 @@ public class CompraParceladaService {
 				|| parcelas.size() != request.quantidadeParcelas();
 
 		if (recriar) {
-			final var dataInicial = parcelas.stream()
-					.filter(parcela -> Integer.valueOf(1).equals(parcela.getNumeroParcela()))
-					.findFirst()
-					.orElseThrow(() -> new IllegalStateException("Compra parcelada sem primeira parcela: " + id))
-					.getData();
+			if (parcelas.stream().noneMatch(parcela -> Integer.valueOf(1).equals(parcela.getNumeroParcela()))) {
+				throw new IllegalStateException("Compra parcelada sem primeira parcela: " + id);
+			}
+
 			parcelas.clear();
 			compraParceladaRepository.flush();
+
 			compra.setValorTotal(request.valorTotal());
-			gerarParcelas(compra, dataInicial, request.quantidadeParcelas(), request.nome(),
+			gerarParcelas(compra, request.data(), request.quantidadeParcelas(), request.nome(),
 					request.categoria(), request.metodoPagamento(), request.descricao());
 		} else {
 			for (final var parcela : parcelas) {
@@ -63,6 +63,7 @@ public class CompraParceladaService {
 				parcela.setCategoria(request.categoria());
 				parcela.setMetodoPagamento(request.metodoPagamento());
 				parcela.setDescricao(request.descricao());
+				parcela.setData(dataParcela(request.data(), parcela.getNumeroParcela() - 1));
 			}
 		}
         
@@ -78,7 +79,7 @@ public class CompraParceladaService {
 				.subtract(valorParcela.multiply(BigDecimal.valueOf(quantidade - 1L)));
 		for (int indice = 0; indice < quantidade; indice++) {
 			final var parcela = new Gasto();
-			parcela.setData(dataInicial.withDayOfMonth(1).plusMonths(indice));
+			parcela.setData(dataParcela(dataInicial, indice));
 			parcela.setNome(nome);
 			parcela.setValor(indice == 0 ? valorPrimeiraParcela : valorParcela);
 			parcela.setCategoria(categoria);
@@ -89,6 +90,10 @@ public class CompraParceladaService {
 			parcela.setNumeroParcela(indice + 1);
 			compra.getParcelas().add(parcela);
 		}
+	}
+
+	private LocalDate dataParcela(LocalDate dataInicial, int indice) {
+		return indice == 0 ? dataInicial : dataInicial.withDayOfMonth(1).plusMonths(indice);
 	}
 
 	@Transactional

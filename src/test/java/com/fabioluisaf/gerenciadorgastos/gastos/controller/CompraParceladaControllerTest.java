@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.CompraParceladaService;
@@ -99,11 +100,14 @@ class CompraParceladaControllerTest {
 		mvc.perform(get("/compras-parceladas/{id}", id)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.id").value(id.toString()));
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
-				{"nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
+				{"data":"2026-03-20","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
 				"categoria":"Casa","metodoPagamento":"CREDITO_NUBANK","descricao":"Descricao"}
 				""")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.quantidadeParcelas").value(2));
 		mvc.perform(delete("/compras-parceladas/{id}", id)).andExpect(status().isNoContent());
+		final var captor = org.mockito.ArgumentCaptor.forClass(AtualizarCompraParceladaRequest.class);
+		verify(service).atualizar(eq(id), captor.capture());
+		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, 3, 20), captor.getValue().data());
 		verify(service).excluir(id);
 	}
 
@@ -115,12 +119,18 @@ class CompraParceladaControllerTest {
 				.andExpect(jsonPath("$.dados.mensagem").value("Erro de validação."));
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest());
+		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
+				{"nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
+				"categoria":"Casa","metodoPagamento":"CREDITO_NUBANK"}
+				""")).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo")
+						.value(org.hamcrest.Matchers.hasItem("NotNull")));
 		when(service.buscarPorId(id)).thenThrow(new EntityNotFoundException());
 		when(service.atualizar(eq(id), any())).thenThrow(new EntityNotFoundException());
 		doThrow(new EntityNotFoundException()).when(service).excluir(id);
 		mvc.perform(get("/compras-parceladas/{id}", id)).andExpect(status().isNotFound());
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
-				{"nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
+				{"data":"2026-01-31","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
 				"categoria":"Casa","metodoPagamento":"CREDITO_NUBANK"}
 				""")).andExpect(status().isNotFound());
 		mvc.perform(delete("/compras-parceladas/{id}", id)).andExpect(status().isNotFound());

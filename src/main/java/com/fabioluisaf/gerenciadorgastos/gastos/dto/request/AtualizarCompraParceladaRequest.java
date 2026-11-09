@@ -1,8 +1,11 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.request;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +32,14 @@ public record AtualizarCompraParceladaRequest(
 
     @NotNull 
     @Positive 
-    Integer quantidadeParcelas
+    Integer quantidadeParcelas,
+
+    @NotNull
+    @JsonFormat(
+        pattern = "[" + FormatoData.DIA_MES_ANO + "]["
+                      + FormatoData.DIA_MES_ANO_HIFEN + "]["
+                      + FormatoData.ANO_MES_DIA_HIFEN + "]"
+    )
+    LocalDate data
 ) {
 }

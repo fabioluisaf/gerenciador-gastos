@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+
+- A primeira parcela usa a data informada; as seguintes ficam no primeiro dia dos meses subsequentes.
+- A data passa a ser obrigatória na atualização de compras parceladas.
+
 ## 1.1.1
 
 - Respostas de gastos incluem informações da parcela e da compra vinculada.

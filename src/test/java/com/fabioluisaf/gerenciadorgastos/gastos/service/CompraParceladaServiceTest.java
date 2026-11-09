@@ -56,7 +56,7 @@ class CompraParceladaServiceTest {
 	@Test
 	void criaParcelasNumeradasComDatasEValoresCorretos() {
 		final var parcelas = compra.getParcelas();
-		assertEquals(List.of(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 1)),
+		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 1)),
 				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
 		assertEquals(List.of(new BigDecimal("33.34"), new BigDecimal("33.33"), new BigDecimal("33.33")),
 				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getValor()).toList());
@@ -71,7 +71,7 @@ class CompraParceladaServiceTest {
 		final var request = request("100.0", 3);
 		assertSame(compra, service.atualizar(id, request));
 		assertEquals(parcelas, compra.getParcelas());
-		assertEquals(List.of(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 1)),
+		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 1)),
 				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
 		assertTrue(parcelas.stream().allMatch(p -> p.getNome().equals("Novo") && p.getCategoria().equals("Outra")
 				&& p.getMetodoPagamento() == MetodoPagamento.PIX_CAIXA && p.getDescricao() == null));
@@ -90,7 +90,7 @@ class CompraParceladaServiceTest {
 		assertEquals(List.of(new BigDecimal("25.01"), new BigDecimal("25.00"),
 				new BigDecimal("25.00"), new BigDecimal("25.00")),
 				novas.stream().map(parcela -> Objects.requireNonNull(parcela).getValor()).toList());
-		assertEquals(List.of(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 2, 1),
+		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1),
 				LocalDate.of(2024, 3, 1), LocalDate.of(2024, 4, 1)),
 				novas.stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
 		assertTrue(novas.stream().allMatch(p -> p.isRealizado() && p.getCompraParcelada() == compra));
@@ -100,7 +100,7 @@ class CompraParceladaServiceTest {
 	@Test
 	void reduzQuantidadeMantendoMesInicial() {
 		service.atualizar(id, request("100.00", 2));
-		assertEquals(List.of(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 2, 1)),
+		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1)),
 				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
 	}
 
@@ -114,6 +114,27 @@ class CompraParceladaServiceTest {
 		assertNotSame(parcelas.get(0), compra.getParcelas().get(0));
 		assertEquals(List.of(new BigDecimal("40.00"), new BigDecimal("40.00"), new BigDecimal("40.00")),
 				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getValor()).toList());
+		verify(repository).flush();
+	}
+
+	@Test
+	void alteraDataSemRecriarERecalculaMesesMesmoForaDeOrdem() {
+		final var antigas = List.copyOf(compra.getParcelas());
+		java.util.Collections.reverse(compra.getParcelas());
+		final var data = LocalDate.of(2024, 12, 31);
+		service.atualizar(id, request("100.00", 3, data));
+		assertEquals(LocalDate.of(2024, 12, 31), antigas.get(0).getData());
+		assertEquals(LocalDate.of(2025, 1, 1), antigas.get(1).getData());
+		assertEquals(LocalDate.of(2025, 2, 1), antigas.get(2).getData());
+		verify(repository, never()).flush();
+	}
+
+	@Test
+	void recriaComNovaDataEQuantidade() {
+		service.atualizar(id, request("120.00", 4, LocalDate.of(2025, 1, 31)));
+		assertEquals(List.of(LocalDate.of(2025, 1, 31), LocalDate.of(2025, 2, 1),
+				LocalDate.of(2025, 3, 1), LocalDate.of(2025, 4, 1)),
+				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
 		verify(repository).flush();
 	}
 
@@ -148,7 +169,11 @@ class CompraParceladaServiceTest {
 	}
 
 	private AtualizarCompraParceladaRequest request(String total, int quantidade) {
+		return request(total, quantidade, LocalDate.of(2024, 1, 31));
+	}
+
+	private AtualizarCompraParceladaRequest request(String total, int quantidade, LocalDate data) {
 		return new AtualizarCompraParceladaRequest("Novo", "Outra", MetodoPagamento.PIX_CAIXA, null,
-				new BigDecimal(total), quantidade);
+				new BigDecimal(total), quantidade, data);
 	}
 }

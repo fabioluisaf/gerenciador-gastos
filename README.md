@@ -27,9 +27,9 @@ parcelas são recriadas e seus IDs mudam.
   valor total ou a quantidade mudar, recria as parcelas e seus identificadores.
 - `DELETE /compras-parceladas/{id}`: exclui a compra e suas parcelas.
 
-As parcelas são registradas no primeiro dia de cada mês, sempre como
-realizadas. A data enviada na criação determina o mês inicial. As parcelas não
-podem ser alteradas ou excluídas individualmente pela API de gastos.
+A primeira parcela usa a data informada; as seguintes são registradas no dia
+primeiro dos meses seguintes. Todas são consideradas realizadas. As parcelas
+não podem ser alteradas ou excluídas individualmente pela API de gastos.
 
 Exemplo de corpo para criar uma compra:
 
@@ -45,7 +45,9 @@ Exemplo de corpo para criar uma compra:
 }
 ```
 
-Para atualizar, envie os mesmos campos, exceto `data`. A descrição é opcional.
+Para atualizar, envie os mesmos campos, incluindo `data`; a data informada
+substitui a data da primeira parcela e recalcula as datas das demais.
+A descrição é opcional.
 As respostas incluem o valor total e as parcelas ordenadas pelo número,
 com seus identificadores, datas e valores.
 

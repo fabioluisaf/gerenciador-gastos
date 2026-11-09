@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
@@ -41,6 +42,43 @@ class GastoRepositoryPostgresTest {
 	private GastoService gastoService;
 	@Autowired
 	private EntityManager entityManager;
+
+	@Test
+	void persisteDatasNaCriacaoEdicaoERecriacao() {
+		final var compra = compraService.criar(new CriarCompraParceladaRequest(
+				LocalDate.of(2024, 1, 31), "Compra", new BigDecimal("90.00"), 3,
+				"Casa", MetodoPagamento.CREDITO_NUBANK, null
+		));
+		entityManager.flush();
+		final var id = compra.getId();
+		entityManager.clear();
+		final var existente = compraService.buscarPorId(id);
+		assertEquals(LocalDate.of(2024, 1, 31), existente.getParcelas().stream()
+				.filter(parcela -> parcela.getNumeroParcela() == 1).findFirst().orElseThrow().getData());
+
+		compraService.atualizar(id, new AtualizarCompraParceladaRequest(
+				"Compra", "Casa", MetodoPagamento.CREDITO_NUBANK, null, new BigDecimal("90.00"), 3,
+				LocalDate.of(2025, 12, 31)
+		));
+		entityManager.clear();
+		final var editada = compraService.buscarPorId(id);
+		assertEquals(LocalDate.of(2025, 12, 31), editada.getParcelas().stream()
+				.filter(parcela -> parcela.getNumeroParcela() == 1).findFirst().orElseThrow().getData());
+		assertEquals(LocalDate.of(2026, 1, 1), editada.getParcelas().stream()
+				.filter(parcela -> parcela.getNumeroParcela() == 2).findFirst().orElseThrow().getData());
+
+		compraService.atualizar(id, new AtualizarCompraParceladaRequest(
+				"Compra", "Casa", MetodoPagamento.CREDITO_NUBANK, null, new BigDecimal("100.00"), 2,
+				LocalDate.of(2026, 1, 31)
+		));
+		entityManager.clear();
+		final var recriada = compraService.buscarPorId(id);
+		assertEquals(2, recriada.getParcelas().size());
+		assertEquals(LocalDate.of(2026, 1, 31), recriada.getParcelas().stream()
+				.filter(parcela -> parcela.getNumeroParcela() == 1).findFirst().orElseThrow().getData());
+		assertEquals(LocalDate.of(2026, 2, 1), recriada.getParcelas().stream()
+				.filter(parcela -> parcela.getNumeroParcela() == 2).findFirst().orElseThrow().getData());
+	}
 
 	@Test
 	void carregaDadosDaCompraSemConsultasAdicionaisPorParcela() {
