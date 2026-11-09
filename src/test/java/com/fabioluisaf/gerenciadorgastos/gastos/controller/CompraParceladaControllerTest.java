@@ -37,6 +37,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.CompraParceladaService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.exception.GlobalExceptionHandler;
+import com.fabioluisaf.gerenciadorgastos.shared.exception.NegocioExceptionHandler;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -86,7 +87,7 @@ class CompraParceladaControllerTest {
 		final var validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
 		mvc = MockMvcBuilders.standaloneSetup(new CompraParceladaController(service, presenter))
-				.setControllerAdvice(new GlobalExceptionHandler(presenter))
+				.setControllerAdvice(new GlobalExceptionHandler(presenter), new NegocioExceptionHandler(presenter))
 				.setValidator(validator)
 				.build();
 	}

@@ -32,6 +32,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoReposi
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.exception.GlobalExceptionHandler;
+import com.fabioluisaf.gerenciadorgastos.shared.exception.NegocioExceptionHandler;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
 class MetodoPagamentoControllerTest {
@@ -49,7 +50,7 @@ class MetodoPagamentoControllerTest {
 		final var validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
 		mvc = MockMvcBuilders.standaloneSetup(new MetodoPagamentoController(service, presenter))
-				.setControllerAdvice(new GlobalExceptionHandler(presenter))
+				.setControllerAdvice(new GlobalExceptionHandler(presenter), new NegocioExceptionHandler(presenter))
 				.setValidator(validator)
 				.build();
 	}

@@ -50,7 +50,7 @@ class GlobalExceptionHandlerTest {
 		final var validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
 		mvc = MockMvcBuilders.standaloneSetup(new GastoController(service, presenter))
-				.setControllerAdvice(new GlobalExceptionHandler(presenter))
+				.setControllerAdvice(new GlobalExceptionHandler(presenter), new NegocioExceptionHandler(presenter))
 				.setValidator(validator)
 				.setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
 				.build();

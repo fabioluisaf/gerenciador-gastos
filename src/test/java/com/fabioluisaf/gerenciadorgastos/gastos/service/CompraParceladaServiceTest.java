@@ -59,7 +59,7 @@ class CompraParceladaServiceTest {
 		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(metodoPagamento);
 		when(faturaRepository.save(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 		final var faturaService = new FaturaService(faturaRepository, metodoPagamentoService);
-		service = new CompraParceladaService(repository, metodoPagamentoService, faturaService);
+		service = new CompraParceladaService(repository, metodoPagamentoService, new Parcelamento(faturaService));
 		when(repository.save(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 		when(repository.saveAndFlush(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 		compra = service.criar(new CriarCompraParceladaRequest(
