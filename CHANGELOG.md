@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+
+- Gastos resumidos incluem o estado de realização, a parcela atual e o total de parcelas.
+- Totais planejados passam a incluir gastos realizados e não realizados.
+- O valor total das faturas resumidas considera apenas os gastos realizados.
+- Validação das totalizações informa a necessidade de fornecer mês e ano ou ID da fatura, sem expor campos internos.
+
 ## 1.2.0
 
 - Cadastro e manutenção de métodos de pagamento com tipo e instituição financeira.

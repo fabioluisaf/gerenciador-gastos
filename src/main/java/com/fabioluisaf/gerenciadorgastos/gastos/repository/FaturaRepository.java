@@ -20,7 +20,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, UUID> {
                 f.id, f.dataFechamento, coalesce(sum(g.valor), 0)
             )
             from Fatura f
-            left join f.gastos g
+            left join f.gastos g on g.realizado = true
             where f.metodoPagamento.id = :metodoPagamentoId
             group by f.id, f.dataFechamento
             """, countQuery = """

@@ -127,6 +127,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			case "Max" -> "ACIMA_DO_MAXIMO";
 			case "Digits" -> "FORMATO_NUMERICO_INVALIDO";
 			case "DataObrigatoriaSeRealizado" -> "DATA_OBRIGATORIA_PARA_GASTO_REALIZADO";
+			case "EscopoTotalizacaoValido" -> "INFORME_MES_E_ANO_OU_FATURA";
 			default -> ERRO_DE_VALIDACAO;
 		};
 	}

@@ -2,6 +2,8 @@ package com.fabioluisaf.gerenciadorgastos.gastos.repository;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import java.util.stream.Stream;
+
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.core.TypedPropertyPath;
@@ -30,12 +32,16 @@ class GastoRepositoryQueryTest {
 
 		try (final var factory = configuration.buildSessionFactory();
 				final var session = factory.openSession()) {
-			for (final var method : GastoRepository.class.getDeclaredMethods()) {
+			final var methods = Stream.concat(Stream.of(GastoRepository.class.getDeclaredMethods()),
+					Stream.of(FaturaRepository.class.getDeclaredMethods())).toList();
+			for (final var method : methods) {
 				final var query = method.getAnnotation(Query.class);
 				if (query == null) {
 					continue;
 				}
 				final var sort = switch (method.getName()) {
+					case "listarResumosPorMetodoPagamentoId" ->
+						Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId));
 					case "totalizarPorCategoria" ->
 						Sort.by(TypedPropertyPath.path(Gasto::getCategoria));
 					case "totalizarPorMetodoPagamento" ->
