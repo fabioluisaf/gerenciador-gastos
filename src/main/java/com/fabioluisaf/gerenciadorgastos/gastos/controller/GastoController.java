@@ -1,5 +1,6 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
@@ -22,7 +23,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosPo
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
-import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiPageResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
@@ -49,7 +49,7 @@ public class GastoController {
 	}
 
 	@GetMapping
-	public ApiPageResponse<GastoResponse> listar(
+	public ApiResponse<List<GastoResponse>> listar(
         @Valid @ModelAttribute BuscarGastosPorMesEAnoRequest request,
         @PageableDefault(sort = { "data", "id" }) Pageable pageable
     ) {
