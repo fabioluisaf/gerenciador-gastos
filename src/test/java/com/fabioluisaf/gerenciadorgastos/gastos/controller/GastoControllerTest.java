@@ -31,6 +31,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
@@ -85,7 +86,8 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.categoria").value("Alimentacao"))
 				.andExpect(jsonPath("$.dados.metodoPagamento").value("PIX_CAIXA"))
 				.andExpect(jsonPath("$.dados.descricao").value("compra"))
-				.andExpect(jsonPath("$.dados.realizado").value(false));
+				.andExpect(jsonPath("$.dados.realizado").value(false))
+				.andExpect(jsonPath("$.dados.parcela").doesNotExist());
 	}
 
 	@Test
@@ -95,11 +97,35 @@ class GastoControllerTest {
 		mvc.perform(get("/gastos").param("mes", "2").param("ano", "2024").param("size", "10"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
+				.andExpect(jsonPath("$.dados[0].parcela").doesNotExist())
 				.andExpect(jsonPath("$.paginacao.pagina").value(0))
 				.andExpect(jsonPath("$.paginacao.tamanho").value(10))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(12))
 				.andExpect(jsonPath("$.paginacao.totalPaginas").value(2))
 				.andExpect(jsonPath("$.versao").value("v1"));
+	}
+
+	@Test
+	void exibeInformacoesDaParcelaNaListaENaConsulta() throws Exception {
+		final var compraId = UUID.randomUUID();
+		final var compra = mock(CompraParcelada.class);
+		when(compra.getId()).thenReturn(compraId);
+		when(compra.getQuantidadeParcelas()).thenReturn(3L);
+		gasto.setCompraParcelada(compra);
+		gasto.setNumeroParcela(2);
+		when(service.buscarPorId(id)).thenReturn(gasto);
+		when(service.listarPorMesEAno(any(), any()))
+				.thenReturn(new PageImpl<>(List.of(gasto), PageRequest.of(0, 10), 1));
+
+		mvc.perform(get("/gastos/{id}", id)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados.parcela.numero").value(2))
+				.andExpect(jsonPath("$.dados.parcela.quantidade").value(3))
+				.andExpect(jsonPath("$.dados.parcela.compraParceladaId").value(compraId.toString()));
+		mvc.perform(get("/gastos").param("mes", "2").param("ano", "2026"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].parcela.numero").value(2))
+				.andExpect(jsonPath("$.dados[0].parcela.quantidade").value(3))
+				.andExpect(jsonPath("$.dados[0].parcela.compraParceladaId").value(compraId.toString()));
 	}
 
 	@Test
@@ -132,7 +158,8 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
 				.andExpect(jsonPath("$.dados.metodoPagamento").value("DEBITO_NUBANK"))
 				.andExpect(jsonPath("$.dados.descricao").value("atualizado"))
-				.andExpect(jsonPath("$.dados.realizado").value(true));
+				.andExpect(jsonPath("$.dados.realizado").value(true))
+				.andExpect(jsonPath("$.dados.parcela").doesNotExist());
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isNoContent());
 		verify(service).excluir(id);
 	}

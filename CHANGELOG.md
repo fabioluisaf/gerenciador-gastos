@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+- Respostas de gastos incluem informações da parcela e da compra vinculada.
+- Swagger e OpenAPI desativados no perfil de produção.
+
 ## 1.1.0
 
 - Cadastro, consulta, atualização e exclusão de compras parceladas.

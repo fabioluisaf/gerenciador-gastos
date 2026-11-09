@@ -14,6 +14,11 @@ configuração de execução local do VS Code, ela está definida como `8080`.
 - `PUT /gastos/{id}`: atualiza todos os campos de um gasto.
 - `DELETE /gastos/{id}`: exclui um gasto.
 
+Quando um gasto é uma parcela, as respostas de gastos incluem `parcela`, com
+`numero`, `quantidade` e `compraParceladaId`. O campo é omitido para gastos
+avulsos. Ao alterar o valor total ou a quantidade de uma compra parcelada, as
+parcelas são recriadas e seus IDs mudam.
+
 ## API de compras parceladas
 
 - `POST /compras-parceladas`: cria uma compra e seus gastos.
@@ -45,7 +50,9 @@ As respostas incluem o valor total e as parcelas ordenadas pelo número,
 com seus identificadores, datas e valores.
 
 As respostas de consulta e alteração incluem a versão da aplicação; a exclusão
-retorna HTTP 204 sem corpo. A documentação interativa está em `/swagger`.
+retorna HTTP 204 sem corpo. A documentação interativa está em `/swagger`, exceto
+no perfil de produção. Para desativar a interface Swagger e os endpoints OpenAPI
+em produção, inicie a aplicação com `SPRING_PROFILES_ACTIVE=prod`.
 
 Erros tratados pela API retornam `ApiResponse` com `dados` contendo `status`,
 `mensagem`, `caminho` e `instante`. Erros inesperados são registrados no log e

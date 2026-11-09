@@ -8,6 +8,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public record GastoResponse(
     UUID id,
@@ -25,10 +26,19 @@ public record GastoResponse(
 
     String descricao,
 
-    boolean realizado
+    boolean realizado,
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    InformacoesParcelaResponse parcela
 ) {
 
 	public static GastoResponse from(Gasto entidade) {
+		final var compra = entidade.getCompraParcelada();
+		final var parcela = compra == null ? null : new InformacoesParcelaResponse(
+            entidade.getNumeroParcela(),
+            compra.getQuantidadeParcelas(),
+            compra.getId()
+        );
 		return new GastoResponse(
             entidade.getId(),
             entidade.getData(),
@@ -37,7 +47,8 @@ public record GastoResponse(
             entidade.getCategoria(),
             entidade.getMetodoPagamento(),
             entidade.getDescricao(),
-            entidade.isRealizado()
+            entidade.isRealizado(),
+            parcela
         );
 	}
 }

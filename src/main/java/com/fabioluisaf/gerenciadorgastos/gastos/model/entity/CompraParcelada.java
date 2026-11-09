@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.Formula;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +33,10 @@ public class CompraParcelada {
 
 	@Column(name = "valor_total", nullable = false, precision = 19, scale = 2)
 	private BigDecimal valorTotal;
+
+	@Formula("(select count(*) from gastos g where g.compra_parcelada_id = id)")
+	@Setter(AccessLevel.NONE)
+	private Long quantidadeParcelas;
 
 	@OneToMany(mappedBy = "compraParcelada", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Gasto> parcelas = new ArrayList<>();

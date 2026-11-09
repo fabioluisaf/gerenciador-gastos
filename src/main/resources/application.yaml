@@ -13,6 +13,7 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
+    open-in-view: true
     hibernate:
       ddl-auto: validate
     properties:
@@ -20,7 +21,10 @@ spring:
         "[format_sql]": true
 
 springdoc:
+  api-docs:
+    enabled: true
   swagger-ui:
+    enabled: true
     path: /swagger
 
 api:
@@ -31,3 +35,15 @@ logging:
     org:
       hibernate:
         SQL: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
