@@ -16,10 +16,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.GastoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.AtualizarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.CompraParceladaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;

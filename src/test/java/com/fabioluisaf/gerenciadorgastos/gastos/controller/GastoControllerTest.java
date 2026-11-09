@@ -29,8 +29,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;

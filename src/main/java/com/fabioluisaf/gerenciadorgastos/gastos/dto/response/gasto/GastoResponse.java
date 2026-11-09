@@ -1,9 +1,10 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.compraparcelada.InformacoesParcelaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;

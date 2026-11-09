@@ -22,8 +22,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.AtualizarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.CriarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;

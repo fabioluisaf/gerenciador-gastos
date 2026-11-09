@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.BuscarGastosPorMesEAnoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.GastoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosPorMesEAnoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiPageResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;

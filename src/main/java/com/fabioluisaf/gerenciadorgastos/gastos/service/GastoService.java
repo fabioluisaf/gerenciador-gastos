@@ -8,9 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.BuscarGastosPorMesEAnoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosPorMesEAnoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;

@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.CompraParceladaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.AtualizarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.compraparcelada.CompraParceladaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.CompraParceladaService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;

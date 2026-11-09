@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.BuscarGastosPorMesEAnoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosPorMesEAnoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;

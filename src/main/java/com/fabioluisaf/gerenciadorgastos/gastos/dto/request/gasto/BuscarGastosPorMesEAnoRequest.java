@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.request;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.compraparcelada;
 
 import java.util.UUID;
 
