@@ -19,9 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosPorMesEAnoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.GastoResumidoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
@@ -39,21 +40,23 @@ public class GastoController {
 	private final ApiResponsePresenter presenter;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<GastoResponse>> criar(@Valid @RequestBody CriarGastoRequest request) {
+	public ResponseEntity<ApiResponse<GastoResumidoResponse>> criar(@Valid @RequestBody CriarGastoRequest request) {
 		final var gasto = gastoService.criar(request);
 		final var localizacao = ServletUriComponentsBuilder.fromCurrentRequestUri()
 				.path("/{id}")
 				.buildAndExpand(gasto.getId())
 				.toUri();
-		return ResponseEntity.created(localizacao).body(presenter.apresentar(GastoResponse.from(gasto)));
+
+		return ResponseEntity.created(localizacao).body(presenter.apresentar(GastoResumidoResponse.from(gasto)));
 	}
 
 	@GetMapping
-	public ApiResponse<List<GastoResponse>> listar(
-        @Valid @ModelAttribute BuscarGastosPorMesEAnoRequest request,
+	public ApiResponse<List<GastoResumidoResponse>> listar(
+        @Valid @ModelAttribute BuscarGastosRequest request,
         @PageableDefault(sort = { "data", "id" }) Pageable pageable
     ) {
-		final var gastos = gastoService.listarPorMesEAno(request, pageable).map(GastoResponse::from);
+		final var gastos = gastoService.listarPorMesEAno(request, pageable).map(GastoResumidoResponse::from);
+
 		return presenter.apresentarPagina(gastos);
 	}
 
@@ -63,24 +66,25 @@ public class GastoController {
 	}
 
 	@PutMapping("/{id}")
-	public ApiResponse<GastoResponse> atualizar(
+	public ApiResponse<GastoResumidoResponse> atualizar(
         @PathVariable UUID id,
         @Valid @RequestBody AtualizarGastoRequest request
     ) {
-		return presenter.apresentar(GastoResponse.from(gastoService.atualizar(id, request)));
+		return presenter.apresentar(GastoResumidoResponse.from(gastoService.atualizar(id, request)));
 	}
 
 	@PatchMapping("/{id}/realizado")
-	public ApiResponse<GastoResponse> atualizarRealizado(
+	public ApiResponse<GastoResumidoResponse> atualizarRealizado(
 			@PathVariable UUID id, 
             @NotNull @RequestBody Boolean realizado
 	) {
-		return presenter.apresentar(GastoResponse.from(gastoService.atualizarRealizado(id, realizado)));
+		return presenter.apresentar(GastoResumidoResponse.from(gastoService.atualizarRealizado(id, realizado)));
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> excluir(@PathVariable UUID id) {
 		gastoService.excluir(id);
+
 		return ResponseEntity.noContent().build();
 	}
 }

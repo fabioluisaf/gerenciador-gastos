@@ -40,6 +40,7 @@ public class CompraParceladaController {
 				.path("/{id}")
 				.buildAndExpand(compra.getId())
 				.toUri();
+
 		return ResponseEntity.created(localizacao).body(presenter.apresentar(CompraParceladaResponse.from(compra)));
 	}
 
@@ -58,6 +59,7 @@ public class CompraParceladaController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> excluir(@PathVariable UUID id) {
 		service.excluir(id);
+
 		return ResponseEntity.noContent().build();
 	}
 }

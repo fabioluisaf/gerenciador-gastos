@@ -1,5 +1,11 @@
 package com.fabioluisaf.gerenciadorgastos.shared.exception;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,9 +27,6 @@ import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ErroResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ErroValidacao;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
-
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,24 +37,53 @@ import tools.jackson.databind.exc.MismatchedInputException;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+	private static final String ERRO_DE_VALIDACAO = "ERRO_DE_VALIDACAO";
+
 	private final ApiResponsePresenter presenter;
 
 	@ExceptionHandler(ParcelaOperacaoInvalidaException.class)
 	public ResponseEntity<ApiResponse<ErroResponse>> tratarOperacaoEmParcela(
-        ParcelaOperacaoInvalidaException excecao, HttpServletRequest request
-    ) {
-		final var status = HttpStatus.CONFLICT;
-		return ResponseEntity.status(status)
-				.body(criarResposta(status, excecao.getMessage(), request.getRequestURI()));
+			ParcelaOperacaoInvalidaException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.CONFLICT, excecao.getMessage(), request);
 	}
 
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<ApiResponse<ErroResponse>> tratarNaoEncontrado(
-        EntityNotFoundException excecao, HttpServletRequest request
-    ) {
-		final var status = HttpStatus.NOT_FOUND;
-		return ResponseEntity.status(status)
-				.body(criarResposta(status, "RECURSO_NAO_ENCONTRADO", request.getRequestURI()));
+			EntityNotFoundException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.NOT_FOUND, "RECURSO_NAO_ENCONTRADO", request);
+	}
+
+	@ExceptionHandler(GastoRealizadoSemDataException.class)
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarGastoRealizadoSemData(
+			GastoRealizadoSemDataException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.BAD_REQUEST, "DATA_OBRIGATORIA_PARA_GASTO_REALIZADO", request);
+	}
+
+	@ExceptionHandler({PagamentoInvalidoException.class, ValoresParcelasInvalidosException.class})
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarRegraInvalida(
+			RuntimeException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.BAD_REQUEST, excecao.getMessage(), request);
+	}
+
+	@ExceptionHandler(MetodoPagamentoEmUsoException.class)
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarMetodoPagamentoEmUso(
+			MetodoPagamentoEmUsoException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.CONFLICT, "METODO_PAGAMENTO_EM_USO", request);
+	}
+
+	private ResponseEntity<ApiResponse<ErroResponse>> responder(
+			HttpStatus status, String mensagem, HttpServletRequest request
+	) {
+		final var erro = new ErroResponse(
+				status.value(), mensagem, request.getRequestURI(), Instant.now(), List.of()
+		);
+
+		return ResponseEntity.status(status).body(presenter.apresentar(erro));
 	}
 
 	@ExceptionHandler(Exception.class)
@@ -60,7 +92,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ) {
 		log.error("Erro inesperado ao processar requisição", excecao);
 		final var status = HttpStatus.INTERNAL_SERVER_ERROR;
-        
+
 		return ResponseEntity.status(status)
 				.body(criarResposta(status, "ERRO_INTERNO_DO_SERVIDOR", request.getRequestURI()));
 	}
@@ -76,6 +108,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 						traduzirCodigoValidacao(erro.getCode())
 				))
 				.toList();
+
 		return responderErroValidacao(excecao, erros, headers, status, request);
 	}
 
@@ -91,6 +124,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 		final var caminho = erroData.getPath();
 		final var campo = caminho.isEmpty() ? null : caminho.get(caminho.size() - 1).getPropertyName();
+
 		return responderErroValidacao(
 				excecao, List.of(new ErroValidacao(campo, "FORMATO_INVALIDO")), headers, status, request
 		);
@@ -126,13 +160,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			Exception excecao, List<ErroValidacao> erros, HttpHeaders headers,
 			HttpStatusCode status, WebRequest request
 	) {
-		final var resposta = criarResposta(status, "ERRO_DE_VALIDACAO", obterCaminho(request), erros);
+		final var resposta = criarResposta(status, ERRO_DE_VALIDACAO, obterCaminho(request), erros);
+
 		return super.handleExceptionInternal(excecao, resposta, headers, status, request);
 	}
 
 	private String traduzirCodigoValidacao(String codigo) {
 		if (codigo == null) {
-			return "ERRO_DE_VALIDACAO";
+			return ERRO_DE_VALIDACAO;
 		}
 		return switch (codigo) {
 			case "NotBlank" -> "CAMPO_NAO_PODE_FICAR_VAZIO";
@@ -142,7 +177,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			case "Min" -> "ABAIXO_DO_MINIMO";
 			case "Max" -> "ACIMA_DO_MAXIMO";
 			case "Digits" -> "FORMATO_NUMERICO_INVALIDO";
-			default -> "ERRO_DE_VALIDACAO";
+			case "DataObrigatoriaSeRealizado" -> "DATA_OBRIGATORIA_PARA_GASTO_REALIZADO";
+			default -> ERRO_DE_VALIDACAO;
 		};
 	}
 
@@ -156,6 +192,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 				return erro;
 			}
 		}
+
 		return null;
 	}
 
@@ -167,6 +204,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			HttpStatusCode status, String mensagem, String caminho, List<ErroValidacao> errosValidacao
 	) {
 		final var erro = new ErroResponse(status.value(), mensagem, caminho, Instant.now(), errosValidacao);
+
 		return presenter.apresentar(erro);
 	}
 }

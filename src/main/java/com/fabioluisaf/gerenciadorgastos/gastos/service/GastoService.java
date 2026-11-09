@@ -1,5 +1,6 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.UUID;
 
@@ -9,9 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosPorMesEAnoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
@@ -24,16 +28,22 @@ import lombok.RequiredArgsConstructor;
 public class GastoService {
 
 	private final GastoRepository gastoRepository;
+	private final MetodoPagamentoService metodoPagamentoService;
+	private final FaturaService faturaService;
 
 	@Transactional
 	public Gasto criar(CriarGastoRequest request) {
 		final var entidade = request.toEntity();
+		aplicarMetodoPagamento(
+				entidade, request.metodoPagamentoId(), request.data(), request.faturaDataFechamento()
+		);
 
 		return gastoRepository.save(entidade);
 	}
 
-	public Page<Gasto> listarPorMesEAno(BuscarGastosPorMesEAnoRequest request, Pageable pageable) {
+	public Page<Gasto> listarPorMesEAno(BuscarGastosRequest request, Pageable pageable) {
 		final var periodo = YearMonth.of(request.ano(), request.mes());
+
 		return gastoRepository.findByDataBetween(periodo.atDay(1), periodo.atEndOfMonth(), pageable);
 	}
 
@@ -44,22 +54,31 @@ public class GastoService {
 	@Transactional
 	public Gasto atualizar(UUID id, AtualizarGastoRequest request) {
 		final var entidade = buscarEntidadePorId(id);
+
 		validarGastoAvulso(entidade);
+
+		aplicarMetodoPagamento(
+				entidade, request.metodoPagamentoId(), request.data(), request.faturaDataFechamento()
+		);
 		entidade.setData(request.data());
 		entidade.setNome(request.nome());
 		entidade.setValor(request.valor());
 		entidade.setCategoria(request.categoria());
-		entidade.setMetodoPagamento(request.metodoPagamento());
 		entidade.setDescricao(request.descricao());
 		entidade.setRealizado(request.realizado());
-        
+
 		return gastoRepository.save(entidade);
 	}
 
 	@Transactional
 	public Gasto atualizarRealizado(UUID id, boolean realizado) {
 		final var entidade = buscarEntidadePorId(id);
+
+		if (realizado && entidade.getData() == null) {
+			throw new GastoRealizadoSemDataException();
+		}
 		entidade.setRealizado(realizado);
+
 		return gastoRepository.save(entidade);
 	}
 
@@ -74,6 +93,32 @@ public class GastoService {
 		if (gasto.getCompraParcelada() != null) {
 			throw new ParcelaOperacaoInvalidaException();
 		}
+	}
+
+	private void aplicarMetodoPagamento(
+			Gasto gasto, UUID metodoPagamentoId, LocalDate data, LocalDate faturaDataFechamento
+	) {
+		final var metodo = metodoPagamentoService.buscarEntidadePorId(metodoPagamentoId);
+		gasto.setMetodoPagamento(metodo);
+
+		if (metodo.getTipo() != TipoMetodoPagamento.CREDITO) {
+			if (faturaDataFechamento != null) {
+				throw new PagamentoInvalidoException("FATURA_PERMITIDA_APENAS_PARA_CREDITO");
+			}
+
+			gasto.setFatura(null);
+
+			return;
+		}
+
+		final var dataFechamento = faturaDataFechamento != null
+				? faturaDataFechamento
+				: faturaService.sugerirDataFechamento(metodo, data);
+		if (dataFechamento == null) {
+			throw new PagamentoInvalidoException("FATURA_OBRIGATORIA_SEM_DATA_DA_COMPRA");
+		}
+
+		gasto.setFatura(faturaService.obterOuCriar(metodoPagamentoId, dataFechamento));
 	}
 
 	private Gasto buscarEntidadePorId(UUID id) {

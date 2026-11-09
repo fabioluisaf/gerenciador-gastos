@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.InformacoesFaturaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento.MetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -16,7 +17,8 @@ public record ParcelaResponse(
     String nome,
     BigDecimal valor,
     String categoria,
-    MetodoPagamento metodoPagamento,
+    MetodoPagamentoResponse metodoPagamento,
+    InformacoesFaturaResponse fatura,
     String descricao,
     boolean realizado
 ) {
@@ -28,7 +30,8 @@ public record ParcelaResponse(
             parcela.getNome(),
             parcela.getValor(),
             parcela.getCategoria(),
-            parcela.getMetodoPagamento(),
+            MetodoPagamentoResponse.from(parcela.getMetodoPagamento()),
+            InformacoesFaturaResponse.from(parcela.getFatura()),
             parcela.getDescricao(),
             parcela.isRealizado()
         );

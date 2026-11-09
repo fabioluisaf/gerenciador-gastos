@@ -20,6 +20,7 @@ public record CompraParceladaResponse(
                         Objects.requireNonNull(Objects.requireNonNull(parcela).getNumeroParcela())))
                 .map(ParcelaResponse::from)
                 .toList();
+
         return new CompraParceladaResponse(compra.getId(), compra.getValorTotal(), parcelas.size(), parcelas);
     }
 }

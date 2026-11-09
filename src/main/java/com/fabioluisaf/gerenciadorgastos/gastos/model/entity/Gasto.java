@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +16,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,7 +34,7 @@ public class Gasto {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
-	@Column(nullable = false)
+	@Column
 	private LocalDate data;
 
 	@Column(nullable = false)
@@ -44,9 +46,17 @@ public class Gasto {
 	@Column(nullable = false)
 	private String categoria;
 
-	@Column(name = "metodo_pagamento", nullable = false)
-	@Enumerated(EnumType.STRING)
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "metodo_pagamento_id", nullable = false)
 	private MetodoPagamento metodoPagamento;
+
+	@Column(name = "tipo_metodo_pagamento", nullable = false)
+	@Enumerated(EnumType.STRING)
+	private TipoMetodoPagamento tipoMetodoPagamento;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "fatura_id")
+	private Fatura fatura;
 
 	@Column(columnDefinition = "text")
 	private String descricao;
@@ -61,6 +71,12 @@ public class Gasto {
 	@Column(name = "numero_parcela")
 	private Integer numeroParcela;
 
+	@PrePersist
+	@PreUpdate
+	void definirTipoMetodoPagamento() {
+		tipoMetodoPagamento = metodoPagamento.getTipo();
+	}
+
 	@Override
 	public boolean equals(Object objeto) {
 		if (this == objeto) {
@@ -70,6 +86,7 @@ public class Gasto {
 			return false;
 		}
 		final var identificador = getId();
+
 		return identificador != null && identificador.equals(outro.getId());
 	}
 

@@ -1,0 +1,2 @@
+ALTER TABLE gastos
+    ALTER COLUMN data DROP NOT NULL;

@@ -50,6 +50,7 @@ public class CompraParcelada {
 			return false;
 		}
 		final var identificador = getId();
+
 		return identificador != null && identificador.equals(outra.getId());
 	}
 

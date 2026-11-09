@@ -27,6 +27,9 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.controller.GastoController;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
@@ -54,6 +57,24 @@ class GlobalExceptionHandlerTest {
 	}
 
 	@Test
+	void priorizaErrosDeNegocioSobreTratamentoGenerico() throws Exception {
+		when(service.buscarPorId(id)).thenThrow(new PagamentoInvalidoException("FATURA_PERMITIDA_APENAS_PARA_CREDITO"));
+
+		mvc.perform(get("/gastos/{id}", id))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.mensagem").value("FATURA_PERMITIDA_APENAS_PARA_CREDITO"))
+				.andExpect(jsonPath("$.dados.caminho").value("/gastos/" + id))
+				.andExpect(jsonPath("$.dados.instante").isNotEmpty())
+				.andExpect(jsonPath("$.versao").value("v1"));
+
+		doThrow(new MetodoPagamentoEmUsoException()).when(service).buscarPorId(id);
+
+		mvc.perform(get("/gastos/{id}", id))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.dados.mensagem").value("METODO_PAGAMENTO_EM_USO"));
+	}
+
+	@Test
 	void reportaErrosEstruturadosParaCamposInvalidos() throws Exception {
 		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
 				{"nome":"  ","valor":-1,"categoria":"","realizado":null}
@@ -63,13 +84,12 @@ class GlobalExceptionHandlerTest {
 				.andExpect(jsonPath("$.dados.caminho").value("/gastos"))
 				.andExpect(jsonPath("$.dados.instante").isNotEmpty())
 				.andExpect(jsonPath("$.versao").value("v1"))
+				.andExpect(jsonPath("$.paginacao").doesNotHaveJsonPath())
 				.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'nome')].codigo",
 						hasItem("CAMPO_NAO_PODE_FICAR_VAZIO")))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'valor')].codigo",
 						hasItem("DEVE_SER_ZERO_OU_POSITIVO")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo",
-						hasItem("CAMPO_OBRIGATORIO")))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));
 		mvc.perform(get("/gastos").param("mes", "13").param("ano", "1999"))
@@ -90,12 +110,19 @@ class GlobalExceptionHandlerTest {
 						hasItem("CAMPO_NAO_PODE_FICAR_VAZIO")));
 		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"data-invalida","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
-				"metodoPagamento":"PIX_CAIXA","realizado":true}
-				"""))
+				"metodoPagamentoId":"%s","realizado":true}
+				""".formatted(UUID.randomUUID())))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo",
 						hasItem("FORMATO_INVALIDO")));
+		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
+				{"data":null,"nome":"Conta de luz","valor":80,"categoria":"Casa",
+				"metodoPagamentoId":"%s","realizado":true}
+				""".formatted(UUID.randomUUID())))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'data')].codigo",
+						hasItem("DATA_OBRIGATORIA_PARA_GASTO_REALIZADO")));
 	}
 
 	@Test
@@ -111,8 +138,8 @@ class GlobalExceptionHandlerTest {
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isNotFound());
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"15/02/2026","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
-				"metodoPagamento":"PIX_CAIXA","realizado":true}
-				""")).andExpect(status().isNotFound());
+				"metodoPagamentoId":"%s","realizado":true}
+				""".formatted(UUID.randomUUID()))).andExpect(status().isNotFound());
 		mvc.perform(get("/gastos/uuid-invalido")).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.mensagem").value("REQUISICAO_INVALIDA"));
 		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("{"))
@@ -135,8 +162,19 @@ class GlobalExceptionHandlerTest {
 						.value("PARCELA_DEVE_SER_ALTERADA_PELA_COMPRA"));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"15/02/2026","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
-				"metodoPagamento":"PIX_CAIXA","realizado":true}
-				""")).andExpect(status().isConflict());
+				"metodoPagamentoId":"%s","realizado":true}
+				""".formatted(UUID.randomUUID()))).andExpect(status().isConflict());
+	}
+
+	@Test
+	void retornaErroAoMarcarComoRealizadoGastoSemData() throws Exception {
+		when(service.atualizarRealizado(id, true)).thenThrow(new GastoRealizadoSemDataException());
+
+		mvc.perform(patch("/gastos/{id}/realizado", id)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("true"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.mensagem").value("DATA_OBRIGATORIA_PARA_GASTO_REALIZADO"));
 	}
 
 	@Test

@@ -13,10 +13,12 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 
 public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 
-	@EntityGraph(attributePaths = "compraParcelada")
+	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
 	Page<Gasto> findByDataBetween(LocalDate inicio, LocalDate fim, Pageable pageable);
 
+	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
+
 	@Override
-	@EntityGraph(attributePaths = "compraParcelada")
+	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
 	Optional<Gasto> findById(UUID id);
 }

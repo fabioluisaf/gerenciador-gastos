@@ -5,7 +5,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.compraparcelada.InformacoesParcelaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.InformacoesFaturaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento.MetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -23,7 +24,10 @@ public record GastoResponse(
 
     String categoria,
 
-    MetodoPagamento metodoPagamento,
+    MetodoPagamentoResponse metodoPagamento,
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    InformacoesFaturaResponse fatura,
 
     String descricao,
 
@@ -40,13 +44,15 @@ public record GastoResponse(
             compra.getQuantidadeParcelas(),
             compra.getId()
         );
+
 		return new GastoResponse(
             entidade.getId(),
             entidade.getData(),
             entidade.getNome(),
             entidade.getValor(),
             entidade.getCategoria(),
-            entidade.getMetodoPagamento(),
+            MetodoPagamentoResponse.from(entidade.getMetodoPagamento()),
+            entidade.getFatura() == null ? null : InformacoesFaturaResponse.from(entidade.getFatura()),
             entidade.getDescricao(),
             entidade.isRealizado(),
             parcela

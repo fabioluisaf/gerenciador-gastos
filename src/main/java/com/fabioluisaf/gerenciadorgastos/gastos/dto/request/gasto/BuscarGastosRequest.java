@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record BuscarGastosPorMesEAnoRequest(
+public record BuscarGastosRequest(
     @NotNull
     @Min(1)
     @Max(12)
