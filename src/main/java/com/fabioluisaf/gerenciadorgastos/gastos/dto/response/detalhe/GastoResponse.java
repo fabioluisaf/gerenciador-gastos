@@ -7,14 +7,14 @@ import java.util.UUID;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InformacoesFaturaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.MetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
-import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 public record GastoResponse(
     UUID id,
 
-    @JsonFormat(pattern = FormatoData.DIA_MES_ANO) 
+    @JsonSerialize(using = DataSerializer.class)
     LocalDate data,
 
     String nome,

@@ -1,12 +1,14 @@
 package com.fabioluisaf.gerenciadorgastos.shared.constantes;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class FormatoData {
+@Getter
+@RequiredArgsConstructor
+public enum FormatoData {
+	DIA_MES_ANO("dd/MM/uuuu"),
+	DIA_MES_ANO_HIFEN("dd-MM-uuuu"),
+	ANO_MES_DIA_HIFEN("uuuu-MM-dd");
 
-	public static final String DIA_MES_ANO = "dd/MM/yyyy";
-	public static final String DIA_MES_ANO_HIFEN = "dd-MM-yyyy";
-	public static final String ANO_MES_DIA_HIFEN = "yyyy-MM-dd";
+	private final String formato;
 }

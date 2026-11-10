@@ -4,10 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
-import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataDeserializer;
 import com.fabioluisaf.gerenciadorgastos.shared.validation.DataObrigatoriaSeRealizado;
 import com.fabioluisaf.gerenciadorgastos.shared.validation.GastoComDataERealizacao;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,11 +16,7 @@ import java.util.UUID;
 
 @DataObrigatoriaSeRealizado
 public record CriarGastoRequest(
-    @JsonFormat(
-        pattern = "[" + FormatoData.DIA_MES_ANO + "]["
-                      + FormatoData.DIA_MES_ANO_HIFEN + "]["
-                      + FormatoData.ANO_MES_DIA_HIFEN + "]"
-    )
+    @JsonDeserialize(using = DataDeserializer.class)
     LocalDate data,
 
     @NotBlank
@@ -36,7 +32,7 @@ public record CriarGastoRequest(
     @NotNull
     UUID metodoPagamentoId,
 
-    @JsonFormat(pattern = FormatoData.DIA_MES_ANO)
+    @JsonDeserialize(using = DataDeserializer.class)
     LocalDate faturaDataFechamento,
 
     String descricao,

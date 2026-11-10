@@ -5,8 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Digits;
@@ -25,7 +25,7 @@ public record AtualizarCompraParceladaRequest(
     @NotNull
     UUID metodoPagamentoId,
 
-    @JsonFormat(pattern = FormatoData.DIA_MES_ANO)
+    @JsonDeserialize(using = DataDeserializer.class)
     LocalDate faturaDataFechamento,
 
     String descricao,
@@ -40,11 +40,7 @@ public record AtualizarCompraParceladaRequest(
     Integer quantidadeParcelas,
 
     @NotNull
-    @JsonFormat(
-        pattern = "[" + FormatoData.DIA_MES_ANO + "]["
-                      + FormatoData.DIA_MES_ANO_HIFEN + "]["
-                      + FormatoData.ANO_MES_DIA_HIFEN + "]"
-    )
+    @JsonDeserialize(using = DataDeserializer.class)
     LocalDate data,
 
     @Schema(description = "Valores opcionais na ordem das parcelas, com quantidade e soma iguais as da compra. "

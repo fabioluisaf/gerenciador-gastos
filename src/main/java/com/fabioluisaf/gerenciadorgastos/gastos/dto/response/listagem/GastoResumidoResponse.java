@@ -5,8 +5,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
-import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record GastoResumidoResponse(
     UUID id,
 
-    @JsonFormat(pattern = FormatoData.DIA_MES_ANO)
+    @JsonSerialize(using = DataSerializer.class)
     LocalDate data,
 
     String nome,

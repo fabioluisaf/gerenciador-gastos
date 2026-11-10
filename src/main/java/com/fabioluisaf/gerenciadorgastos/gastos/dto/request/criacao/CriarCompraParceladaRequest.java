@@ -3,8 +3,8 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -15,11 +15,7 @@ import java.util.UUID;
 
 public record CriarCompraParceladaRequest(
     @NotNull
-    @JsonFormat(
-        pattern = "[" + FormatoData.DIA_MES_ANO + "]["
-                      + FormatoData.DIA_MES_ANO_HIFEN + "]["
-                      + FormatoData.ANO_MES_DIA_HIFEN + "]"
-    )
+    @JsonDeserialize(using = DataDeserializer.class)
     LocalDate data,
 
     @NotBlank
@@ -40,7 +36,7 @@ public record CriarCompraParceladaRequest(
     @NotNull
     UUID metodoPagamentoId,
 
-    @JsonFormat(pattern = FormatoData.DIA_MES_ANO)
+    @JsonDeserialize(using = DataDeserializer.class)
     LocalDate faturaDataFechamento,
 
     String descricao
