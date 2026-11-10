@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.2
+
+- Adicionados os métodos de pagamento boleto, DOC e TED; o tipo não pode ser alterado após o cadastro.
+- Faturas selecionadas por mês e ano, com fechamento calculado pelo dia configurado no cartão.
+- Consultas mensais e totalizações recebem `periodo` em vez de `mes` e `ano`, aceitando hífen ou ponto na URL.
+- Datas e períodos aceitam múltiplos formatos, com validação estrita de valores inválidos.
+- Nome, categoria, método de pagamento e descrição ficam na resposta da compra parcelada, sem repetição nas parcelas.
+- Listagem por fatura mantém apenas o filtro de categoria e a paginação.
+- Refatorações internas e reorganização dos DTOs por uso.
+
 ## 1.2.1
 
 - Gastos resumidos incluem o estado de realização, a parcela atual e o total de parcelas.
