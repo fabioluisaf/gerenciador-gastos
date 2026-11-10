@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;

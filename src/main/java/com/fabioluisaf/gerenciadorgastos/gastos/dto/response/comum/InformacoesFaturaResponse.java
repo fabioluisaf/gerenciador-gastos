@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum;
 
 import java.time.LocalDate;
 import java.util.UUID;

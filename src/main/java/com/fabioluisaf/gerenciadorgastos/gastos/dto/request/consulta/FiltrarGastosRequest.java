@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta;
 
 import java.util.UUID;
 

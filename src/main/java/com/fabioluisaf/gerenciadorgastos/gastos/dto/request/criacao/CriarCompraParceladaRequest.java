@@ -1,20 +1,20 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
-import com.fabioluisaf.gerenciadorgastos.shared.validation.DataObrigatoriaSeRealizado;
-import com.fabioluisaf.gerenciadorgastos.shared.validation.GastoComDataERealizacao;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.util.UUID;
 
-@DataObrigatoriaSeRealizado
-public record AtualizarGastoRequest(
+public record CriarCompraParceladaRequest(
+    @NotNull
     @JsonFormat(
         pattern = "[" + FormatoData.DIA_MES_ANO + "]["
                       + FormatoData.DIA_MES_ANO_HIFEN + "]["
@@ -27,7 +27,12 @@ public record AtualizarGastoRequest(
 
     @NotNull
     @PositiveOrZero
-    BigDecimal valor,
+    @Digits(integer = 17, fraction = 2)
+    BigDecimal valorTotal,
+
+    @NotNull
+    @Positive
+    Integer quantidadeParcelas,
 
     @NotBlank
     String categoria,
@@ -38,9 +43,6 @@ public record AtualizarGastoRequest(
     @JsonFormat(pattern = FormatoData.DIA_MES_ANO)
     LocalDate faturaDataFechamento,
 
-    String descricao,
-
-    @NotNull
-    Boolean realizado
-) implements GastoComDataERealizacao {
+    String descricao
+) {
 }

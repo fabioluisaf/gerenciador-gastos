@@ -8,7 +8,7 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.AtualizarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;

@@ -1,6 +1,6 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.validation;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.TotalizarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategoriaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
 public interface GastoRepository extends JpaRepository<Gasto, UUID>{
@@ -36,7 +36,7 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 	Page<Gasto> listarPorFatura(UUID faturaId, UUID metodoPagamentoId, String categoria, Pageable pageable);
 
 	@Query(value = """
-            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategoriaResponse(
+            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse(
                 g.categoria,
                 sum(case when g.realizado = true then g.valor else 0 end),
                 sum(g.valor)
@@ -52,7 +52,7 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 			UUID faturaId, Pageable pageable);
 
 	@Query(value = """
-            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse(
+            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse(
                 m.id, m.instituicaoFinanceira, m.tipo, m.nome,
                 sum(case when g.realizado = true then g.valor else 0 end),
                 sum(g.valor)

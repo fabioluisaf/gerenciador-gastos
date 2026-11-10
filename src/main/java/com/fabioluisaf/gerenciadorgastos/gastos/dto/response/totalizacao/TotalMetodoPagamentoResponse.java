@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao;
 
 import java.math.BigDecimal;
 import java.util.UUID;

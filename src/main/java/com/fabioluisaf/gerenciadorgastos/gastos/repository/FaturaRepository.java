@@ -10,13 +10,13 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 
 public interface FaturaRepository extends JpaRepository<Fatura, UUID> {
 
 	@Query(value = """
-            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse(
+            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse(
                 f.id, f.dataFechamento, coalesce(sum(g.valor), 0)
             )
             from Fatura f

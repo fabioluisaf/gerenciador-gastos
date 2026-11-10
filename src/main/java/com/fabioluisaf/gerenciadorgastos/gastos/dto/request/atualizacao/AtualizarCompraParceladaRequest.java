@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

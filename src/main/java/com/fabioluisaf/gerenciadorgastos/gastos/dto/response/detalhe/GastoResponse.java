@@ -1,12 +1,11 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.compraparcelada.InformacoesParcelaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.InformacoesFaturaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento.MetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InformacoesFaturaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.MetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
 import com.fasterxml.jackson.annotation.JsonFormat;

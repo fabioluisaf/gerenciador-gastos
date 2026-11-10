@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.FaturaService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;

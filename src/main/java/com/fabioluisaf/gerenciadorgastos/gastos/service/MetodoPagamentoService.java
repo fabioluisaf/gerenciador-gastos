@@ -7,8 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento.AtualizarMetodoPagamentoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento.CriarMetodoPagamentoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;

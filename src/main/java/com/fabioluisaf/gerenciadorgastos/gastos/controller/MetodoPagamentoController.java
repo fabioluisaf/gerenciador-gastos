@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento.AtualizarMetodoPagamentoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento.CriarMetodoPagamentoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento.MetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.MetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;

@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.compraparcelada;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe;
 
 import java.math.BigDecimal;
 import java.util.Comparator;

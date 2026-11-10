@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum;
 
 import java.util.UUID;
 

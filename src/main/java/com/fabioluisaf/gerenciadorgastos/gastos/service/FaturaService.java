@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
