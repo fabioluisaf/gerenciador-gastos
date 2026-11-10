@@ -119,29 +119,33 @@ class CompraParceladaControllerTest {
 				.andExpect(jsonPath("$.dados.parcelas[0].numeroParcela").value(1))
 				.andExpect(jsonPath("$.dados.parcelas[0].id").value(compra.getParcelas().get(1).getId().toString()))
 				.andExpect(jsonPath("$.dados.parcelas[0].data").value("01/01/2026"))
-				.andExpect(jsonPath("$.dados.parcelas[0].nome").value("Compra"))
+				.andExpect(jsonPath("$.dados.nome").value("Compra"))
+				.andExpect(jsonPath("$.dados.parcelas[*].nome").doesNotHaveJsonPath())
 				.andExpect(jsonPath("$.dados.parcelas[0].valor").value(50.00))
-				.andExpect(jsonPath("$.dados.parcelas[0].categoria").value("Casa"))
-				.andExpect(jsonPath("$.dados.parcelas[0].metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
+				.andExpect(jsonPath("$.dados.parcelas[*].categoria").doesNotHaveJsonPath())
+				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.parcelas[*].metodoPagamento").doesNotHaveJsonPath())
 				.andExpect(jsonPath("$.dados.parcelas[0].fatura.dataFechamento").value("2026-02-10"))
-				.andExpect(jsonPath("$.dados.parcelas[0].descricao").value("Descricao"))
+				.andExpect(jsonPath("$.dados.descricao").value("Descricao"))
+				.andExpect(jsonPath("$.dados.parcelas[*].descricao").doesNotHaveJsonPath())
 				.andExpect(jsonPath("$.dados.parcelas[0].realizado").value(true))
 				.andExpect(jsonPath("$.dados.parcelas[1].numeroParcela").value(2));
 		mvc.perform(get("/compras-parceladas/{id}", id)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados.parcelas[0].nome").value("Compra"))
-				.andExpect(jsonPath("$.dados.parcelas[0].categoria").value("Casa"))
-				.andExpect(jsonPath("$.dados.parcelas[0].metodoPagamento.id").value(metodoPagamentoId.toString()))
-				.andExpect(jsonPath("$.dados.parcelas[0].descricao").value("Descricao"))
+				.andExpect(jsonPath("$.dados.nome").value("Compra"))
+				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
+				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.descricao").value("Descricao"))
 				.andExpect(jsonPath("$.dados.id").value(id.toString()));
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"%s","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
 				"categoria":"Casa","metodoPagamentoId":"%s","faturaPeriodo":"%s",
 				"descricao":"Descricao","valoresParcelas":[30.25,69.75]}
 				""".formatted(dataAtualizacao, metodoPagamentoId, periodoAtualizacao))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.dados.parcelas[0].nome").value("Compra"))
-				.andExpect(jsonPath("$.dados.parcelas[0].categoria").value("Casa"))
-				.andExpect(jsonPath("$.dados.parcelas[0].metodoPagamento.id").value(metodoPagamentoId.toString()))
-				.andExpect(jsonPath("$.dados.parcelas[0].descricao").value("Descricao"))
+				.andExpect(jsonPath("$.dados.nome").value("Compra"))
+				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
+				.andExpect(jsonPath("$.dados.metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.descricao").value("Descricao"))
 				.andExpect(jsonPath("$.dados.quantidadeParcelas").value(2));
 		mvc.perform(delete("/compras-parceladas/{id}", id)).andExpect(status().isNoContent());
 		final var criacao = org.mockito.ArgumentCaptor.forClass(

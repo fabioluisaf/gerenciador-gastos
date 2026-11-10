@@ -2,17 +2,18 @@
 
 Confira o [changelog](CHANGELOG.md) para acompanhar as alterações do projeto.
 
-## Métodos de pagamento
+## Resposta de compra parcelada
 
-As entidades `Gasto` e `CompraParcelada` ficam em `gastos.model`. O pacote
-`gastos.model.pagamento` agrupa os métodos de pagamento, seus enums e `Fatura`.
-As subclasses de `MetodoPagamento` ficam em `gastos.model.pagamento.metodos`.
+Os campos `nome`, `categoria`, `metodoPagamento` e `descricao` ficam na compra,
+sem repetição nas parcelas. Cada parcela contém `id`, `numeroParcela`, `data`,
+`valor`, `fatura` e `realizado`.
 
-`MetodoPagamento` é uma entidade abstrata com as subclasses `Credito`, `Debito`,
-`Pix`, `Boleto`, `Doc` e `Ted`. A herança usa `SINGLE_TABLE`: todos permanecem na tabela `metodos_pagamento`,
-com a coluna `tipo` como discriminador.
+## Organização dos DTOs
 
-O tipo é definido na criação e não pode ser alterado. O corpo da atualização
-recebe apenas `instituicaoFinanceira`, `nome` e `diaFechamento`, sem o campo `tipo`.
-Somente `Credito` armazena dia de fechamento, obrigatório entre 1 e 31.
-Débito, Pix, boleto, DOC e TED rejeitam dia de fechamento informado e não possuem fatura.
+Os DTOs mantêm a separação entre `request` e `response`, agrupados por uso:
+
+- `request.criacao`, `request.atualizacao` e `request.consulta`.
+- `response.detalhe`, `response.listagem` e `response.totalizacao`.
+- `response.comum` para DTOs compartilhados entre grupos.
+
+DTOs auxiliares exclusivos ficam no mesmo pacote do DTO que os utiliza.
