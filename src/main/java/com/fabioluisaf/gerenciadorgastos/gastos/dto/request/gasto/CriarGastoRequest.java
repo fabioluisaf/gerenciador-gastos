@@ -3,7 +3,7 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
 import com.fabioluisaf.gerenciadorgastos.shared.validation.DataObrigatoriaSeRealizado;
 import com.fabioluisaf.gerenciadorgastos.shared.validation.GastoComDataERealizacao;

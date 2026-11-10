@@ -3,8 +3,8 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

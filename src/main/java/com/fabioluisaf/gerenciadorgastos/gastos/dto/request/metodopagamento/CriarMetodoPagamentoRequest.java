@@ -1,7 +1,7 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

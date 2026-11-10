@@ -1,6 +1,8 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.repository;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.stream.Stream;
 
@@ -11,10 +13,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Credito;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Debito;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Pix;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Boleto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Doc;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Ted;
 
 // Eclipse cannot infer the non-null receiver of Spring Data property references.
 @SuppressWarnings("null")
@@ -27,11 +35,28 @@ class GastoRepositoryQueryTest {
 				.addAnnotatedClass(CompraParcelada.class)
 				.addAnnotatedClass(Fatura.class)
 				.addAnnotatedClass(MetodoPagamento.class)
+				.addAnnotatedClass(Credito.class)
+				.addAnnotatedClass(Debito.class)
+				.addAnnotatedClass(Pix.class)
+				.addAnnotatedClass(Boleto.class)
+				.addAnnotatedClass(Doc.class)
+				.addAnnotatedClass(Ted.class)
 				.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
 				.setProperty("hibernate.boot.allow_jdbc_metadata_access", "false");
 
 		try (final var factory = configuration.buildSessionFactory();
 				final var session = factory.openSession()) {
+			assertEquals(Integer.class, factory.getMetamodel().entity(Credito.class)
+					.getAttribute("diaFechamento").getJavaType());
+			assertThrows(IllegalArgumentException.class,
+					() -> factory.getMetamodel().entity(Debito.class).getAttribute("diaFechamento"));
+			assertThrows(IllegalArgumentException.class,
+					() -> factory.getMetamodel().entity(Pix.class).getAttribute("diaFechamento"));
+			for (final var tipo : new Class<?>[] { Boleto.class, Doc.class, Ted.class }) {
+				assertThrows(IllegalArgumentException.class,
+						() -> factory.getMetamodel().entity(tipo).getAttribute("diaFechamento"));
+			}
+			assertDoesNotThrow(() -> session.createQuery("from MetodoPagamento", MetodoPagamento.class));
 			final var methods = Stream.concat(Stream.of(GastoRepository.class.getDeclaredMethods()),
 					Stream.of(FaturaRepository.class.getDeclaredMethods())).toList();
 			for (final var method : methods) {

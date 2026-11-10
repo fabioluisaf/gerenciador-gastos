@@ -1,10 +1,12 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.model.entity;
+package com.fabioluisaf.gerenciadorgastos.gastos.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

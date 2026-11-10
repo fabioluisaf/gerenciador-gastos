@@ -10,10 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento.AtualizarMetodoPagamentoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.metodopagamento.CriarMetodoPagamentoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoRepository;
@@ -40,20 +38,17 @@ public class MetodoPagamentoService {
 
 	@Transactional
 	public MetodoPagamento criar(CriarMetodoPagamentoRequest request) {
-		validarConfiguracao(request.tipo(), request.diaFechamento());
-		final var metodo = new MetodoPagamento();
-		aplicarDados(metodo, request.tipo(), request.instituicaoFinanceira(), request.nome(),
-				request.diaFechamento());
+		final var metodo = MetodoPagamento.criar(request.tipo(), request.diaFechamento());
+		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
 
 		return metodoPagamentoRepository.save(metodo);
 	}
 
 	@Transactional
 	public MetodoPagamento atualizar(UUID id, AtualizarMetodoPagamentoRequest request) {
-		validarConfiguracao(request.tipo(), request.diaFechamento());
 		final var metodo = buscarEntidadePorId(id);
-		aplicarDados(metodo, request.tipo(), request.instituicaoFinanceira(), request.nome(),
-				request.diaFechamento());
+		metodo.atualizarDiaFechamento(request.diaFechamento());
+		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
 
 		return metodoPagamentoRepository.save(metodo);
 	}
@@ -69,23 +64,10 @@ public class MetodoPagamentoService {
 	}
 
 	private void aplicarDados(
-			MetodoPagamento metodo, TipoMetodoPagamento tipo, InstituicaoFinanceira instituicao,
-			String nome, Integer diaFechamento
+			MetodoPagamento metodo, InstituicaoFinanceira instituicao, String nome
 	) {
-		metodo.setTipo(tipo);
 		metodo.setInstituicaoFinanceira(instituicao);
 		metodo.setNome(nome);
-		metodo.setDiaFechamento(diaFechamento);
-	}
-
-	private void validarConfiguracao(TipoMetodoPagamento tipo, Integer diaFechamento) {
-		if (tipo == TipoMetodoPagamento.CREDITO && (diaFechamento == null || diaFechamento < 1
-				|| diaFechamento > 31)) {
-			throw new PagamentoInvalidoException("DIA_FECHAMENTO_OBRIGATORIO_PARA_CREDITO");
-		}
-		if (tipo != TipoMetodoPagamento.CREDITO && diaFechamento != null) {
-			throw new PagamentoInvalidoException("DIA_FECHAMENTO_PERMITIDO_APENAS_PARA_CREDITO");
-		}
 	}
 
 	MetodoPagamento buscarEntidadePorId(UUID id) {

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 
 public interface MetodoPagamentoRepository extends JpaRepository<MetodoPagamento, UUID> {
 }

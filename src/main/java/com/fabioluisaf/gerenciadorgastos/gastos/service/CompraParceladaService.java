@@ -9,9 +9,9 @@ import org.springframework.validation.annotation.Validated;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.AtualizarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.CriarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;
 
 import jakarta.persistence.EntityNotFoundException;

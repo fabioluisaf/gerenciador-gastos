@@ -46,12 +46,12 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.FiltrarGastosR
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.gasto.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.exception.GlobalExceptionHandler;
@@ -76,9 +76,8 @@ class GastoControllerTest {
 		service = mock(GastoService.class);
 		id = UUID.randomUUID();
 		metodoPagamentoId = UUID.randomUUID();
-		metodoPagamento = new MetodoPagamento();
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.DEBITO, null);
 		metodoPagamento.setId(metodoPagamentoId);
-		metodoPagamento.setTipo(TipoMetodoPagamento.DEBITO);
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
 		metodoPagamento.setNome("Debito Caixa");
 		gasto = new Gasto();
@@ -251,7 +250,9 @@ class GastoControllerTest {
 		final var faturaId = UUID.randomUUID();
 		final var pageable = PageRequest.of(1, 2,
 				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
-		metodoPagamento.setTipo(TipoMetodoPagamento.CREDITO);
+		final var credito = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10);
+		credito.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+		gasto.setMetodoPagamento(credito);
 		when(service.listarPorFatura(faturaId, new FiltrarGastosRequest(null, null), pageable))
 				.thenReturn(new PageImpl<>(List.of(gasto), pageable, 3));
 

@@ -19,8 +19,8 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPa
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
 import jakarta.persistence.EntityNotFoundException;

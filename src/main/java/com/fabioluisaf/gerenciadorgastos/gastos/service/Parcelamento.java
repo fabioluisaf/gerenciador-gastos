@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.AtualizarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 
 import lombok.RequiredArgsConstructor;
 

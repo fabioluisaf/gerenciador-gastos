@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
 public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 

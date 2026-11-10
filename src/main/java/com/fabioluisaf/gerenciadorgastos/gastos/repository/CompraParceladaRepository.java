@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 
 public interface CompraParceladaRepository extends JpaRepository<CompraParcelada, UUID> {
 

@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.FaturaResumidaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.FaturaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;

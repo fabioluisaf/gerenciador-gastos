@@ -2,9 +2,9 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento;
 
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 
 public record MetodoPagamentoResponse(
 		UUID id,

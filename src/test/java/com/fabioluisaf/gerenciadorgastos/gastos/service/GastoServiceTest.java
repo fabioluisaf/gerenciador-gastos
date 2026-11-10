@@ -34,11 +34,11 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalCategori
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.gasto.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -56,9 +56,8 @@ class GastoServiceTest {
 		repository = mock(GastoRepository.class);
 		metodoPagamentoService = mock(MetodoPagamentoService.class);
 		faturaService = mock(FaturaService.class);
-		metodoPagamento = new MetodoPagamento();
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null);
 		metodoPagamento.setId(UUID.randomUUID());
-		metodoPagamento.setTipo(TipoMetodoPagamento.PIX);
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
 		metodoPagamento.setNome("Pix Caixa");
 		service = new GastoService(repository, metodoPagamentoService, faturaService);

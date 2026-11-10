@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.model.entity;
+package com.fabioluisaf.gerenciadorgastos.gastos.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

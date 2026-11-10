@@ -1,11 +1,11 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.model.entity;
+package com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

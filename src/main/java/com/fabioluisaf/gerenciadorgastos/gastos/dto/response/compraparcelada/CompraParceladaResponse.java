@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 
 public record CompraParceladaResponse(
     UUID id,

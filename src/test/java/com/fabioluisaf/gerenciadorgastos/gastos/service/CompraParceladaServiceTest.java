@@ -26,10 +26,10 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.Atua
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.compraparcelada.CriarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 
@@ -50,12 +50,10 @@ class CompraParceladaServiceTest {
 		repository = mock(CompraParceladaRepository.class);
 		metodoPagamentoService = mock(MetodoPagamentoService.class);
 		faturaRepository = mock(FaturaRepository.class);
-		metodoPagamento = new MetodoPagamento();
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31);
 		metodoPagamento.setId(UUID.randomUUID());
-		metodoPagamento.setTipo(TipoMetodoPagamento.CREDITO);
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
 		metodoPagamento.setNome("Cartao Nubank");
-		metodoPagamento.setDiaFechamento(31);
 		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(metodoPagamento);
 		when(faturaRepository.save(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 		final var faturaService = new FaturaService(faturaRepository, metodoPagamentoService);
@@ -87,12 +85,13 @@ class CompraParceladaServiceTest {
 
 	@Test
 	void rejeitaMetodoNaoCreditoOuAusenciaDeDataEFatura() {
-		metodoPagamento.setTipo(TipoMetodoPagamento.PIX);
+		final var pix = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null);
+		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(pix);
 		final var request = request("100.00", 3);
 		assertEquals("COMPRA_PARCELADA_EXIGE_CREDITO",
 				assertThrows(PagamentoInvalidoException.class, () -> service.atualizar(id, request)).getMessage());
 
-		metodoPagamento.setTipo(TipoMetodoPagamento.CREDITO);
+		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(metodoPagamento);
 		final var semData = request("100.00", 3, null);
 		assertEquals("FATURA_OBRIGATORIA_SEM_DATA_DA_COMPRA",
 				assertThrows(PagamentoInvalidoException.class, () -> service.atualizar(id, semData)).getMessage());

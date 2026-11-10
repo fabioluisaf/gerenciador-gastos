@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.fatura.InformacoesFaturaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.metodopagamento.MetodoPagamentoResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.constantes.FormatoData;
 import com.fasterxml.jackson.annotation.JsonFormat;
 

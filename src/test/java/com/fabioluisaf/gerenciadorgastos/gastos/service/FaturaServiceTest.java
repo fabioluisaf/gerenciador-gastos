@@ -15,9 +15,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.TipoMetodoPagamento;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.entity.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -40,10 +40,8 @@ class FaturaServiceTest {
 		final var repository = mock(FaturaRepository.class);
 		final var metodoService = mock(MetodoPagamentoService.class);
 		final var service = new FaturaService(repository, metodoService);
-		final var metodo = new MetodoPagamento();
+		final var metodo = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10);
 		metodo.setId(UUID.randomUUID());
-		metodo.setTipo(TipoMetodoPagamento.CREDITO);
-		metodo.setDiaFechamento(10);
 		when(metodoService.buscarEntidadePorId(metodo.getId())).thenReturn(metodo);
 		when(repository.findByMetodoPagamentoIdAndDataFechamentoBetween(
 				metodo.getId(), LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30)
@@ -53,7 +51,7 @@ class FaturaServiceTest {
 		when(repository.findByMetodoPagamentoIdAndDataFechamentoBetween(
 				metodo.getId(), LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30)
 		)).thenReturn(Optional.of(fatura));
-		metodo.setDiaFechamento(15);
+		metodo.atualizarDiaFechamento(15);
 
 		assertSame(fatura, service.obterOuCriar(metodo.getId(), LocalDate.of(2026, 11, 15)));
 		assertEquals(LocalDate.of(2026, 11, 10), fatura.getDataFechamento());

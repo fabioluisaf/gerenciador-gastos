@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.model.entity;
+package com.fabioluisaf.gerenciadorgastos.gastos.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
