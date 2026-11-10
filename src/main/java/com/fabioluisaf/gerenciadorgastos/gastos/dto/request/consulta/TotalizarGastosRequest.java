@@ -6,22 +6,22 @@ import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.fabioluisaf.gerenciadorgastos.gastos.validation.EscopoTotalizacaoValido;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import com.fabioluisaf.gerenciadorgastos.shared.validation.AnoMinimo;
 
-@Schema(description = "Informe mes e ano OU faturaId. Totais ignoram filtros de categoria e metodo de pagamento.")
+@Schema(description = "Informe periodo OU faturaId. Totais ignoram filtros de categoria e metodo de pagamento.")
 @EscopoTotalizacaoValido
 public record TotalizarGastosRequest(
-		@Min(1) @Max(12) Integer mes,
-		@Min(2000) Integer ano,
+		@AnoMinimo(2000)
+		@Schema(type = "string", example = "2026-11", description = "Periodo: AAAA-MM, MM-AAAA, AAAA.MM ou MM.AAAA.")
+		YearMonth periodo,
 		UUID faturaId
 ) {
 
 	public LocalDate inicio() {
-		return faturaId == null ? YearMonth.of(ano, mes).atDay(1) : null;
+		return faturaId == null ? periodo.atDay(1) : null;
 	}
 
 	public LocalDate fim() {
-		return faturaId == null ? YearMonth.of(ano, mes).atEndOfMonth() : null;
+		return faturaId == null ? periodo.atEndOfMonth() : null;
 	}
 }

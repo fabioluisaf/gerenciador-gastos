@@ -59,7 +59,7 @@ public class MetodoPagamentoController {
 
 	@GetMapping("/{id}")
 	public ApiResponse<MetodoPagamentoResponse> buscarPorId(@PathVariable UUID id) {
-		return presenter.apresentar(MetodoPagamentoResponse.from(service.buscarPorId(id)));
+		return presenter.apresentar(MetodoPagamentoResponse.from(service.buscarEntidadePorId(id)));
 	}
 
 	@PutMapping("/{id}")

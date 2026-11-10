@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -16,11 +17,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -90,16 +95,21 @@ class CompraParceladaControllerTest {
 				.build();
 	}
 
-	@Test
-	void criaConsultaAtualizaEExcluiCompra() throws Exception {
+	@ParameterizedTest
+	@CsvSource({ "2026-02,2026-04,2026-01-31,2026-03-20",
+			"02-2026,04-2026,31-01-2026,20-03-2026", "02/2026,04/2026,31/01/2026,20/03/2026",
+			"2026.02,2026.04,2026-01-31,2026-03-20", "02.2026,04.2026,2026-01-31,2026-03-20" })
+	void criaConsultaAtualizaEExcluiCompra(
+			String periodoCriacao, String periodoAtualizacao, String dataCriacao, String dataAtualizacao
+	) throws Exception {
 		when(service.criar(any())).thenReturn(compra);
 		when(service.buscarPorId(id)).thenReturn(compra);
 		when(service.atualizar(eq(id), any())).thenReturn(compra);
 		mvc.perform(post("/compras-parceladas").contentType(MediaType.APPLICATION_JSON).content("""
-				{"data":"2026-01-31","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
-				"categoria":"Casa","metodoPagamentoId":"%s","faturaDataFechamento":"10/02/2026",
+				{"data":"%s","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
+				"categoria":"Casa","metodoPagamentoId":"%s","faturaPeriodo":"%s",
 				"descricao":"Descricao"}
-				""".formatted(metodoPagamentoId)))
+				""".formatted(dataCriacao, metodoPagamentoId, periodoCriacao)))
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location", "http://localhost/compras-parceladas/" + id))
 				.andExpect(jsonPath("$.versao").value("v1"))
@@ -118,23 +128,69 @@ class CompraParceladaControllerTest {
 				.andExpect(jsonPath("$.dados.parcelas[0].realizado").value(true))
 				.andExpect(jsonPath("$.dados.parcelas[1].numeroParcela").value(2));
 		mvc.perform(get("/compras-parceladas/{id}", id)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados.parcelas[0].nome").value("Compra"))
+				.andExpect(jsonPath("$.dados.parcelas[0].categoria").value("Casa"))
+				.andExpect(jsonPath("$.dados.parcelas[0].metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.parcelas[0].descricao").value("Descricao"))
 				.andExpect(jsonPath("$.dados.id").value(id.toString()));
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
-				{"data":"2026-03-20","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
-				"categoria":"Casa","metodoPagamentoId":"%s","faturaDataFechamento":"10/04/2026",
+				{"data":"%s","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
+				"categoria":"Casa","metodoPagamentoId":"%s","faturaPeriodo":"%s",
 				"descricao":"Descricao","valoresParcelas":[30.25,69.75]}
-				""".formatted(metodoPagamentoId))).andExpect(status().isOk())
+				""".formatted(dataAtualizacao, metodoPagamentoId, periodoAtualizacao))).andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados.parcelas[0].nome").value("Compra"))
+				.andExpect(jsonPath("$.dados.parcelas[0].categoria").value("Casa"))
+				.andExpect(jsonPath("$.dados.parcelas[0].metodoPagamento.id").value(metodoPagamentoId.toString()))
+				.andExpect(jsonPath("$.dados.parcelas[0].descricao").value("Descricao"))
 				.andExpect(jsonPath("$.dados.quantidadeParcelas").value(2));
 		mvc.perform(delete("/compras-parceladas/{id}", id)).andExpect(status().isNoContent());
+		final var criacao = org.mockito.ArgumentCaptor.forClass(
+				com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaRequest.class);
+		verify(service).criar(criacao.capture());
+		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, Month.JANUARY, 31), criacao.getValue().data());
+		org.junit.jupiter.api.Assertions.assertEquals(YearMonth.of(2026, Month.FEBRUARY), criacao.getValue().faturaPeriodo());
 		final var captor = org.mockito.ArgumentCaptor.forClass(AtualizarCompraParceladaRequest.class);
 		verify(service).atualizar(eq(id), captor.capture());
-		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, 3, 20), captor.getValue().data());
+		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, Month.MARCH, 20), captor.getValue().data());
 		org.junit.jupiter.api.Assertions.assertEquals(metodoPagamentoId, captor.getValue().metodoPagamentoId());
+		org.junit.jupiter.api.Assertions.assertEquals(YearMonth.of(2026, Month.APRIL), captor.getValue().faturaPeriodo());
 		org.junit.jupiter.api.Assertions.assertEquals(
 				List.of(new BigDecimal("30.25"), new BigDecimal("69.75")),
 				captor.getValue().valoresParcelas()
 		);
 		verify(service).excluir(id);
+	}
+
+	@Test
+	void rejeitaDatasInexistentesEFormatosCombinados() throws Exception {
+		for (final var data : List.of("31/02/2026", "29-02-2026", "2026-04-31",
+				"31/01/202631-01-2026")) {
+			final var conteudo = """
+					{"data":"%s","nome":"Compra","valorTotal":100,"quantidadeParcelas":2,
+					"categoria":"Casa","metodoPagamentoId":"%s"}
+					""".formatted(data, metodoPagamentoId);
+			mvc.perform(post("/compras-parceladas").contentType(MediaType.APPLICATION_JSON).content(conteudo))
+					.andExpect(status().isBadRequest());
+			mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content(conteudo))
+					.andExpect(status().isBadRequest());
+		}
+		org.mockito.Mockito.verifyNoInteractions(service);
+	}
+
+	@Test
+	void rejeitaPeriodoComMesInvalidoOuDiaInformado() throws Exception {
+		for (final var periodo : List.of("2026-13", "2026-00", "13-2026", "00/2026",
+				"10/02/2026", "2026-02-10", "2026-0202/2026")) {
+			final var conteudo = """
+					{"data":"2026-01-31","nome":"Compra","valorTotal":100,"quantidadeParcelas":2,
+					"categoria":"Casa","metodoPagamentoId":"%s","faturaPeriodo":"%s"}
+					""".formatted(metodoPagamentoId, periodo);
+			mvc.perform(post("/compras-parceladas").contentType(MediaType.APPLICATION_JSON).content(conteudo))
+					.andExpect(status().isBadRequest());
+			mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content(conteudo))
+					.andExpect(status().isBadRequest());
+		}
+		org.mockito.Mockito.verifyNoInteractions(service);
 	}
 
 	@Test
@@ -148,7 +204,7 @@ class CompraParceladaControllerTest {
 					.andExpect(status().isBadRequest())
 					.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"));
 		}
-		verify(service, org.mockito.Mockito.never()).atualizar(any(), any());
+		verify(service, never()).atualizar(any(), any());
 	}
 
 	@Test

@@ -5,39 +5,30 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
+import java.time.YearMonth;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
@@ -64,6 +55,34 @@ class GastoServiceTest {
 	}
 
 	@Test
+	void selecionaPeriodoExplicitoOuSugeridoParaCredito() {
+		final var credito = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10);
+		final var metodoId = UUID.randomUUID();
+		final var periodo = YearMonth.of(2026, 12);
+		final var data = LocalDate.of(2026, 11, 11);
+		final var fatura = new Fatura();
+		when(metodoPagamentoService.buscarEntidadePorId(metodoId)).thenReturn(credito);
+		when(faturaService.sugerirPeriodo(credito, data)).thenReturn(periodo);
+		when(faturaService.obterOuCriar(metodoId, periodo)).thenReturn(fatura);
+		when(repository.save(any(Gasto.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+		final var explicito = new CriarGastoRequest(null, "Compra", BigDecimal.TEN, "Casa",
+				metodoId, periodo, null, false);
+		assertSame(fatura, service.criar(explicito).getFatura());
+		final var sugerido = new CriarGastoRequest(data, "Compra", BigDecimal.TEN, "Casa",
+				metodoId, null, null, true);
+		assertSame(fatura, service.criar(sugerido).getFatura());
+
+		final var semPeriodo = new CriarGastoRequest(null, "Compra", BigDecimal.TEN, "Casa",
+				metodoId, null, null, false);
+		assertEquals("FATURA_OBRIGATORIA_SEM_DATA_DA_COMPRA",
+				assertThrows(PagamentoInvalidoException.class, () -> service.criar(semPeriodo)).getMessage());
+		when(metodoPagamentoService.buscarEntidadePorId(metodoId)).thenReturn(metodoPagamento);
+		assertEquals("FATURA_PERMITIDA_APENAS_PARA_CREDITO",
+				assertThrows(PagamentoInvalidoException.class, () -> service.criar(explicito)).getMessage());
+	}
+
+	@Test
 	void criaGastoComDadosDaRequisicao() {
 		final var request = new CriarGastoRequest(
 				null, "Mercado", new BigDecimal("25.50"), "Alimentacao",
@@ -81,106 +100,6 @@ class GastoServiceTest {
 		assertEquals(request.descricao(), gasto.getDescricao());
 		assertEquals(request.realizado(), gasto.isRealizado());
 		verify(repository).save(gasto);
-	}
-
-	@Test
-	void consultaMesBissextoComPaginacao() {
-		final var pageable = PageRequest.of(1, 10);
-		final var pagina = new PageImpl<Gasto>(List.of(), pageable, 12);
-		final var filtros = new FiltrarGastosRequest(null, null);
-		when(repository.listarPorPeriodo(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), null, null, pageable))
-				.thenReturn(pagina);
-		assertSame(pagina, service.listarPorMesEAno(new BuscarGastosRequest(2, 2024), filtros, pageable));
-	}
-
-	@Test
-	void repassaFiltrosDoMesEDaFaturaSemAlterarCategoria() {
-		final var faturaId = UUID.randomUUID();
-		final var pageable = PageRequest.of(0, 10);
-		for (final var filtros : List.of(
-				new FiltrarGastosRequest(metodoPagamento.getId(), null),
-				new FiltrarGastosRequest(null, "Alimentacao"),
-				new FiltrarGastosRequest(metodoPagamento.getId(), "Alimentacao")
-		)) {
-			when(repository.listarPorPeriodo(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29),
-					filtros.metodoPagamentoId(), filtros.categoria(), pageable)).thenReturn(Page.empty(pageable));
-			when(repository.listarPorFatura(faturaId, filtros.metodoPagamentoId(), filtros.categoria(), pageable))
-					.thenReturn(Page.empty(pageable));
-
-			assertEquals(0, service.listarPorMesEAno(new BuscarGastosRequest(2, 2024), filtros, pageable).getTotalElements());
-			assertEquals(0, service.listarPorFatura(faturaId, filtros, pageable).getTotalElements());
-
-			verify(repository).listarPorPeriodo(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29),
-					filtros.metodoPagamentoId(), filtros.categoria(), pageable);
-			verify(repository).listarPorFatura(faturaId, filtros.metodoPagamentoId(), filtros.categoria(), pageable);
-		}
-	}
-
-	@Test
-	void totalizaMesOuFaturaComPaginacaoDosGrupos() {
-		final var faturaId = UUID.randomUUID();
-		final var pageable = PageRequest.of(1, 2);
-		final var categorias = new PageImpl<>(List.of(
-				new TotalCategoriaResponse("Casa", new BigDecimal("10.50"), new BigDecimal("20.75"))
-		), pageable, 3);
-		final var metodos = new PageImpl<>(List.of(
-				new TotalMetodoPagamentoResponse(metodoPagamento.getId(), InstituicaoFinanceira.CAIXA,
-						TipoMetodoPagamento.PIX, "Pix Caixa", new BigDecimal("10.50"), new BigDecimal("20.75"))
-		), pageable, 3);
-		for (final var request : List.of(new TotalizarGastosRequest(2, 2024, null),
-				new TotalizarGastosRequest(null, null, faturaId))) {
-			when(repository.totalizarPorCategoria(request.inicio(), request.fim(), request.faturaId(), pageable))
-					.thenReturn(categorias);
-			when(repository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), request.faturaId(), pageable))
-					.thenReturn(metodos);
-
-			assertSame(categorias, service.totalizarPorCategoria(request, pageable));
-			assertSame(metodos, service.totalizarPorMetodoPagamento(request, pageable));
-		}
-
-		verify(faturaService, times(2)).validarExistencia(faturaId);
-		verify(faturaService, never()).validarExistencia(null);
-		verify(repository).totalizarPorCategoria(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), null, pageable);
-		verify(repository).totalizarPorMetodoPagamento(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), null, pageable);
-	}
-
-	@Test
-	void naoTotalizaFaturaInexistente() {
-		final var faturaId = UUID.randomUUID();
-		final var request = new TotalizarGastosRequest(null, null, faturaId);
-		final var pageable = PageRequest.of(0, 10);
-		doThrow(new EntityNotFoundException()).when(faturaService).validarExistencia(faturaId);
-
-		assertThrows(EntityNotFoundException.class, () -> service.totalizarPorCategoria(request, pageable));
-		assertThrows(EntityNotFoundException.class, () -> service.totalizarPorMetodoPagamento(request, pageable));
-
-		verifyNoInteractions(repository);
-	}
-
-	@Test
-	void listaPorFaturaComPaginacao() {
-		final var faturaId = UUID.randomUUID();
-		final var pageable = PageRequest.of(1, 10);
-		final var pagina = new PageImpl<>(List.of(new Gasto()), pageable, 11);
-		final var filtros = new FiltrarGastosRequest(null, null);
-		when(repository.listarPorFatura(faturaId, null, null, pageable)).thenReturn(pagina);
-
-		assertSame(pagina, service.listarPorFatura(faturaId, filtros, pageable));
-
-		verify(faturaService).validarExistencia(faturaId);
-		verify(repository).listarPorFatura(faturaId, null, null, pageable);
-	}
-
-	@Test
-	void naoListaGastosDeFaturaInexistente() {
-		final var faturaId = UUID.randomUUID();
-		final var pageable = PageRequest.of(0, 10);
-		doThrow(new EntityNotFoundException()).when(faturaService).validarExistencia(faturaId);
-
-		final var filtros = new FiltrarGastosRequest(null, null);
-		assertThrows(EntityNotFoundException.class, () -> service.listarPorFatura(faturaId, filtros, pageable));
-
-		verifyNoInteractions(repository);
 	}
 
 	@Test

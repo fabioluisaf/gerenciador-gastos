@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -28,6 +29,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResum
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
+import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
@@ -42,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 public class GastoController {
 
 	private final GastoService gastoService;
+	private final GastoConsultaService gastoConsultaService;
 	private final ApiResponsePresenter presenter;
 
 	@PostMapping
@@ -61,7 +64,7 @@ public class GastoController {
         @ModelAttribute FiltrarGastosRequest filtros,
         @PageableDefault(sort = { "data", "id" }) Pageable pageable
     ) {
-		final var gastos = gastoService.listarPorMesEAno(request, filtros, pageable).map(GastoResumidoResponse::from);
+		final var gastos = gastoConsultaService.listarPorMesEAno(request, filtros, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}
@@ -69,10 +72,10 @@ public class GastoController {
 	@GetMapping("/fatura/{id}")
 	public ApiResponse<List<GastoResumidoResponse>> listarPorFatura(
 			@PathVariable("id") UUID faturaId,
-			@ModelAttribute FiltrarGastosRequest filtros,
+			@RequestParam(required = false) String categoria,
 			@PageableDefault(sort = { "data", "id" }) Pageable pageable
 	) {
-		final var gastos = gastoService.listarPorFatura(faturaId, filtros, pageable).map(GastoResumidoResponse::from);
+		final var gastos = gastoConsultaService.listarPorFatura(faturaId, categoria, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}
@@ -90,7 +93,7 @@ public class GastoController {
 			@Valid @ModelAttribute TotalizarGastosRequest request,
 			@PageableDefault(sort = "categoria") Pageable pageable
 	) {
-		return presenter.apresentarPagina(gastoService.totalizarPorCategoria(request, pageable));
+		return presenter.apresentarPagina(gastoConsultaService.totalizarPorCategoria(request, pageable));
 	}
 
 	@GetMapping("/totais/metodo-pagamento")
@@ -101,7 +104,7 @@ public class GastoController {
 			@Valid @ModelAttribute TotalizarGastosRequest request,
 			@PageableDefault(sort = "metodoPagamento.id") Pageable pageable
 	) {
-		return presenter.apresentarPagina(gastoService.totalizarPorMetodoPagamento(request, pageable));
+		return presenter.apresentarPagina(gastoConsultaService.totalizarPorMetodoPagamento(request, pageable));
 	}
 
 	@PutMapping("/{id}")

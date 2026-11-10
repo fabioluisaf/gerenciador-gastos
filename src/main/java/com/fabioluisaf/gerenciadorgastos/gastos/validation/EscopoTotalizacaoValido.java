@@ -15,7 +15,7 @@ import jakarta.validation.Payload;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EscopoTotalizacaoValido {
 
-	String message() default "INFORME_MES_E_ANO_OU_FATURA";
+	String message() default "INFORME_PERIODO_OU_FATURA";
 
 	Class<?>[] groups() default {};
 

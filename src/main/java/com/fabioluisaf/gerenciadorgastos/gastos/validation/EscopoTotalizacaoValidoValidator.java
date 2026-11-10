@@ -14,9 +14,9 @@ public class EscopoTotalizacaoValidoValidator
 			return true;
 		}
 		if (request.faturaId() != null) {
-			return request.mes() == null && request.ano() == null;
+			return request.periodo() == null;
 		}
 
-		return request.mes() != null && request.ano() != null;
+		return request.periodo() != null;
 	}
 }

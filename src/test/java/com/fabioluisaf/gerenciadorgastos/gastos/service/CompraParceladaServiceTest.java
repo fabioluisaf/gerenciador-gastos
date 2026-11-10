@@ -14,31 +14,35 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.support.StaticListableBeanFactory;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
+import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
+import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
 class CompraParceladaServiceTest {
 
 	private CompraParceladaRepository repository;
-	private MetodoPagamentoService metodoPagamentoService;
+	private MetodoPagamentoRepository metodoPagamentoRepository;
 	private FaturaRepository faturaRepository;
 	private CompraParceladaService service;
 	private CompraParcelada compra;
@@ -48,16 +52,22 @@ class CompraParceladaServiceTest {
 	@BeforeEach
 	void configurar() {
 		repository = mock(CompraParceladaRepository.class);
-		metodoPagamentoService = mock(MetodoPagamentoService.class);
+		metodoPagamentoRepository = mock(MetodoPagamentoRepository.class);
+		final var metodoPagamentoService = new MetodoPagamentoService(
+				metodoPagamentoRepository, mock(GastoRepository.class), mock(FaturaRepository.class)
+		);
 		faturaRepository = mock(FaturaRepository.class);
 		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31);
 		metodoPagamento.setId(UUID.randomUUID());
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
 		metodoPagamento.setNome("Cartao Nubank");
-		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(metodoPagamento);
+		when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodoPagamento));
 		when(faturaRepository.save(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 		final var faturaService = new FaturaService(faturaRepository, metodoPagamentoService);
-		service = new CompraParceladaService(repository, metodoPagamentoService, new Parcelamento(faturaService));
+		final var beans = new StaticListableBeanFactory();
+		service = new CompraParceladaService(repository, metodoPagamentoService,
+				new ParcelamentoComponent(faturaService), beans.getBeanProvider(CompraParceladaService.class));
+		beans.addBean("compraParceladaService", service);
 		when(repository.save(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 		when(repository.saveAndFlush(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 		compra = service.criar(new CriarCompraParceladaRequest(
@@ -73,7 +83,7 @@ class CompraParceladaServiceTest {
 	@Test
 	void usaFaturaInicialSelecionadaENaoASugerida() {
 		final var request = new AtualizarCompraParceladaRequest(
-				"Novo", "Outra", metodoPagamento.getId(), LocalDate.of(2024, 5, 31),
+				"Novo", "Outra", metodoPagamento.getId(), YearMonth.of(2024, 5),
 				null, new BigDecimal("100.00"), 3, LocalDate.of(2024, 1, 31), null
 		);
 
@@ -85,13 +95,18 @@ class CompraParceladaServiceTest {
 
 	@Test
 	void rejeitaMetodoNaoCreditoOuAusenciaDeDataEFatura() {
-		final var pix = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null);
-		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(pix);
 		final var request = request("100.00", 3);
-		assertEquals("COMPRA_PARCELADA_EXIGE_CREDITO",
-				assertThrows(PagamentoInvalidoException.class, () -> service.atualizar(id, request)).getMessage());
+		for (final var tipo : TipoMetodoPagamento.values()) {
+			if (tipo == TipoMetodoPagamento.CREDITO) {
+				continue;
+			}
+			final var metodo = MetodoPagamento.criar(tipo, null);
+			when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodo));
+			assertEquals("COMPRA_PARCELADA_EXIGE_CREDITO",
+					assertThrows(PagamentoInvalidoException.class, () -> service.atualizar(id, request)).getMessage());
+		}
 
-		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(metodoPagamento);
+		when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodoPagamento));
 		final var semData = request("100.00", 3, null);
 		assertEquals("FATURA_OBRIGATORIA_SEM_DATA_DA_COMPRA",
 				assertThrows(PagamentoInvalidoException.class, () -> service.atualizar(id, semData)).getMessage());
@@ -121,7 +136,8 @@ class CompraParceladaServiceTest {
 		final var valores = List.of(new BigDecimal("10.00"), new BigDecimal("20.00"),
 				new BigDecimal("30.00"), new BigDecimal("60.00"));
 		service.atualizar(id, requestComValores("120.00", 4, valores));
-		assertEquals(valores, compra.getParcelas().stream().map(parcela -> parcela.getValor()).toList());
+		assertEquals(valores,
+				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getValor()).toList());
 		assertEquals(new BigDecimal("120.00"), compra.getValorTotal());
 		assertEquals(List.of(LocalDate.of(2024, 2, 29), LocalDate.of(2024, 3, 31),
 				LocalDate.of(2024, 4, 30), LocalDate.of(2024, 5, 31)),
@@ -141,8 +157,11 @@ class CompraParceladaServiceTest {
 			final var request = requestComValores("100.00", 3, valores);
 			final var erro = assertThrows(ValoresParcelasInvalidosException.class,
 					() -> service.atualizar(id, request));
-			assertEquals(valores.size() != 3 ? "QUANTIDADE_VALORES_PARCELAS_INVALIDA"
-					: "SOMA_PARCELAS_DIFERENTE_DO_TOTAL", erro.getMessage());
+			assertEquals(valores.size() == 3 
+                    ? "SOMA_PARCELAS_DIFERENTE_DO_TOTAL" 
+                    : "QUANTIDADE_VALORES_PARCELAS_INVALIDA"
+                , erro.getMessage()
+            );
 		}
 		assertEquals(parcelas, compra.getParcelas());
 		assertEquals("Compra", parcelas.get(0).getNome());
@@ -240,17 +259,23 @@ class CompraParceladaServiceTest {
 	}
 
 	@Test
-	void rejeitaCompraInexistenteOuRecriacaoSemPrimeiraParcela() {
+	void rejeitaCompraInexistenteERecriaParcelasSemDependerDaNumeracaoAnterior() {
 		final var inexistente = UUID.randomUUID();
 		compra.getParcelas().get(0).setNumeroParcela(4);
 		final var parcelas = List.copyOf(compra.getParcelas());
 		final var requestExistente = request("100.00", 3);
 		final var requestNovoValor = request("101.00", 3);
 		assertThrows(EntityNotFoundException.class, () -> service.atualizar(inexistente, requestExistente));
-		assertThrows(IllegalStateException.class, () -> service.atualizar(id, requestNovoValor));
 		assertEquals(parcelas, compra.getParcelas());
 		assertEquals(new BigDecimal("100.00"), compra.getValorTotal());
 		verify(repository, never()).flush();
+
+		service.atualizar(id, requestNovoValor);
+
+		assertEquals(List.of(1, 2, 3),
+				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getNumeroParcela()).toList());
+		assertEquals(new BigDecimal("101.00"), compra.getValorTotal());
+		verify(repository).flush();
 	}
 
 	@Test

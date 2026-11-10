@@ -16,22 +16,24 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 public interface FaturaRepository extends JpaRepository<Fatura, UUID> {
 
 	@Query(value = """
-            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse(
-                f.id, f.dataFechamento, coalesce(sum(g.valor), 0)
-            )
-            from Fatura f
-            left join f.gastos g on g.realizado = true
-            where f.metodoPagamento.id = :metodoPagamentoId
-            group by f.id, f.dataFechamento
-            """, countQuery = """
-            select count(f) from Fatura f where f.metodoPagamento.id = :metodoPagamentoId
-            """)
+        select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse(
+            f.id, f.dataFechamento, coalesce(sum(g.valor), 0)
+        )
+        from Fatura f
+        left join f.gastos g on g.realizado = true
+        where f.metodoPagamento.id = :metodoPagamentoId
+        group by f.id, f.dataFechamento
+    """, countQuery = """
+        select count(f) from Fatura f where f.metodoPagamento.id = :metodoPagamentoId
+    """)
 	Page<FaturaResumidaResponse> listarResumosPorMetodoPagamentoId(UUID metodoPagamentoId, Pageable pageable);
 
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
 
-	@EntityGraph(attributePaths = { "metodoPagamento", "gastos", "gastos.metodoPagamento", "gastos.fatura",
-			"gastos.compraParcelada" })
+	@EntityGraph(attributePaths = { 
+        "metodoPagamento", "gastos", "gastos.metodoPagamento", 
+        "gastos.fatura", "gastos.compraParcelada" 
+    })
 	Optional<Fatura> findByMetodoPagamentoIdAndDataFechamentoBetween(
 			UUID metodoPagamentoId, LocalDate inicio, LocalDate fim
 	);

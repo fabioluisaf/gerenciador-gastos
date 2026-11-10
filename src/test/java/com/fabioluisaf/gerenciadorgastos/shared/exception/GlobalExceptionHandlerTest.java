@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.format.support.DefaultFormattingConversionService;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.controller.GastoController;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
@@ -31,8 +32,10 @@ import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataE
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
+import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoConverter;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -49,9 +52,12 @@ class GlobalExceptionHandlerTest {
 		final var presenter = new ApiResponsePresenter(new ApiProperties("v1"));
 		final var validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
-		mvc = MockMvcBuilders.standaloneSetup(new GastoController(service, presenter))
+		final var conversionService = new DefaultFormattingConversionService();
+		conversionService.addConverter(new PeriodoConverter());
+		mvc = MockMvcBuilders.standaloneSetup(new GastoController(service, mock(GastoConsultaService.class), presenter))
 				.setControllerAdvice(new GlobalExceptionHandler(presenter), new NegocioExceptionHandler(presenter))
 				.setValidator(validator)
+				.setConversionService(conversionService)
 				.setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
 				.build();
 	}
@@ -92,17 +98,13 @@ class GlobalExceptionHandlerTest {
 						hasItem("DEVE_SER_ZERO_OU_POSITIVO")))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));
-		mvc.perform(get("/gastos").param("mes", "13").param("ano", "1999"))
+		mvc.perform(get("/gastos").param("periodo", "1999-02"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'mes')].codigo",
-						hasItem("ACIMA_DO_MAXIMO")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'ano')].codigo",
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'periodo')].codigo",
 						hasItem("ABAIXO_DO_MINIMO")));
 		mvc.perform(get("/gastos"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'mes')].codigo",
-						hasItem("CAMPO_OBRIGATORIO")))
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'ano')].codigo",
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'periodo')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest())

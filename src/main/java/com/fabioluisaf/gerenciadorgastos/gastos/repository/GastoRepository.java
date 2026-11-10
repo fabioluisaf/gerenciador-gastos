@@ -18,54 +18,56 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 
 	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
 	@Query("""
-            select g from Gasto g
-            where g.data between :inicio and :fim
-            and (:metodoPagamentoId is null or g.metodoPagamento.id = :metodoPagamentoId)
-            and (:categoria is null or g.categoria = :categoria)
-            """)
-	Page<Gasto> listarPorPeriodo(LocalDate inicio, LocalDate fim, UUID metodoPagamentoId,
-			String categoria, Pageable pageable);
+        select g from Gasto g
+        where g.data between :inicio and :fim
+        and (:metodoPagamentoId is null or g.metodoPagamento.id = :metodoPagamentoId)
+        and (:categoria is null or g.categoria = :categoria)
+    """)
+	Page<Gasto> listarPorPeriodo(
+        LocalDate inicio, LocalDate fim, UUID metodoPagamentoId,
+        String categoria, Pageable pageable
+    );
 
 	@EntityGraph(attributePaths = { "metodoPagamento", "compraParcelada" })
 	@Query("""
-            select g from Gasto g
-            where g.fatura.id = :faturaId
-            and (:metodoPagamentoId is null or g.metodoPagamento.id = :metodoPagamentoId)
-            and (:categoria is null or g.categoria = :categoria)
-            """)
-	Page<Gasto> listarPorFatura(UUID faturaId, UUID metodoPagamentoId, String categoria, Pageable pageable);
+        select g from Gasto g
+        where g.fatura.id = :faturaId
+        and (:categoria is null or g.categoria = :categoria)
+    """)
+	Page<Gasto> listarPorFatura(UUID faturaId, String categoria, Pageable pageable);
 
 	@Query(value = """
-            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse(
-                g.categoria,
-                sum(case when g.realizado = true then g.valor else 0 end),
-                sum(g.valor)
-            )
-            from Gasto g left join g.fatura f
-            where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
-            group by g.categoria
-            """, countQuery = """
-            select count(distinct g.categoria) from Gasto g left join g.fatura f
-            where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
-            """)
+        select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse(
+            g.categoria,
+            sum(case when g.realizado = true then g.valor else 0 end),
+            sum(g.valor)
+        )
+        from Gasto g left join g.fatura f
+        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
+        group by g.categoria
+    """, countQuery = """
+        select count(distinct g.categoria) from Gasto g left join g.fatura f
+        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
+    """)
 	Page<TotalCategoriaResponse> totalizarPorCategoria(LocalDate inicio, LocalDate fim,
 			UUID faturaId, Pageable pageable);
 
 	@Query(value = """
-            select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse(
-                m.id, m.instituicaoFinanceira, m.tipo, m.nome,
-                sum(case when g.realizado = true then g.valor else 0 end),
-                sum(g.valor)
-            )
-            from Gasto g join g.metodoPagamento m left join g.fatura f
-            where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
-            group by m.id, m.instituicaoFinanceira, m.tipo, m.nome
-            """, countQuery = """
-            select count(distinct g.metodoPagamento.id) from Gasto g left join g.fatura f
-            where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
-            """)
-	Page<TotalMetodoPagamentoResponse> totalizarPorMetodoPagamento(LocalDate inicio, LocalDate fim,
-			UUID faturaId, Pageable pageable);
+        select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse(
+            m.id, m.instituicaoFinanceira, m.tipo, m.nome,
+            sum(case when g.realizado = true then g.valor else 0 end),
+            sum(g.valor)
+        )
+        from Gasto g join g.metodoPagamento m left join g.fatura f
+        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
+        group by m.id, m.instituicaoFinanceira, m.tipo, m.nome
+    """, countQuery = """
+        select count(distinct g.metodoPagamento.id) from Gasto g left join g.fatura f
+        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
+    """)
+	Page<TotalMetodoPagamentoResponse> totalizarPorMetodoPagamento(
+        LocalDate inicio, LocalDate fim,  UUID faturaId, Pageable pageable
+    );
 
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
 

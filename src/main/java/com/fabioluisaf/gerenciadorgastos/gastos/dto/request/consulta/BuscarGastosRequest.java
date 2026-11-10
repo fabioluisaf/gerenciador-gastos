@@ -1,17 +1,16 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import java.time.YearMonth;
+
+import com.fabioluisaf.gerenciadorgastos.shared.validation.AnoMinimo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
 public record BuscarGastosRequest(
     @NotNull
-    @Min(1)
-    @Max(12)
-    Integer mes,
-
-    @NotNull
-    @Min(2000)
-    Integer ano
+    @AnoMinimo(2000)
+    @Schema(type = "string", example = "2026-11", description = "Periodo: AAAA-MM, MM-AAAA, AAAA.MM ou MM.AAAA.")
+    YearMonth periodo
 ) {
 }

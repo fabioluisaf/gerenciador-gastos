@@ -86,7 +86,7 @@ class FaturaControllerTest {
 				.andExpect(jsonPath("$.paginacao.tamanho").value(2))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(5))
 				.andExpect(jsonPath("$.paginacao.totalPaginas").value(3));
-		verify(metodoService).buscarPorId(metodoId);
+		verify(metodoService).buscarEntidadePorId(metodoId);
 		verify(repository).listarResumosPorMetodoPagamentoId(metodoId, pageable);
 	}
 
@@ -103,12 +103,12 @@ class FaturaControllerTest {
 				.andExpect(jsonPath("$.paginacao.tamanho").value(10))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(0))
 				.andExpect(jsonPath("$.paginacao.totalPaginas").value(0));
-		verify(metodoService).buscarPorId(metodoId);
+		verify(metodoService).buscarEntidadePorId(metodoId);
 	}
 
 	@Test
 	void rejeitaMetodoInexistenteOuIdentificadorInvalido() throws Exception {
-		when(metodoService.buscarPorId(metodoId)).thenThrow(new EntityNotFoundException());
+		when(metodoService.buscarEntidadePorId(metodoId)).thenThrow(new EntityNotFoundException());
 
 		mvc.perform(get("/faturas/cartao/{id}", metodoId))
 				.andExpect(status().isNotFound())

@@ -2,6 +2,7 @@ package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
 import java.util.UUID;
 
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Credito;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoRepository;
@@ -32,10 +35,6 @@ public class MetodoPagamentoService {
 		return metodoPagamentoRepository.findAll(pageable);
 	}
 
-	public MetodoPagamento buscarPorId(UUID id) {
-		return buscarEntidadePorId(id);
-	}
-
 	@Transactional
 	public MetodoPagamento criar(CriarMetodoPagamentoRequest request) {
 		final var metodo = MetodoPagamento.criar(request.tipo(), request.diaFechamento());
@@ -47,6 +46,7 @@ public class MetodoPagamentoService {
 	@Transactional
 	public MetodoPagamento atualizar(UUID id, AtualizarMetodoPagamentoRequest request) {
 		final var metodo = buscarEntidadePorId(id);
+
 		metodo.atualizarDiaFechamento(request.diaFechamento());
 		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
 
@@ -70,8 +70,18 @@ public class MetodoPagamentoService {
 		metodo.setNome(nome);
 	}
 
-	MetodoPagamento buscarEntidadePorId(UUID id) {
+	public MetodoPagamento buscarEntidadePorId(UUID id) {
 		return metodoPagamentoRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Método de pagamento não encontrado: " + id));
+	}
+
+	public Credito buscarCreditoPorId(UUID id, String codigoErro) {
+		final var metodo = buscarEntidadePorId(id);
+        
+		if (!(Hibernate.unproxy(metodo) instanceof Credito credito)) {
+			throw new PagamentoInvalidoException(codigoErro);
+		}
+
+		return credito;
 	}
 }

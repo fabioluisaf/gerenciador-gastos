@@ -2,7 +2,6 @@ package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -12,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -29,7 +28,7 @@ public class FaturaService {
 	private final MetodoPagamentoService metodoPagamentoService;
 
 	public Page<FaturaResumidaResponse> listarPorMetodoPagamento(UUID metodoPagamentoId, Pageable pageable) {
-		metodoPagamentoService.buscarPorId(metodoPagamentoId);
+		metodoPagamentoService.buscarEntidadePorId(metodoPagamentoId);
 
 		return faturaRepository.listarResumosPorMetodoPagamentoId(metodoPagamentoId, pageable);
 	}
@@ -41,37 +40,31 @@ public class FaturaService {
 	}
 
 	@Transactional
-	public Fatura obterOuCriar(UUID metodoPagamentoId, LocalDate dataFechamento) {
-		final var metodo = metodoPagamentoService.buscarEntidadePorId(metodoPagamentoId);
-		validarCartao(metodo);
-		validarDataFechamento(metodo, dataFechamento);
-
-		return buscarPorPeriodo(metodoPagamentoId, YearMonth.from(dataFechamento))
-				.orElseGet(() -> criar(metodo, dataFechamento));
-	}
-
-	private Optional<Fatura> buscarPorPeriodo(UUID metodoPagamentoId, YearMonth periodo) {
-		return faturaRepository.findByMetodoPagamentoIdAndDataFechamentoBetween(
-				metodoPagamentoId, periodo.atDay(1), periodo.atEndOfMonth()
+	public Fatura obterOuCriar(UUID metodoPagamentoId, YearMonth periodo) {
+		final var metodo = metodoPagamentoService.buscarCreditoPorId(
+				metodoPagamentoId, "FATURA_PERMITIDA_APENAS_PARA_CREDITO"
 		);
+        
+		if (periodo == null) {
+			throw new PagamentoInvalidoException("PERIODO_FATURA_OBRIGATORIO");
+		}
+
+		return faturaRepository
+            .findByMetodoPagamentoIdAndDataFechamentoBetween(metodoPagamentoId, periodo.atDay(1), periodo.atEndOfMonth())
+            .orElseGet(() -> criar(metodo, dataFechamento(periodo, metodo.getDiaFechamento())));
 	}
 
-	public LocalDate sugerirDataFechamento(MetodoPagamento metodo, LocalDate dataCompra) {
+	public YearMonth sugerirPeriodo(MetodoPagamento metodo, LocalDate dataCompra) {
 		if (metodo.getTipo() != TipoMetodoPagamento.CREDITO || dataCompra == null) {
 			return null;
 		}
 
-		final var fechamentoDoMes = dataFechamento(YearMonth.from(dataCompra), metodo.getDiaFechamento());
+		final var periodo = YearMonth.from(dataCompra);
+		final var fechamentoDoMes = dataFechamento(periodo, metodo.getDiaFechamento());
 
 		return dataCompra.isBefore(fechamentoDoMes)
-				? fechamentoDoMes
-				: dataFechamento(YearMonth.from(dataCompra).plusMonths(1), metodo.getDiaFechamento());
-	}
-
-	public void validarCartao(MetodoPagamento metodo) {
-		if (metodo.getTipo() != TipoMetodoPagamento.CREDITO) {
-			throw new PagamentoInvalidoException("FATURA_PERMITIDA_APENAS_PARA_CREDITO");
-		}
+				? periodo
+				: periodo.plusMonths(1);
 	}
 
 	private Fatura criar(MetodoPagamento metodo, LocalDate dataFechamento) {
@@ -80,19 +73,6 @@ public class FaturaService {
 		fatura.setDataFechamento(dataFechamento);
 
 		return faturaRepository.save(fatura);
-	}
-
-	public void validarDataFechamento(MetodoPagamento metodo, LocalDate dataFechamento) {
-		if (dataFechamento == null || !dataFechamento.equals(
-				dataFechamento(YearMonth.from(dataFechamento), metodo.getDiaFechamento()))) {
-			throw new PagamentoInvalidoException("DATA_FECHAMENTO_FATURA_INVALIDA");
-		}
-	}
-
-	public LocalDate dataFechamentoSeguinte(MetodoPagamento metodo, LocalDate dataFechamento, int quantidadeMeses) {
-		return dataFechamento(
-				YearMonth.from(dataFechamento).plusMonths(quantidadeMeses), metodo.getDiaFechamento()
-		);
 	}
 
 	private LocalDate dataFechamento(YearMonth periodo, int diaFechamento) {
