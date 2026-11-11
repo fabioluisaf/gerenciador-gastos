@@ -6,8 +6,8 @@ import java.util.UUID;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 
 public record InformacoesFaturaResponse(
-		UUID id,
-		LocalDate dataFechamento
+    UUID id,
+    LocalDate dataFechamento
 ) {
 
 	public static InformacoesFaturaResponse from(Fatura fatura) {

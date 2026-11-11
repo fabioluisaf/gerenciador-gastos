@@ -3,15 +3,15 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum;
 import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 
 public record MetodoPagamentoResponse(
-		UUID id,
-		TipoMetodoPagamento tipo,
-		InstituicaoFinanceira instituicaoFinanceira,
-		String nome,
-		Integer diaFechamento
+    UUID id,
+    TipoMetodoPagamento tipo,
+    InstituicaoFinanceira instituicaoFinanceira,
+    String nome,
+    Integer diaFechamento
 ) {
 
 	public static MetodoPagamentoResponse from(MetodoPagamento entidade) {

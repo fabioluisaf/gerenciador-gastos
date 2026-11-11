@@ -7,14 +7,21 @@ import java.util.UUID;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InformacoesFaturaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataSerializer;
+
 import tools.jackson.databind.annotation.JsonSerialize;
 
 public record ParcelaResponse(
     UUID id,
+
     Integer numeroParcela,
-    @JsonSerialize(using = DataSerializer.class) LocalDate data,
+
+    @JsonSerialize(using = DataSerializer.class) 
+    LocalDate data,
+
     BigDecimal valor,
+
     InformacoesFaturaResponse fatura,
+    
     boolean realizado
 ) {
     public static ParcelaResponse from(Gasto parcela) {

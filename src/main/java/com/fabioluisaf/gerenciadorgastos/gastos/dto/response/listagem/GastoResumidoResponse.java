@@ -6,10 +6,9 @@ import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataSerializer;
-import tools.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 public record GastoResumidoResponse(
     UUID id,
@@ -26,9 +25,8 @@ public record GastoResumidoResponse(
     MetodoPagamentoResumidoResponse metodoPagamento,
 
     boolean realizado,
-
+    
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Schema(description = "Numero da parcela atual e quantidade total; omitido em gastos avulsos.")
     ParcelaResumidaResponse parcela
 ) {
 

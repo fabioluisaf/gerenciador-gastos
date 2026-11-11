@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Pequenos ajustes de organização no código.
+
 ## 1.2.2
 
 - Adicionados os métodos de pagamento boleto, DOC e TED; o tipo não pode ser alterado após o cadastro.

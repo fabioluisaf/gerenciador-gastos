@@ -33,7 +33,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -86,9 +85,6 @@ public class GastoController {
 	}
 
 	@GetMapping("/totais/categoria")
-	@Operation(summary = "Totais realizados e planejados por categoria",
-			description = "Considera todo o mes ou fatura, ignorando filtros de categoria e metodo. "
-					+ "A paginacao limita os grupos retornados, nao os gastos somados. Grupos sem gastos nao sao retornados.")
 	public ApiResponse<List<TotalCategoriaResponse>> totalizarPorCategoria(
 			@Valid @ModelAttribute TotalizarGastosRequest request,
 			@PageableDefault(sort = "categoria") Pageable pageable
@@ -97,9 +93,6 @@ public class GastoController {
 	}
 
 	@GetMapping("/totais/metodo-pagamento")
-	@Operation(summary = "Totais realizados e planejados por metodo de pagamento",
-			description = "Agrupa pelo ID do metodo, considerando todo o mes ou fatura. "
-					+ "Ignora filtros de categoria e metodo. A paginacao limita os grupos, nao os gastos somados.")
 	public ApiResponse<List<TotalMetodoPagamentoResponse>> totalizarPorMetodoPagamento(
 			@Valid @ModelAttribute TotalizarGastosRequest request,
 			@PageableDefault(sort = "metodoPagamento.id") Pageable pageable
