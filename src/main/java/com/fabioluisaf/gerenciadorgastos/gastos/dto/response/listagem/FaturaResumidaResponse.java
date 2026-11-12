@@ -8,7 +8,9 @@ public record FaturaResumidaResponse(
 		UUID id,
 
 		LocalDate dataFechamento,
-        
+
+		LocalDate dataVencimento,
+
 		BigDecimal valorTotal
 ) {
 }

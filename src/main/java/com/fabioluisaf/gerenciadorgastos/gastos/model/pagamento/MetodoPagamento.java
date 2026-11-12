@@ -52,13 +52,13 @@ public abstract class MetodoPagamento {
 	@Setter
 	private String nome;
 
-	public static MetodoPagamento criar(TipoMetodoPagamento tipo, Integer diaFechamento) {
+	public static MetodoPagamento criar(TipoMetodoPagamento tipo, Integer diaFechamento, Integer diaVencimento) {
 		if (tipo == null) {
 			throw new IllegalArgumentException("Tipo de método de pagamento é obrigatório");
 		}
 
 		final MetodoPagamento metodo = switch (tipo) {
-			case CREDITO -> new Credito(diaFechamento);
+			case CREDITO -> new Credito(diaFechamento, diaVencimento);
 			case DEBITO -> new Debito();
 			case PIX -> new Pix();
 			case BOLETO -> new Boleto();
@@ -68,6 +68,7 @@ public abstract class MetodoPagamento {
 
 		if (tipo != TipoMetodoPagamento.CREDITO) {
 			metodo.atualizarDiaFechamento(diaFechamento);
+			metodo.atualizarDiaVencimento(diaVencimento);
 		}
         
 		return metodo;
@@ -84,6 +85,16 @@ public abstract class MetodoPagamento {
 	public void atualizarDiaFechamento(Integer diaFechamento) {
 		if (diaFechamento != null) {
 			throw new PagamentoInvalidoException("DIA_FECHAMENTO_PERMITIDO_APENAS_PARA_CREDITO");
+		}
+	}
+
+	public Integer getDiaVencimento() {
+		return null;
+	}
+
+	public void atualizarDiaVencimento(Integer diaVencimento) {
+		if (diaVencimento != null) {
+			throw new PagamentoInvalidoException("DIA_VENCIMENTO_PERMITIDO_APENAS_PARA_CREDITO");
 		}
 	}
 

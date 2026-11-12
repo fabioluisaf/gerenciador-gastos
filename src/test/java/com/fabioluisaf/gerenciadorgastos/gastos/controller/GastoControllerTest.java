@@ -82,7 +82,7 @@ class GastoControllerTest {
 		consultaService = mock(GastoConsultaService.class);
 		id = UUID.randomUUID();
 		metodoPagamentoId = UUID.randomUUID();
-		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.DEBITO, null);
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.DEBITO, null, null);
 		metodoPagamento.setId(metodoPagamentoId);
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
 		metodoPagamento.setNome("Debito Caixa");
@@ -327,7 +327,7 @@ class GastoControllerTest {
 		final var faturaId = UUID.randomUUID();
 		final var pageable = PageRequest.of(1, 2,
 				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
-		final var credito = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10);
+		final var credito = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10, 17);
 		credito.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
 		gasto.setMetodoPagamento(credito);
 		when(consultaService.listarPorFatura(faturaId, null, pageable))

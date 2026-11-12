@@ -37,7 +37,7 @@ public class MetodoPagamentoService {
 
 	@Transactional
 	public MetodoPagamento criar(CriarMetodoPagamentoRequest request) {
-		final var metodo = MetodoPagamento.criar(request.tipo(), request.diaFechamento());
+		final var metodo = MetodoPagamento.criar(request.tipo(), request.diaFechamento(), request.diaVencimento());
 		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
 
 		return metodoPagamentoRepository.save(metodo);
@@ -48,6 +48,7 @@ public class MetodoPagamentoService {
 		final var metodo = buscarEntidadePorId(id);
 
 		metodo.atualizarDiaFechamento(request.diaFechamento());
+		metodo.atualizarDiaVencimento(request.diaVencimento());
 		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
 
 		return metodoPagamentoRepository.save(metodo);

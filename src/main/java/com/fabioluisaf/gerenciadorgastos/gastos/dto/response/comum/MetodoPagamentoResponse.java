@@ -11,7 +11,8 @@ public record MetodoPagamentoResponse(
     TipoMetodoPagamento tipo,
     InstituicaoFinanceira instituicaoFinanceira,
     String nome,
-    Integer diaFechamento
+    Integer diaFechamento,
+    Integer diaVencimento
 ) {
 
 	public static MetodoPagamentoResponse from(MetodoPagamento entidade) {
@@ -20,7 +21,8 @@ public record MetodoPagamentoResponse(
 				entidade.getTipo(),
 				entidade.getInstituicaoFinanceira(),
 				entidade.getNome(),
-				entidade.getDiaFechamento()
+				entidade.getDiaFechamento(),
+				entidade.getDiaVencimento()
 		);
 	}
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4
+
+- Dia de vencimento obrigatório no cadastro e atualização de cartões de crédito.
+- Faturas incluem data de vencimento baseada no dia configurado no cartão, também retornada na listagem resumida.
+- Faturas existentes recebem vencimento sete dias após o fechamento; a sugestão de período continua baseada no fechamento.
+
 ## 1.2.3
 
 - Pequenos ajustes de organização no código.

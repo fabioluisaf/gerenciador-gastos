@@ -61,7 +61,7 @@ class CompraParceladaControllerTest {
 		service = mock(CompraParceladaService.class);
 		id = UUID.randomUUID();
 		metodoPagamentoId = UUID.randomUUID();
-		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10);
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10, 17);
 		metodoPagamento.setId(metodoPagamentoId);
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
 		metodoPagamento.setNome("Cartao Nubank");

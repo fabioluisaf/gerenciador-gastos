@@ -69,16 +69,19 @@ class FaturaControllerTest {
 		final var pageable = PageRequest.of(1, 2,
 				Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId)));
 		when(repository.listarResumosPorMetodoPagamentoId(metodoId, pageable)).thenReturn(new PageImpl<>(List.of(
-				new FaturaResumidaResponse(id, LocalDate.of(2026, 11, 10), new BigDecimal("125.50")),
-				new FaturaResumidaResponse(UUID.randomUUID(), LocalDate.of(2026, 12, 10), BigDecimal.ZERO)
+				new FaturaResumidaResponse(id, LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 17),
+						new BigDecimal("125.50")),
+				new FaturaResumidaResponse(UUID.randomUUID(), LocalDate.of(2026, 12, 10),
+						LocalDate.of(2026, 12, 17), BigDecimal.ZERO)
 		), pageable, 5));
 
 		mvc.perform(get("/faturas/cartao/{id}", metodoId).param("page", "1").param("size", "2"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.length()").value(2))
-				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(3)))
+				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(4)))
 				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
 				.andExpect(jsonPath("$.dados[0].dataFechamento").value("2026-11-10"))
+				.andExpect(jsonPath("$.dados[0].dataVencimento").value("2026-11-17"))
 				.andExpect(jsonPath("$.dados[0].valorTotal").value(125.50))
 				.andExpect(jsonPath("$.dados[1].valorTotal").value(0))
 				.andExpect(jsonPath("$.versao").value("v1"))

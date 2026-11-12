@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 public record AtualizarMetodoPagamentoRequest(
 		@NotNull InstituicaoFinanceira instituicaoFinanceira,
 		@NotBlank String nome,
-		@Min(1) @Max(31) Integer diaFechamento
+		@Min(1) @Max(31) Integer diaFechamento,
+		@Min(1) @Max(31) Integer diaVencimento
 ) {
 }

@@ -20,9 +20,14 @@ public class Credito extends MetodoPagamento {
 	@Column(name = "dia_fechamento")
 	private Integer diaFechamento;
 
-	public Credito(Integer diaFechamento) {
+	@Getter
+	@Column(name = "dia_vencimento")
+	private Integer diaVencimento;
+
+	public Credito(Integer diaFechamento, Integer diaVencimento) {
 		super(TipoMetodoPagamento.CREDITO);
 		atualizarDiaFechamento(diaFechamento);
+		atualizarDiaVencimento(diaVencimento);
 	}
 
 	@Override
@@ -31,6 +36,14 @@ public class Credito extends MetodoPagamento {
 			throw new PagamentoInvalidoException("DIA_FECHAMENTO_OBRIGATORIO_PARA_CREDITO");
 		}
 		this.diaFechamento = diaFechamento;
+	}
+
+	@Override
+	public void atualizarDiaVencimento(Integer diaVencimento) {
+		if (diaVencimento == null || diaVencimento < 1 || diaVencimento > 31) {
+			throw new PagamentoInvalidoException("DIA_VENCIMENTO_OBRIGATORIO_PARA_CREDITO");
+		}
+		this.diaVencimento = diaVencimento;
 	}
 
     @Override 

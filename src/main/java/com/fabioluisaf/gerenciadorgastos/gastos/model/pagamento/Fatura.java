@@ -42,6 +42,9 @@ public class Fatura {
 	@Column(name = "data_fechamento", nullable = false)
 	private LocalDate dataFechamento;
 
+	@Column(name = "data_vencimento", nullable = false)
+	private LocalDate dataVencimento;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "tipo_metodo_pagamento", nullable = false)
 	private TipoMetodoPagamento tipoMetodoPagamento;

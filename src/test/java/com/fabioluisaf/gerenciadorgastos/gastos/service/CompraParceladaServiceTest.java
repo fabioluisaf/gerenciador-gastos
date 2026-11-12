@@ -57,7 +57,7 @@ class CompraParceladaServiceTest {
 				metodoPagamentoRepository, mock(GastoRepository.class), mock(FaturaRepository.class)
 		);
 		faturaRepository = mock(FaturaRepository.class);
-		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31);
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31, 7);
 		metodoPagamento.setId(UUID.randomUUID());
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
 		metodoPagamento.setNome("Cartao Nubank");
@@ -100,7 +100,7 @@ class CompraParceladaServiceTest {
 			if (tipo == TipoMetodoPagamento.CREDITO) {
 				continue;
 			}
-			final var metodo = MetodoPagamento.criar(tipo, null);
+			final var metodo = MetodoPagamento.criar(tipo, null, null);
 			when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodo));
 			assertEquals("COMPRA_PARCELADA_EXIGE_CREDITO",
 					assertThrows(PagamentoInvalidoException.class, () -> service.atualizar(id, request)).getMessage());

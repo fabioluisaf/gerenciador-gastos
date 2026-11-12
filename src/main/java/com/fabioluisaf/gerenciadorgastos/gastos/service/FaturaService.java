@@ -71,11 +71,22 @@ public class FaturaService {
 		final var fatura = new Fatura();
 		fatura.setMetodoPagamento(metodo);
 		fatura.setDataFechamento(dataFechamento);
+		fatura.setDataVencimento(dataVencimento(dataFechamento, metodo.getDiaVencimento()));
 
 		return faturaRepository.save(fatura);
 	}
 
 	private LocalDate dataFechamento(YearMonth periodo, int diaFechamento) {
 		return periodo.atDay(Math.min(diaFechamento, periodo.lengthOfMonth()));
+	}
+
+	private LocalDate dataVencimento(LocalDate fechamento, int diaVencimento) {
+		final var periodo = YearMonth.from(fechamento);
+		final var vencimento = periodo.atDay(Math.min(diaVencimento, periodo.lengthOfMonth()));
+		if (vencimento.isAfter(fechamento)) {
+			return vencimento;
+		}
+		final var proximoPeriodo = periodo.plusMonths(1);
+		return proximoPeriodo.atDay(Math.min(diaVencimento, proximoPeriodo.lengthOfMonth()));
 	}
 }

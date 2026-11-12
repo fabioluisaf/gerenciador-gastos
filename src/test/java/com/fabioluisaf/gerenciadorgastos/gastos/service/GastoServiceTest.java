@@ -47,7 +47,7 @@ class GastoServiceTest {
 		repository = mock(GastoRepository.class);
 		metodoPagamentoService = mock(MetodoPagamentoService.class);
 		faturaService = mock(FaturaService.class);
-		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null);
+		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null, null);
 		metodoPagamento.setId(UUID.randomUUID());
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
 		metodoPagamento.setNome("Pix Caixa");
@@ -56,7 +56,7 @@ class GastoServiceTest {
 
 	@Test
 	void selecionaPeriodoExplicitoOuSugeridoParaCredito() {
-		final var credito = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10);
+		final var credito = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10, 17);
 		final var metodoId = UUID.randomUUID();
 		final var periodo = YearMonth.of(2026, 12);
 		final var data = LocalDate.of(2026, 11, 11);

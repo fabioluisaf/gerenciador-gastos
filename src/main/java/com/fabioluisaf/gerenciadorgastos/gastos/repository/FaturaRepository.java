@@ -17,12 +17,12 @@ public interface FaturaRepository extends JpaRepository<Fatura, UUID> {
 
 	@Query(value = """
         select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse(
-            f.id, f.dataFechamento, coalesce(sum(g.valor), 0)
+            f.id, f.dataFechamento, f.dataVencimento, coalesce(sum(g.valor), 0)
         )
         from Fatura f
         left join f.gastos g on g.realizado = true
         where f.metodoPagamento.id = :metodoPagamentoId
-        group by f.id, f.dataFechamento
+        group by f.id, f.dataFechamento, f.dataVencimento
     """, countQuery = """
         select count(f) from Fatura f where f.metodoPagamento.id = :metodoPagamentoId
     """)
