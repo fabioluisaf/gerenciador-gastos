@@ -555,6 +555,7 @@ class GastoControllerTest {
 		fatura.setId(faturaId);
 		fatura.setMetodoPagamento(metodoPagamento);
 		fatura.setDataFechamento(LocalDate.of(2026, 3, 10));
+		fatura.setDataVencimento(LocalDate.of(2026, 3, 17));
 		gasto.setFatura(fatura);
 		when(service.buscarPorId(id)).thenReturn(gasto);
 		when(consultaService.listarPorMesEAno(any(), any(), any()))
@@ -575,6 +576,7 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.descricao").value("Compra parcelada"))
 				.andExpect(jsonPath("$.dados.realizado").value(false))
 				.andExpect(jsonPath("$.dados.fatura.id").value(faturaId.toString()))
+				.andExpect(jsonPath("$.dados.fatura.dataVencimento").value("2026-03-17"))
 				.andExpect(jsonPath("$.dados.parcela.numero").value(2))
 				.andExpect(jsonPath("$.dados.parcela.quantidade").value(3))
 				.andExpect(jsonPath("$.dados.parcela.compraParceladaId").value(compraId.toString()));

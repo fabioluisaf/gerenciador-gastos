@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.5
+
+- Data de vencimento da fatura incluída nas informações retornadas junto a gastos e parcelas.
+
 ## 1.2.4
 
 - Dia de vencimento obrigatório no cadastro e atualização de cartões de crédito.
