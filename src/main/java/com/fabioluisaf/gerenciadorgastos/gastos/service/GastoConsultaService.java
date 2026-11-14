@@ -1,5 +1,6 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -24,6 +26,10 @@ public class GastoConsultaService {
 
 	private final GastoRepository gastoRepository;
 	private final FaturaService faturaService;
+
+	public List<PeriodoComGastosResponse> listarPeriodosComGastos() {
+		return gastoRepository.listarPeriodosComGastos();
+	}
 
 	public Page<Gasto> listarPorMesEAno(BuscarGastosRequest request, FiltrarGastosRequest filtros, Pageable pageable) {
 		final var periodo = request.periodo();

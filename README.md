@@ -23,6 +23,11 @@ Os campos `nome`, `categoria`, `metodoPagamento` e `descricao` ficam na compra,
 sem repetição nas parcelas. Cada parcela contém `id`, `numeroParcela`, `data`,
 `valor`, `fatura` e `realizado`.
 
+## Períodos com gastos
+
+`GET /gastos/periodos` retorna os meses e anos que possuem gastos, do mais
+recente ao mais antigo. Cada item contém `ano` e `mes`.
+
 ## Organização dos DTOs
 
 Os DTOs mantêm a separação entre `request` e `response`, agrupados por uso:

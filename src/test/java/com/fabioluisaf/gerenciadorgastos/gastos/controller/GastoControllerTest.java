@@ -46,6 +46,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRe
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
@@ -153,6 +154,24 @@ class GastoControllerTest {
 					.andExpect(status().isBadRequest());
 		}
 		verifyNoInteractions(service, consultaService);
+	}
+
+	@Test
+	void listaPeriodosComGastos() throws Exception {
+		when(consultaService.listarPeriodosComGastos()).thenReturn(List.of(
+				new PeriodoComGastosResponse(2025, 12),
+				new PeriodoComGastosResponse(2024, 2)
+		));
+
+		mvc.perform(get("/gastos/periodos"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].ano").value(2025))
+				.andExpect(jsonPath("$.dados[0].mes").value(12))
+				.andExpect(jsonPath("$.dados[1].ano").value(2024))
+				.andExpect(jsonPath("$.dados[1].mes").value(2))
+				.andExpect(jsonPath("$.paginacao").doesNotHaveJsonPath());
+
+		verify(consultaService).listarPeriodosComGastos();
 	}
 
 	@Test

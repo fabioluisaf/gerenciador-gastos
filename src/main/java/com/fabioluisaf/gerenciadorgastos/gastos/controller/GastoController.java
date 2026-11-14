@@ -26,6 +26,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGast
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResumidoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
@@ -66,6 +67,11 @@ public class GastoController {
 		final var gastos = gastoConsultaService.listarPorMesEAno(request, filtros, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
+	}
+
+	@GetMapping("/periodos")
+	public ApiResponse<List<PeriodoComGastosResponse>> listarPeriodosComGastos() {
+		return presenter.apresentar(gastoConsultaService.listarPeriodosComGastos());
 	}
 
 	@GetMapping("/fatura/{id}")

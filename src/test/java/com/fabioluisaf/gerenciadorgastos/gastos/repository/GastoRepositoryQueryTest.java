@@ -65,6 +65,7 @@ class GastoRepositoryQueryTest {
 					continue;
 				}
 				final var sort = switch (method.getName()) {
+					case "listarPeriodosComGastos" -> Sort.unsorted();
 					case "listarResumosPorMetodoPagamentoId" ->
 						Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId));
 					case "totalizarPorCategoria" ->

@@ -1,6 +1,7 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,11 +11,22 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
 public interface GastoRepository extends JpaRepository<Gasto, UUID>{
+
+	@Query("""
+        select distinct new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse(
+            year(g.data), month(g.data)
+        )
+        from Gasto g
+        where g.data is not null
+        order by year(g.data) desc, month(g.data) desc
+    """)
+	List<PeriodoComGastosResponse> listarPeriodosComGastos();
 
 	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
 	@Query("""

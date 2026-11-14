@@ -26,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -48,6 +49,18 @@ class GastoConsultaServiceTest {
 		faturaService = mock(FaturaService.class);
 		service = new GastoConsultaService(repository, faturaService);
 		metodoPagamentoId = UUID.randomUUID();
+	}
+
+	@Test
+	void listaPeriodosComGastos() {
+		final var periodos = List.of(
+				new PeriodoComGastosResponse(2025, 12),
+				new PeriodoComGastosResponse(2024, 2)
+		);
+		when(repository.listarPeriodosComGastos()).thenReturn(periodos);
+
+		assertSame(periodos, service.listarPeriodosComGastos());
+		verify(repository).listarPeriodosComGastos();
 	}
 
 	@Test

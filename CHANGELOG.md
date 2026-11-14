@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Adicionado endpoint para listar os meses e anos que possuem gastos.
+
 ## 1.2.5
 
 - Data de vencimento da fatura incluída nas informações retornadas junto a gastos e parcelas.
