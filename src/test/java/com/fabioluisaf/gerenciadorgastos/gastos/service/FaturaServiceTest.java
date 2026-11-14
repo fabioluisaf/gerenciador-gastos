@@ -11,17 +11,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
+import static org.mockito.Mockito.doThrow;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.Test;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.FaturaExistenteException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
@@ -33,6 +38,33 @@ import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoReposi
 import jakarta.persistence.EntityNotFoundException;
 
 class FaturaServiceTest {
+
+	@Test
+	void conflitoConcorrenteEhTratadoSemEsconderOutrasViolacoes() {
+		final var repository = mock(FaturaRepository.class);
+		final var metodoService = mock(MetodoPagamentoService.class);
+		final var service = new FaturaService(repository, metodoService);
+		final var id = UUID.randomUUID();
+		when(metodoService.buscarCreditoPorId(id, "FATURA_PERMITIDA_APENAS_PARA_CREDITO"))
+				.thenReturn(new Credito(10, 17));
+		when(repository.save(any(Fatura.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+		final var violacao = new ConstraintViolationException("duplicada", new SQLException(), "uq_faturas_metodo_mes");
+		final var outroErro = new DataIntegrityViolationException("outro erro");
+		doThrow(new DataIntegrityViolationException("duplicada", violacao), outroErro).when(repository).flush();
+		final var periodo = YearMonth.of(2026, 11);
+
+		assertNull(assertThrows(FaturaExistenteException.class,
+				() -> service.criarFatura(id, periodo)).getFaturaId());
+		assertSame(outroErro, assertThrows(DataIntegrityViolationException.class,
+				() -> service.criarFatura(id, periodo)));
+		final var existente = new Fatura();
+		existente.setId(UUID.randomUUID());
+		when(repository.findByMetodoPagamentoIdAndDataFechamentoBetween(
+				id, periodo.atDay(1), periodo.atEndOfMonth()))
+				.thenReturn(Optional.of(existente));
+		assertEquals(existente.getId(), assertThrows(FaturaExistenteException.class,
+				() -> service.criarFatura(id, periodo)).getFaturaId());
+	}
 
 	@Test
 	void calculaFechamentoPeloCartaoERespeitaUltimoDiaDoMes() {
@@ -144,10 +176,15 @@ class FaturaServiceTest {
 		final var data = YearMonth.of(2026, 11);
 		when(metodoRepository.findById(id))
 				.thenReturn(Optional.of(MetodoPagamento.criar(TipoMetodoPagamento.PIX, null, null)))
+				.thenReturn(Optional.of(MetodoPagamento.criar(TipoMetodoPagamento.PIX, null, null)))
+				.thenReturn(Optional.empty())
 				.thenReturn(Optional.empty());
 
 		assertEquals("FATURA_PERMITIDA_APENAS_PARA_CREDITO",
+				assertThrows(PagamentoInvalidoException.class, () -> service.criarFatura(id, data)).getMessage());
+		assertEquals("FATURA_PERMITIDA_APENAS_PARA_CREDITO",
 				assertThrows(PagamentoInvalidoException.class, () -> service.obterOuCriar(id, data)).getMessage());
+		assertThrows(EntityNotFoundException.class, () -> service.criarFatura(id, data));
 		assertThrows(EntityNotFoundException.class, () -> service.obterOuCriar(id, data));
 		verifyNoInteractions(repository);
 	}

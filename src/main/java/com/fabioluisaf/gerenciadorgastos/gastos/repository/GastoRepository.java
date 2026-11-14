@@ -40,6 +40,16 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
         String categoria, Pageable pageable
     );
 
+	@EntityGraph(attributePaths = { "compraParcelada", "metodoPagamento", "fatura" })
+	@Query("""
+        select g from Gasto g left join g.fatura f
+        where (g.tipoMetodoPagamento = com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
+               and f.dataFechamento between :inicio and :fim)
+           or (g.tipoMetodoPagamento <> com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
+               and g.data between :inicio and :fim)
+    """)
+	Page<Gasto> listarPorIntervalo(LocalDate inicio, LocalDate fim, Pageable pageable);
+
 	@EntityGraph(attributePaths = { "metodoPagamento", "compraParcelada" })
 	@Query("""
         select g from Gasto g

@@ -21,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
@@ -72,6 +73,16 @@ public class GastoController {
 	@GetMapping("/periodos")
 	public ApiResponse<List<PeriodoComGastosResponse>> listarPeriodosComGastos() {
 		return presenter.apresentar(gastoConsultaService.listarPeriodosComGastos());
+	}
+
+	@GetMapping("/intervalo")
+	public ApiResponse<List<GastoResumidoResponse>> listarPorIntervalo(
+			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
+			@PageableDefault(sort = { "data", "id" }) Pageable pageable
+	) {
+		final var gastos = gastoConsultaService.listarPorIntervalo(request, pageable).map(GastoResumidoResponse::from);
+
+		return presenter.apresentarPagina(gastos);
 	}
 
 	@GetMapping("/fatura/{id}")

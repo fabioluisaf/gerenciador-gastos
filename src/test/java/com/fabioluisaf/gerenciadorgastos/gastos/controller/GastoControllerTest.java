@@ -44,6 +44,7 @@ import org.springframework.format.support.DefaultFormattingConversionService;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
@@ -172,6 +173,36 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.paginacao").doesNotHaveJsonPath());
 
 		verify(consultaService).listarPeriodosComGastos();
+	}
+
+	@Test
+	void listaIntervaloComPaginacaoEValidaDatas() throws Exception {
+		final var inicio = LocalDate.of(2026, 11, 1);
+		final var fim = LocalDate.of(2026, 11, 30);
+		final var pageable = PageRequest.of(1, 1,
+				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
+		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), pageable))
+				.thenReturn(new PageImpl<>(List.of(gasto), pageable, 2));
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-30")
+				.param("page", "1").param("size", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
+				.andExpect(jsonPath("$.paginacao.totalElementos").value(2));
+		verify(consultaService).listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), pageable);
+
+		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, inicio),
+				PageRequest.of(0, 10, pageable.getSort()))).thenReturn(Page.empty());
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-01"))
+				.andExpect(status().isOk());
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-30").param("fim", "2026-11-01"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.errosValidacao[0].codigo").value("INTERVALO_INVALIDO"));
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01"))
+				.andExpect(status().isBadRequest());
+		mvc.perform(get("/gastos/intervalo").param("fim", "2026-11-30"))
+				.andExpect(status().isBadRequest());
+		mvc.perform(get("/gastos/intervalo").param("inicio", "invalido").param("fim", "2026-11-30"))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test

@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
@@ -71,6 +72,17 @@ class GastoConsultaServiceTest {
 		when(repository.listarPorPeriodo(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), null, null, pageable))
 				.thenReturn(pagina);
 		assertSame(pagina, service.listarPorMesEAno(new BuscarGastosRequest(YearMonth.of(2024, 2)), filtros, pageable));
+	}
+
+	@Test
+	void consultaIntervaloComPaginacao() {
+		final var inicio = LocalDate.of(2026, 11, 25);
+		final var fim = LocalDate.of(2026, 12, 5);
+		final var pageable = PageRequest.of(1, 10);
+		final var pagina = new PageImpl<Gasto>(List.of(), pageable, 12);
+		when(repository.listarPorIntervalo(inicio, fim, pageable)).thenReturn(pagina);
+
+		assertSame(pagina, service.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), pageable));
 	}
 
 	@Test

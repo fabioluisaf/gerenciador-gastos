@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.FaturaExistenteException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
@@ -29,6 +30,19 @@ import lombok.RequiredArgsConstructor;
 public class NegocioExceptionHandler {
 
 	private final ApiResponsePresenter presenter;
+
+	@ExceptionHandler(FaturaExistenteException.class)
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarFaturaExistente(
+			FaturaExistenteException excecao, HttpServletRequest request
+	) {
+		final var status = HttpStatus.CONFLICT;
+		final var erro = new ErroResponse(
+				status.value(), "FATURA_JA_EXISTE", request.getRequestURI(),
+				Instant.now(), excecao.getFaturaId(), List.of()
+		);
+
+		return ResponseEntity.status(status).body(presenter.apresentar(erro));
+	}
 
 	@ExceptionHandler(ParcelaOperacaoInvalidaException.class)
 	public ResponseEntity<ApiResponse<ErroResponse>> tratarOperacaoEmParcela(

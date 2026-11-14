@@ -6,11 +6,14 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.FaturaExistenteException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
@@ -36,6 +39,33 @@ public class FaturaService {
 	public void validarExistencia(UUID id) {
 		if (!faturaRepository.existsById(id)) {
 			throw new EntityNotFoundException("Fatura não encontrada: " + id);
+		}
+	}
+
+	@Transactional
+	public Fatura criarFatura(UUID metodoPagamentoId, YearMonth periodo) {
+		final var metodo = metodoPagamentoService.buscarCreditoPorId(
+				metodoPagamentoId, "FATURA_PERMITIDA_APENAS_PARA_CREDITO"
+		);
+		final var existente = faturaRepository.findByMetodoPagamentoIdAndDataFechamentoBetween(
+				metodoPagamentoId, periodo.atDay(1), periodo.atEndOfMonth());
+		if (existente.isPresent()) {
+			throw new FaturaExistenteException(existente.get().getId());
+		}
+
+		try {
+			final var fatura = criar(metodo, dataFechamento(periodo, metodo.getDiaFechamento()));
+			faturaRepository.flush();
+			return fatura;
+		} catch (DataIntegrityViolationException excecao) {
+			for (Throwable causa = excecao; causa != null; causa = causa.getCause()) {
+				if (causa instanceof ConstraintViolationException violacao
+						&& "uq_faturas_metodo_mes".equals(violacao.getConstraintName())) {
+					// Corrida de criação: a sessão não é confiável para reconsultar o id.
+					throw new FaturaExistenteException(null);
+				}
+			}
+			throw excecao;
 		}
 	}
 

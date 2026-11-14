@@ -121,6 +121,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return switch (codigo) {
 			case "NotBlank" -> "CAMPO_NAO_PODE_FICAR_VAZIO";
 			case "NotNull" -> "CAMPO_OBRIGATORIO";
+			case "AssertTrue" -> "INTERVALO_INVALIDO";
 			case "Positive" -> "DEVE_SER_POSITIVO";
 			case "PositiveOrZero" -> "DEVE_SER_ZERO_OU_POSITIVO";
 			case "Min", "AnoMinimo" -> "ABAIXO_DO_MINIMO";

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- Adicionado endpoint de listagem de gastos por intervalo de datas: crédito pelo fechamento da fatura, demais métodos pela data do gasto.
+- Adicionado endpoint para criar faturas escolhendo o cartão e o mês de fechamento.
+- Tentativa de criar fatura duplicada retorna conflito com o identificador da fatura existente em `recursoId`.
+- Refatorações internas.
+
 ## 1.3.1
 
 - Corrigida a associação de faturas às parcelas de compras parceladas.

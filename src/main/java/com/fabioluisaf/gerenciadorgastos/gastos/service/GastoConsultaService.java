@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
@@ -44,6 +45,10 @@ public class GastoConsultaService {
 		faturaService.validarExistencia(faturaId);
 
 		return gastoRepository.listarPorFatura(faturaId, categoria, pageable);
+	}
+
+	public Page<Gasto> listarPorIntervalo(BuscarGastosPorIntervaloRequest request, Pageable pageable) {
+		return gastoRepository.listarPorIntervalo(request.inicio(), request.fim(), pageable);
 	}
 
 	public Page<TotalCategoriaResponse> totalizarPorCategoria(TotalizarGastosRequest request, Pageable pageable) {
