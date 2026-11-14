@@ -36,12 +36,14 @@ public class CompraParceladaService {
 		final var periodoInicial = parcelamentoComponent.resolverPeriodoInicial(
 				metodo, request.data(), request.faturaPeriodo()
 		);
-
+		final var faturas = parcelamentoComponent.obterFaturas(
+				metodo, periodoInicial, request.quantidadeParcelas()
+		);
 		parcelamentoComponent.gerarParcelas(compra, request.quantidadeParcelas());
 		parcelamentoComponent.aplicarDados(
-            compra, request.data(), request.nome(), request.categoria(),
-            metodo, periodoInicial, request.descricao()
-        );
+				compra, request.data(), request.nome(), request.categoria(),
+				metodo, faturas, request.descricao()
+		);
 
 		return compraParceladaRepository.save(compra);
 	}
@@ -60,6 +62,9 @@ public class CompraParceladaService {
 		final var parcelas = compra.getParcelas();
 		final var recriar = compra.getValorTotal().compareTo(request.valorTotal()) != 0
 				|| parcelas.size() != request.quantidadeParcelas();
+		final var faturas = parcelamentoComponent.obterFaturas(
+				metodo, periodoInicial, request.quantidadeParcelas()
+		);
 
 		if (recriar) {
 			parcelas.clear();
@@ -70,9 +75,9 @@ public class CompraParceladaService {
 		}
 
 		parcelamentoComponent.aplicarDados(
-            compra, request.data(), request.nome(), request.categoria(),
-            metodo, periodoInicial, request.descricao()
-        );
+				compra, request.data(), request.nome(), request.categoria(),
+				metodo, faturas, request.descricao()
+		);
 		parcelamentoComponent.aplicarValores(compra, request.valoresParcelas());
 
 		return compraParceladaRepository.saveAndFlush(compra);

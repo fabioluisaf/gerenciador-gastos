@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoExcep
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 
 import lombok.RequiredArgsConstructor;
@@ -61,18 +63,27 @@ public class ParcelamentoComponent {
 		}
 	}
 
+	public List<Fatura> obterFaturas(MetodoPagamento metodo, YearMonth periodoInicial, int quantidadeParcelas) {
+		final var faturas = new ArrayList<Fatura>(quantidadeParcelas);
+
+		for (int indice = 0; indice < quantidadeParcelas; indice++) {
+			faturas.add(faturaService.obterOuCriar(metodo.getId(), periodoInicial.plusMonths(indice)));
+		}
+
+		return faturas;
+	}
+
 	public void aplicarDados(
 			CompraParcelada compra, LocalDate dataInicial, String nome, String categoria,
-			MetodoPagamento metodo, YearMonth periodoInicial, String descricao
+			MetodoPagamento metodo, List<Fatura> faturas, String descricao
 	) {
 		for (final var parcela : compra.getParcelas()) {
 			final var indice = parcela.getNumeroParcela() - 1;
-			final var periodo = periodoInicial.plusMonths(indice);
 			parcela.setData(indice == 0 ? dataInicial : dataInicial.withDayOfMonth(1).plusMonths(indice));
 			parcela.setNome(nome);
 			parcela.setCategoria(categoria);
 			parcela.setMetodoPagamento(metodo);
-			parcela.setFatura(faturaService.obterOuCriar(metodo.getId(), periodo));
+			parcela.setFatura(faturas.get(indice));
 			parcela.setDescricao(descricao);
 		}
 	}

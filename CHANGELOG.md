@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Corrigida a associação de faturas às parcelas de compras parceladas.
+
 ## 1.3.0
 
 - Adicionado endpoint para listar os meses e anos que possuem gastos.
