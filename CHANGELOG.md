@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.4
+- Removidos endpoints redundantes/não utilizados.
+
 ## 1.4.3
 
 - Incluída a descrição nas respostas resumidas de gastos.

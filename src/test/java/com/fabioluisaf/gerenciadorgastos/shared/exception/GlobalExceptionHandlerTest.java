@@ -20,19 +20,18 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
-import org.springframework.format.support.DefaultFormattingConversionService;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.controller.GastoController;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
+import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoConverter;
@@ -166,17 +165,6 @@ class GlobalExceptionHandlerTest {
 				{"data":"15/02/2026","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
 				"metodoPagamentoId":"%s","realizado":true}
 				""".formatted(UUID.randomUUID()))).andExpect(status().isConflict());
-	}
-
-	@Test
-	void retornaErroAoMarcarComoRealizadoGastoSemData() throws Exception {
-		when(service.atualizarRealizado(id, true)).thenThrow(new GastoRealizadoSemDataException());
-
-		mvc.perform(patch("/gastos/{id}/realizado", id)
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("true"))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.mensagem").value("DATA_OBRIGATORIA_PARA_GASTO_REALIZADO"));
 	}
 
 	@Test

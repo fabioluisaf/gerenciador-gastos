@@ -35,18 +35,6 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
     """)
 	List<PeriodoComGastosResponse> listarPeriodosComGastos();
 
-	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
-	@Query("""
-        select g from Gasto g
-        where g.data between :inicio and :fim
-        and (:metodoPagamentoId is null or g.metodoPagamento.id = :metodoPagamentoId)
-        and (:categoria is null or g.categoria = :categoria)
-    """)
-	Page<Gasto> listarPorPeriodo(
-        LocalDate inicio, LocalDate fim, UUID metodoPagamentoId,
-        String categoria, Pageable pageable
-    );
-
 	@EntityGraph(attributePaths = { "compraParcelada", "metodoPagamento", "fatura" })
 	@Query("""
         select g from Gasto g left join g.fatura f
@@ -57,14 +45,6 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
     """)
 	Page<Gasto> listarPorIntervalo(
 			LocalDate inicio, LocalDate fim, UUID metodoPagamentoId, String categoria, Pageable pageable);
-
-	@EntityGraph(attributePaths = { "metodoPagamento", "compraParcelada" })
-	@Query("""
-        select g from Gasto g
-        where g.fatura.id = :faturaId
-        and (:categoria is null or g.categoria = :categoria)
-    """)
-	Page<Gasto> listarPorFatura(UUID faturaId, String categoria, Pageable pageable);
 
 	@Query(value = """
         select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse(

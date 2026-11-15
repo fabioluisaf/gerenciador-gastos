@@ -9,33 +9,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResumidoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
-import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
+import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -58,17 +54,6 @@ public class GastoController {
 		return ResponseEntity.created(localizacao).body(presenter.apresentar(GastoResumidoResponse.from(gasto)));
 	}
 
-	@GetMapping
-	public ApiResponse<List<GastoResumidoResponse>> listar(
-        @Valid @ModelAttribute BuscarGastosRequest request,
-        @ModelAttribute FiltrarGastosRequest filtros,
-        @PageableDefault(sort = { "data", "id" }) Pageable pageable
-    ) {
-		final var gastos = gastoConsultaService.listarPorMesEAno(request, filtros, pageable).map(GastoResumidoResponse::from);
-
-		return presenter.apresentarPagina(gastos);
-	}
-
 	@GetMapping("/periodos")
 	public ApiResponse<List<PeriodoComGastosResponse>> listarPeriodosComGastos() {
 		return presenter.apresentar(gastoConsultaService.listarPeriodosComGastos());
@@ -81,17 +66,6 @@ public class GastoController {
 			@PageableDefault(sort = { "data", "id" }) Pageable pageable
 	) {
 		final var gastos = gastoConsultaService.listarPorIntervalo(request, filtros, pageable).map(GastoResumidoResponse::from);
-
-		return presenter.apresentarPagina(gastos);
-	}
-
-	@GetMapping("/fatura/{id}")
-	public ApiResponse<List<GastoResumidoResponse>> listarPorFatura(
-			@PathVariable("id") UUID faturaId,
-			@RequestParam(required = false) String categoria,
-			@PageableDefault(sort = { "data", "id" }) Pageable pageable
-	) {
-		final var gastos = gastoConsultaService.listarPorFatura(faturaId, categoria, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}
@@ -123,14 +97,6 @@ public class GastoController {
         @Valid @RequestBody AtualizarGastoRequest request
     ) {
 		return presenter.apresentar(GastoResumidoResponse.from(gastoService.atualizar(id, request)));
-	}
-
-	@PatchMapping("/{id}/realizado")
-	public ApiResponse<GastoResumidoResponse> atualizarRealizado(
-			@PathVariable UUID id, 
-            @NotNull @RequestBody Boolean realizado
-	) {
-		return presenter.apresentar(GastoResumidoResponse.from(gastoService.atualizarRealizado(id, realizado)));
 	}
 
 	@DeleteMapping("/{id}")

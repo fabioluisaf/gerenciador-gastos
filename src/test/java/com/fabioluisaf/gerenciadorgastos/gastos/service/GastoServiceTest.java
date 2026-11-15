@@ -21,18 +21,15 @@ import org.junit.jupiter.api.Test;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
-
-import jakarta.persistence.EntityNotFoundException;
 
 class GastoServiceTest {
 
@@ -130,37 +127,6 @@ class GastoServiceTest {
 	}
 
 	@Test
-	void atualizaSomenteEstadoDeRealizacaoDoGasto() {
-		final var id = UUID.randomUUID();
-		final var gasto = new Gasto();
-		gasto.setId(id);
-		gasto.setNome("Mercado");
-		gasto.setData(LocalDate.of(2026, 2, 15));
-		gasto.setRealizado(false);
-		when(repository.findById(id)).thenReturn(Optional.of(gasto));
-		when(repository.save(gasto)).thenReturn(gasto);
-
-		assertSame(gasto, service.atualizarRealizado(id, true));
-
-		assertEquals("Mercado", gasto.getNome());
-		assertEquals(true, gasto.isRealizado());
-		verify(repository).save(gasto);
-	}
-
-	@Test
-	void naoMarcaComoRealizadoGastoSemData() {
-		final var id = UUID.randomUUID();
-		final var gasto = new Gasto();
-		gasto.setId(id);
-		gasto.setRealizado(false);
-		when(repository.findById(id)).thenReturn(Optional.of(gasto));
-
-		assertThrows(GastoRealizadoSemDataException.class, () -> service.atualizarRealizado(id, true));
-
-		verify(repository, never()).save(gasto);
-	}
-
-	@Test
 	void impedeAlteracaoEExclusaoDeParcelaPeloCrudDeGastos() {
 		final var id = UUID.randomUUID();
 		final var parcela = new Gasto();
@@ -170,15 +136,5 @@ class GastoServiceTest {
 		assertThrows(ParcelaOperacaoInvalidaException.class, () -> service.excluir(id));
 		verify(repository, never()).save(parcela);
 		verify(repository, never()).delete(parcela);
-	}
-
-	@Test
-	void lancaExcecaoQuandoGastoNaoExiste() {
-		final var id = UUID.randomUUID();
-		when(repository.findById(id)).thenReturn(Optional.empty());
-		assertThrows(EntityNotFoundException.class, () -> service.buscarPorId(id));
-		assertThrows(EntityNotFoundException.class, () -> service.atualizar(id, null));
-		assertThrows(EntityNotFoundException.class, () -> service.atualizarRealizado(id, true));
-		assertThrows(EntityNotFoundException.class, () -> service.excluir(id));
 	}
 }

@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -60,18 +59,6 @@ public class GastoService {
 		entidade.setCategoria(request.categoria());
 		entidade.setDescricao(request.descricao());
 		entidade.setRealizado(request.realizado());
-
-		return gastoRepository.save(entidade);
-	}
-
-	@Transactional
-	public Gasto atualizarRealizado(UUID id, boolean realizado) {
-		final var entidade = buscarPorId(id);
-
-		if (realizado && entidade.getData() == null) {
-			throw new GastoRealizadoSemDataException();
-		}
-		entidade.setRealizado(realizado);
 
 		return gastoRepository.save(entidade);
 	}
