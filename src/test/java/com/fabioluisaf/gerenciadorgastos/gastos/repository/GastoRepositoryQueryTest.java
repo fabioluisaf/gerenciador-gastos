@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.stream.Stream;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -73,6 +75,8 @@ class GastoRepositoryQueryTest {
 			final var creditoSemData = criarGasto(credito, faturaFim, null, false);
 			final var pixInicio = criarGasto(pix, null, inicio, true);
 			final var pixFim = criarGasto(pix, null, fim, false);
+			creditoSemData.setCategoria("Outra");
+			pixFim.setCategoria("Outra");
 			for (final var gasto : new Gasto[] { creditoDataFora, creditoSemData, pixInicio, pixFim,
 					criarGasto(credito, faturaFora, inicio, true),
 					criarGasto(pix, null, inicio.minusDays(1), true),
@@ -83,22 +87,41 @@ class GastoRepositoryQueryTest {
 			session.flush();
 			session.clear();
 			final var hql = GastoRepository.class.getMethod("listarPorIntervalo", LocalDate.class, LocalDate.class,
-					org.springframework.data.domain.Pageable.class).getAnnotation(Query.class).value();
-			final var resultados = session.createQuery(hql, Gasto.class)
-					.setParameter("inicio", inicio)
-					.setParameter("fim", fim)
-					.getResultList().stream().map(Gasto::getId).collect(Collectors.toSet());
-			assertEquals(Set.of(creditoDataFora.getId(), creditoSemData.getId(), pixInicio.getId(), pixFim.getId()),
-					resultados);
-			final var total = session.createQuery(hql.replace("select g from Gasto g", "select count(g) from Gasto g"),
-					Long.class)
-					.setParameter("inicio", inicio)
-					.setParameter("fim", fim)
-					.getSingleResult();
-			assertEquals(4L, total);
+					UUID.class, String.class, org.springframework.data.domain.Pageable.class).getAnnotation(Query.class).value();
+			final var casos = Map.of(
+					new FiltrarGastosRequest(null, null),
+					Set.of(creditoDataFora.getId(), creditoSemData.getId(), pixInicio.getId(), pixFim.getId()),
+					new FiltrarGastosRequest(credito.getId(), null), Set.of(creditoDataFora.getId(), creditoSemData.getId()),
+					new FiltrarGastosRequest(pix.getId(), null), Set.of(pixInicio.getId(), pixFim.getId()),
+					new FiltrarGastosRequest(null, "Teste"), Set.of(creditoDataFora.getId(), pixInicio.getId()),
+					new FiltrarGastosRequest(null, "Outra"), Set.of(creditoSemData.getId(), pixFim.getId()),
+					new FiltrarGastosRequest(credito.getId(), "Teste"), Set.of(creditoDataFora.getId()),
+					new FiltrarGastosRequest(pix.getId(), "Outra"), Set.of(pixFim.getId()),
+					new FiltrarGastosRequest(UUID.randomUUID(), null), Set.<UUID>of(),
+					new FiltrarGastosRequest(null, "Inexistente"), Set.<UUID>of());
+			for (final var caso : casos.entrySet()) {
+				final var filtros = caso.getKey();
+				final var resultados = session.createQuery(hql, Gasto.class)
+						.setParameter("inicio", inicio)
+						.setParameter("fim", fim)
+						.setParameter("metodoPagamentoId", filtros.metodoPagamentoId())
+						.setParameter("categoria", filtros.categoria())
+						.getResultList().stream().map(Gasto::getId).collect(Collectors.toSet());
+				assertEquals(caso.getValue(), resultados, filtros.toString());
+				final var total = session.createQuery(hql.replace("select g from Gasto g", "select count(g) from Gasto g"),
+						Long.class)
+						.setParameter("inicio", inicio)
+						.setParameter("fim", fim)
+						.setParameter("metodoPagamentoId", filtros.metodoPagamentoId())
+						.setParameter("categoria", filtros.categoria())
+						.getSingleResult();
+				assertEquals((long) caso.getValue().size(), total, filtros.toString());
+			}
 			final var pagina = session.createQuery(hql + " order by g.id", Gasto.class)
 					.setParameter("inicio", inicio)
 					.setParameter("fim", fim)
+					.setParameter("metodoPagamentoId", null)
+					.setParameter("categoria", null)
 					.setFirstResult(2)
 					.setMaxResults(2)
 					.getResultList();

@@ -181,16 +181,17 @@ class GastoControllerTest {
 		final var fim = LocalDate.of(2026, 11, 30);
 		final var pageable = PageRequest.of(1, 1,
 				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
-		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), pageable))
+		final var filtros = new FiltrarGastosRequest(null, null);
+		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), filtros, pageable))
 				.thenReturn(new PageImpl<>(List.of(gasto), pageable, 2));
 		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-30")
 				.param("page", "1").param("size", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(2));
-		verify(consultaService).listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), pageable);
+		verify(consultaService).listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), filtros, pageable);
 
-		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, inicio),
+		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, inicio), filtros,
 				PageRequest.of(0, 10, pageable.getSort()))).thenReturn(Page.empty());
 		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-01"))
 				.andExpect(status().isOk());
@@ -233,28 +234,36 @@ class GastoControllerTest {
 	}
 
 	@Test
-	void filtraGastosDoMesEDaFaturaPorCategoriaEMetodo() throws Exception {
+	void filtraGastosDoMesDoIntervaloEDaFaturaPorCategoriaEMetodo() throws Exception {
 		final var faturaId = UUID.randomUUID();
 		final var pageable = PageRequest.of(0, 10,
 				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
 		final var request = new BuscarGastosRequest(YearMonth.of(2024, 2));
+		final var intervaloRequest = new BuscarGastosPorIntervaloRequest(
+				LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29));
 		for (final var filtros : List.of(
 				new FiltrarGastosRequest(metodoPagamentoId, null),
 				new FiltrarGastosRequest(null, "Alimentacao"),
 				new FiltrarGastosRequest(metodoPagamentoId, "Alimentacao")
 		)) {
 			when(consultaService.listarPorMesEAno(request, filtros, pageable)).thenReturn(Page.empty(pageable));
+			when(consultaService.listarPorIntervalo(intervaloRequest, filtros, pageable)).thenReturn(Page.empty(pageable));
 			final var mensal = get("/gastos").param("periodo", "2024-02");
+			final var intervalo = get("/gastos/intervalo").param("inicio", "2024-02-01").param("fim", "2024-02-29");
 			if (filtros.metodoPagamentoId() != null) {
 				mensal.param("metodoPagamentoId", filtros.metodoPagamentoId().toString());
+				intervalo.param("metodoPagamentoId", filtros.metodoPagamentoId().toString());
 			}
 			if (filtros.categoria() != null) {
 				mensal.param("categoria", filtros.categoria());
+				intervalo.param("categoria", filtros.categoria());
 			}
 
 			mvc.perform(mensal).andExpect(status().isOk()).andExpect(jsonPath("$.dados").isEmpty());
+			mvc.perform(intervalo).andExpect(status().isOk()).andExpect(jsonPath("$.dados").isEmpty());
 
 			verify(consultaService).listarPorMesEAno(request, filtros, pageable);
+			verify(consultaService).listarPorIntervalo(intervaloRequest, filtros, pageable);
 		}
 		when(consultaService.listarPorFatura(faturaId, "Alimentacao", pageable)).thenReturn(Page.empty(pageable));
 		mvc.perform(get("/gastos/fatura/{id}", faturaId).param("categoria", "Alimentacao")
@@ -266,6 +275,8 @@ class GastoControllerTest {
 	@Test
 	void rejeitaFiltroDeMetodoInvalido() throws Exception {
 		mvc.perform(get("/gastos").param("periodo", "2024-02")
+				.param("metodoPagamentoId", "invalido")).andExpect(status().isBadRequest());
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2024-02-01").param("fim", "2024-02-29")
 				.param("metodoPagamentoId", "invalido")).andExpect(status().isBadRequest());
 
 		verifyNoInteractions(service, consultaService);

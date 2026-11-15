@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+
+- Adicionados filtros por categoria e método de pagamento à listagem de gastos por intervalo de datas.
+
 ## 1.4.0
 
 - Adicionado endpoint de listagem de gastos por intervalo de datas: crédito pelo fechamento da fatura, demais métodos pela data do gasto.

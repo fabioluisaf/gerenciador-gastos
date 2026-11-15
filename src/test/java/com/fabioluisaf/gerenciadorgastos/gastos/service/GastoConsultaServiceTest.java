@@ -80,9 +80,18 @@ class GastoConsultaServiceTest {
 		final var fim = LocalDate.of(2026, 12, 5);
 		final var pageable = PageRequest.of(1, 10);
 		final var pagina = new PageImpl<Gasto>(List.of(), pageable, 12);
-		when(repository.listarPorIntervalo(inicio, fim, pageable)).thenReturn(pagina);
+		for (final var filtros : List.of(
+				new FiltrarGastosRequest(null, null),
+				new FiltrarGastosRequest(metodoPagamentoId, null),
+				new FiltrarGastosRequest(null, "Alimentacao"),
+				new FiltrarGastosRequest(metodoPagamentoId, "Alimentacao")
+		)) {
+			when(repository.listarPorIntervalo(inicio, fim, filtros.metodoPagamentoId(), filtros.categoria(), pageable))
+					.thenReturn(pagina);
 
-		assertSame(pagina, service.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), pageable));
+			assertSame(pagina, service.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), filtros, pageable));
+			verify(repository).listarPorIntervalo(inicio, fim, filtros.metodoPagamentoId(), filtros.categoria(), pageable);
+		}
 	}
 
 	@Test

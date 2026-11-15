@@ -78,9 +78,10 @@ public class GastoController {
 	@GetMapping("/intervalo")
 	public ApiResponse<List<GastoResumidoResponse>> listarPorIntervalo(
 			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
+			@ModelAttribute FiltrarGastosRequest filtros,
 			@PageableDefault(sort = { "data", "id" }) Pageable pageable
 	) {
-		final var gastos = gastoConsultaService.listarPorIntervalo(request, pageable).map(GastoResumidoResponse::from);
+		final var gastos = gastoConsultaService.listarPorIntervalo(request, filtros, pageable).map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}

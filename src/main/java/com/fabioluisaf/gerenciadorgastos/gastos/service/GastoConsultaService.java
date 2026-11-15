@@ -47,8 +47,9 @@ public class GastoConsultaService {
 		return gastoRepository.listarPorFatura(faturaId, categoria, pageable);
 	}
 
-	public Page<Gasto> listarPorIntervalo(BuscarGastosPorIntervaloRequest request, Pageable pageable) {
-		return gastoRepository.listarPorIntervalo(request.inicio(), request.fim(), pageable);
+	public Page<Gasto> listarPorIntervalo(BuscarGastosPorIntervaloRequest request, FiltrarGastosRequest filtros, Pageable pageable) {
+		return gastoRepository.listarPorIntervalo(
+				request.inicio(), request.fim(), filtros.metodoPagamentoId(), filtros.categoria(), pageable);
 	}
 
 	public Page<TotalCategoriaResponse> totalizarPorCategoria(TotalizarGastosRequest request, Pageable pageable) {
