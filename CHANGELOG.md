@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.3
+
+- Incluída a descrição nas respostas resumidas de gastos.
+
 ## 1.4.2
 
 - Totalizações por categoria e método de pagamento passam a exigir `inicio` e `fim`, substituindo `periodo` e `faturaId`.

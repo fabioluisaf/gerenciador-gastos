@@ -24,6 +24,8 @@ public record GastoResumidoResponse(
 
     MetodoPagamentoResumidoResponse metodoPagamento,
 
+    String descricao,
+
     boolean realizado,
     
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -43,6 +45,7 @@ public record GastoResumidoResponse(
 				entidade.getValor(),
 				entidade.getCategoria(),
 				MetodoPagamentoResumidoResponse.from(entidade.getMetodoPagamento()),
+				entidade.getDescricao(),
 				entidade.isRealizado(),
 				parcela
 		);
