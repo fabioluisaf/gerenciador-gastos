@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.5
+- Ajustes nos testes
+
 ## 1.4.4
 - Removidos endpoints redundantes/não utilizados.
 
