@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.stream.Stream;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -16,10 +17,13 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.core.TypedPropertyPath;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -37,7 +41,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Ted;
 class GastoRepositoryQueryTest {
 
 	@Test
-	void selecionaPeloFechamentoOuPelaDataDoGastoIncluindoOsLimites() throws Exception {
+	void listaETotalizaPeloFechamentoOuPelaDataDoGastoIncluindoOsLimites() throws Exception {
 		final var configuration = new Configuration()
 				.addAnnotatedClass(Gasto.class)
 				.addAnnotatedClass(CompraParcelada.class)
@@ -79,11 +83,19 @@ class GastoRepositoryQueryTest {
 			pixFim.setCategoria("Outra");
 			for (final var gasto : new Gasto[] { creditoDataFora, creditoSemData, pixInicio, pixFim,
 					criarGasto(credito, faturaFora, inicio, true),
+					criarGasto(credito, null, inicio, false),
 					criarGasto(pix, null, inicio.minusDays(1), true),
 					criarGasto(pix, null, fim.plusDays(1), false),
 					criarGasto(pix, null, null, false) }) {
 				session.persist(gasto);
 			}
+			final var debito = new Debito();
+			debito.setNome("Debito");
+			debito.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+			session.persist(debito);
+			final var gastoFora = criarGasto(debito, null, inicio.minusDays(1), true);
+			gastoFora.setCategoria("Fora");
+			session.persist(gastoFora);
 			session.flush();
 			session.clear();
 			final var hql = GastoRepository.class.getMethod("listarPorIntervalo", LocalDate.class, LocalDate.class,
@@ -126,6 +138,49 @@ class GastoRepositoryQueryTest {
 					.setMaxResults(2)
 					.getResultList();
 			assertEquals(2, pagina.size());
+
+			final var consultaCategorias = GastoRepository.class.getMethod("totalizarPorCategoria",
+					LocalDate.class, LocalDate.class, Pageable.class).getAnnotation(Query.class);
+			final var totaisCategorias = session.createQuery(consultaCategorias.value(), TotalCategoriaResponse.class)
+					.setParameter("inicio", inicio)
+					.setParameter("fim", fim)
+					.getResultList().stream().collect(Collectors.toMap(TotalCategoriaResponse::categoria,
+							total -> List.of(total.realizado().stripTrailingZeros(), total.planejado().stripTrailingZeros())));
+			assertEquals(Map.of(
+					"Teste", List.of(BigDecimal.TWO, BigDecimal.TWO),
+					"Outra", List.of(BigDecimal.ZERO, BigDecimal.TWO)), totaisCategorias);
+
+			final var consultaMetodos = GastoRepository.class.getMethod("totalizarPorMetodoPagamento",
+					LocalDate.class, LocalDate.class, Pageable.class).getAnnotation(Query.class);
+			final var totaisMetodos = session.createQuery(consultaMetodos.value(), TotalMetodoPagamentoResponse.class)
+					.setParameter("inicio", inicio)
+					.setParameter("fim", fim)
+					.getResultList().stream().collect(Collectors.toMap(TotalMetodoPagamentoResponse::metodoPagamentoId,
+							total -> List.of(total.realizado().stripTrailingZeros(), total.planejado().stripTrailingZeros())));
+			assertEquals(Map.of(
+					credito.getId(), List.of(BigDecimal.ONE, BigDecimal.TWO),
+					pix.getId(), List.of(BigDecimal.ONE, BigDecimal.TWO)), totaisMetodos);
+
+			for (final var consulta : List.of(consultaCategorias, consultaMetodos)) {
+				assertEquals(2L, session.createQuery(consulta.countQuery(), Long.class)
+						.setParameter("inicio", inicio)
+						.setParameter("fim", fim)
+						.getSingleResult());
+				assertEquals(1, session.createQuery(consulta.value(), Object.class)
+						.setParameter("inicio", inicio)
+						.setParameter("fim", fim)
+						.setFirstResult(1)
+						.setMaxResults(1)
+						.getResultList().size());
+				assertEquals(List.of(), session.createQuery(consulta.value(), Object.class)
+						.setParameter("inicio", inicio.minusYears(1))
+						.setParameter("fim", fim.minusYears(1))
+						.getResultList());
+				assertEquals(0L, session.createQuery(consulta.countQuery(), Long.class)
+						.setParameter("inicio", inicio.minusYears(1))
+						.setParameter("fim", fim.minusYears(1))
+						.getSingleResult());
+			}
 			session.getTransaction().rollback();
 		}
 	}

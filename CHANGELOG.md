@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.2
+
+- Totalizações por categoria e método de pagamento passam a exigir `inicio` e `fim`, substituindo `periodo` e `faturaId`.
+- Totalizações seguem a regra da listagem por intervalo: crédito pelo fechamento da fatura, demais métodos pela data do gasto, incluindo as datas-limite.
+
 ## 1.4.1
 
 - Adicionados filtros por categoria e método de pagamento à listagem de gastos por intervalo de datas.

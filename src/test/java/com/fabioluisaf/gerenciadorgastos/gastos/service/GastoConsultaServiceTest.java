@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,7 +24,6 @@ import org.springframework.data.domain.PageRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
@@ -118,8 +115,9 @@ class GastoConsultaServiceTest {
 	}
 
 	@Test
-	void totalizaMesOuFaturaComPaginacaoDosGrupos() {
-		final var faturaId = UUID.randomUUID();
+	void totalizaIntervaloComPaginacaoDosGrupos() {
+		final var request = new BuscarGastosPorIntervaloRequest(
+				LocalDate.of(2026, 11, 25), LocalDate.of(2026, 12, 5));
 		final var pageable = PageRequest.of(1, 2);
 		final var categorias = new PageImpl<>(List.of(
 				new TotalCategoriaResponse("Casa", new BigDecimal("10.50"), new BigDecimal("20.75"))
@@ -128,34 +126,15 @@ class GastoConsultaServiceTest {
 				new TotalMetodoPagamentoResponse(metodoPagamentoId, InstituicaoFinanceira.CAIXA,
 						TipoMetodoPagamento.PIX, "Pix Caixa", new BigDecimal("10.50"), new BigDecimal("20.75"))
 		), pageable, 3);
-		for (final var request : List.of(new TotalizarGastosRequest(YearMonth.of(2024, 2), null),
-				new TotalizarGastosRequest(null, faturaId))) {
-			when(repository.totalizarPorCategoria(request.inicio(), request.fim(), request.faturaId(), pageable))
-					.thenReturn(categorias);
-			when(repository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), request.faturaId(), pageable))
-					.thenReturn(metodos);
+		when(repository.totalizarPorCategoria(request.inicio(), request.fim(), pageable)).thenReturn(categorias);
+		when(repository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), pageable)).thenReturn(metodos);
 
-			assertSame(categorias, service.totalizarPorCategoria(request, pageable));
-			assertSame(metodos, service.totalizarPorMetodoPagamento(request, pageable));
-		}
+		assertSame(categorias, service.totalizarPorCategoria(request, pageable));
+		assertSame(metodos, service.totalizarPorMetodoPagamento(request, pageable));
 
-		verify(faturaService, times(2)).validarExistencia(faturaId);
-		verify(faturaService, never()).validarExistencia(null);
-		verify(repository).totalizarPorCategoria(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), null, pageable);
-		verify(repository).totalizarPorMetodoPagamento(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29), null, pageable);
-	}
-
-	@Test
-	void naoTotalizaFaturaInexistente() {
-		final var faturaId = UUID.randomUUID();
-		final var request = new TotalizarGastosRequest(null, faturaId);
-		final var pageable = PageRequest.of(0, 10);
-		doThrow(new EntityNotFoundException()).when(faturaService).validarExistencia(faturaId);
-
-		assertThrows(EntityNotFoundException.class, () -> service.totalizarPorCategoria(request, pageable));
-		assertThrows(EntityNotFoundException.class, () -> service.totalizarPorMetodoPagamento(request, pageable));
-
-		verifyNoInteractions(repository);
+		verify(repository).totalizarPorCategoria(request.inicio(), request.fim(), pageable);
+		verify(repository).totalizarPorMetodoPagamento(request.inicio(), request.fim(), pageable);
+		verifyNoInteractions(faturaService);
 	}
 
 	@Test

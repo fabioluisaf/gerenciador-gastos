@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
@@ -52,23 +51,13 @@ public class GastoConsultaService {
 				request.inicio(), request.fim(), filtros.metodoPagamentoId(), filtros.categoria(), pageable);
 	}
 
-	public Page<TotalCategoriaResponse> totalizarPorCategoria(TotalizarGastosRequest request, Pageable pageable) {
-		validarFaturaTotalizacao(request);
-
-		return gastoRepository.totalizarPorCategoria(request.inicio(), request.fim(), request.faturaId(), pageable);
+	public Page<TotalCategoriaResponse> totalizarPorCategoria(BuscarGastosPorIntervaloRequest request, Pageable pageable) {
+		return gastoRepository.totalizarPorCategoria(request.inicio(), request.fim(), pageable);
 	}
 
 	public Page<TotalMetodoPagamentoResponse> totalizarPorMetodoPagamento(
-			TotalizarGastosRequest request, Pageable pageable
+			BuscarGastosPorIntervaloRequest request, Pageable pageable
 	) {
-		validarFaturaTotalizacao(request);
-
-		return gastoRepository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), request.faturaId(), pageable);
-	}
-
-	private void validarFaturaTotalizacao(TotalizarGastosRequest request) {
-		if (request.faturaId() != null) {
-			faturaService.validarExistencia(request.faturaId());
-		}
+		return gastoRepository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), pageable);
 	}
 }

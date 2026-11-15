@@ -18,6 +18,13 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
 public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 
+	String CONDICAO_INTERVALO = """
+        ((g.tipoMetodoPagamento = com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
+          and f.dataFechamento between :inicio and :fim)
+         or (g.tipoMetodoPagamento <> com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
+          and g.data between :inicio and :fim))
+        """;
+
 	@Query("""
         select distinct new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse(
             year(g.data), month(g.data)
@@ -43,10 +50,8 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 	@EntityGraph(attributePaths = { "compraParcelada", "metodoPagamento", "fatura" })
 	@Query("""
         select g from Gasto g left join g.fatura f
-        where ((g.tipoMetodoPagamento = com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
-               and f.dataFechamento between :inicio and :fim)
-           or (g.tipoMetodoPagamento <> com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
-               and g.data between :inicio and :fim))
+        where
+        """ + CONDICAO_INTERVALO + """
         and (:metodoPagamentoId is null or g.metodoPagamento.id = :metodoPagamentoId)
         and (:categoria is null or g.categoria = :categoria)
     """)
@@ -68,14 +73,14 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
             sum(g.valor)
         )
         from Gasto g left join g.fatura f
-        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
+        where
+        """ + CONDICAO_INTERVALO + """
         group by g.categoria
     """, countQuery = """
         select count(distinct g.categoria) from Gasto g left join g.fatura f
-        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
-    """)
-	Page<TotalCategoriaResponse> totalizarPorCategoria(LocalDate inicio, LocalDate fim,
-			UUID faturaId, Pageable pageable);
+        where
+    """ + CONDICAO_INTERVALO)
+	Page<TotalCategoriaResponse> totalizarPorCategoria(LocalDate inicio, LocalDate fim, Pageable pageable);
 
 	@Query(value = """
         select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse(
@@ -84,14 +89,15 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
             sum(g.valor)
         )
         from Gasto g join g.metodoPagamento m left join g.fatura f
-        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
+        where
+        """ + CONDICAO_INTERVALO + """
         group by m.id, m.instituicaoFinanceira, m.tipo, m.nome
     """, countQuery = """
         select count(distinct g.metodoPagamento.id) from Gasto g left join g.fatura f
-        where (:faturaId is null and g.data between :inicio and :fim) or f.id = :faturaId
-    """)
+        where
+    """ + CONDICAO_INTERVALO)
 	Page<TotalMetodoPagamentoResponse> totalizarPorMetodoPagamento(
-        LocalDate inicio, LocalDate fim,  UUID faturaId, Pageable pageable
+        LocalDate inicio, LocalDate fim, Pageable pageable
     );
 
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);

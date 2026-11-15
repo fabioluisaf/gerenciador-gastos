@@ -24,7 +24,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGasto
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.TotalizarGastosRequest;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResumidoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
@@ -104,7 +103,7 @@ public class GastoController {
 
 	@GetMapping("/totais/categoria")
 	public ApiResponse<List<TotalCategoriaResponse>> totalizarPorCategoria(
-			@Valid @ModelAttribute TotalizarGastosRequest request,
+			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
 			@PageableDefault(sort = "categoria") Pageable pageable
 	) {
 		return presenter.apresentarPagina(gastoConsultaService.totalizarPorCategoria(request, pageable));
@@ -112,7 +111,7 @@ public class GastoController {
 
 	@GetMapping("/totais/metodo-pagamento")
 	public ApiResponse<List<TotalMetodoPagamentoResponse>> totalizarPorMetodoPagamento(
-			@Valid @ModelAttribute TotalizarGastosRequest request,
+			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
 			@PageableDefault(sort = "metodoPagamento.id") Pageable pageable
 	) {
 		return presenter.apresentarPagina(gastoConsultaService.totalizarPorMetodoPagamento(request, pageable));
