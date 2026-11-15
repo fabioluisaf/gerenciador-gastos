@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -13,9 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,14 +23,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.FaturaResumidaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Credito;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.FaturaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
@@ -100,47 +95,6 @@ class FaturaControllerTest {
 	}
 
 	@Test
-	void criaFaturaERejeitaDuplicidadeOuEntradaInvalida() throws Exception {
-		final var credito = new Credito(31, 7);
-		final var faturaId = UUID.randomUUID();
-		when(metodoService.buscarCreditoPorId(metodoId, "FATURA_PERMITIDA_APENAS_PARA_CREDITO"))
-				.thenReturn(credito);
-		when(repository.save(any(Fatura.class))).thenAnswer(invocacao -> {
-			final Fatura fatura = invocacao.getArgument(0);
-			fatura.setId(faturaId);
-			return fatura;
-		});
-		final var body = """
-				{"metodoPagamentoId":"%s","periodo":"2024-02"}
-				""".formatted(metodoId);
-		mvc.perform(post("/faturas").contentType(MediaType.APPLICATION_JSON).content(body))
-				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.dados.id").value(faturaId.toString()))
-				.andExpect(jsonPath("$.dados.dataFechamento").value("2024-02-29"))
-				.andExpect(jsonPath("$.dados.dataVencimento").value("2024-03-07"));
-		when(repository.findByMetodoPagamentoIdAndDataFechamentoBetween(
-				metodoId, YearMonth.of(2024, 2).atDay(1), YearMonth.of(2024, 2).atEndOfMonth()))
-				.thenAnswer(invocacao -> {
-					final var existente = new Fatura();
-					existente.setId(faturaId);
-					return Optional.of(existente);
-				});
-		mvc.perform(post("/faturas").contentType(MediaType.APPLICATION_JSON).content(body))
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.dados.mensagem").value("FATURA_JA_EXISTE"))
-				.andExpect(jsonPath("$.dados.recursoId").value(faturaId.toString()));
-		for (final var entrada : List.of("{}", """
-				{"metodoPagamentoId":"%s","periodo":"1999-12"}
-				""".formatted(metodoId), """
-				{"metodoPagamentoId":"%s","periodo":"2024-13"}
-				""".formatted(metodoId))) {
-			mvc.perform(post("/faturas").contentType(MediaType.APPLICATION_JSON).content(entrada))
-					.andExpect(status().isBadRequest());
-		}
-		verify(repository).flush();
-	}
-
-	@Test
 	void listaVaziaQuandoMetodoNaoTemFaturas() throws Exception {
 		final var pageable = PageRequest.of(0, 10,
 				Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId)));
@@ -169,10 +123,11 @@ class FaturaControllerTest {
 	}
 
 	@Test
-	void consultaUnicaNaoEstaMaisDisponivel() throws Exception {
+	void criacaoEConsultaUnicaNaoEstaoMaisDisponiveis() throws Exception {
 		mvc.perform(get("/faturas").param("metodoPagamentoId", metodoId.toString())
 				.param("mes", "12").param("ano", "2026"))
-				.andExpect(status().isMethodNotAllowed());
+				.andExpect(status().isNotFound());
+		mvc.perform(post("/faturas")).andExpect(status().isNotFound());
 
 		verifyNoInteractions(repository, metodoService);
 	}

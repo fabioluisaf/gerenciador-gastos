@@ -97,13 +97,13 @@ class GlobalExceptionHandlerTest {
 						hasItem("DEVE_SER_ZERO_OU_POSITIVO")))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));
-		mvc.perform(get("/gastos").param("periodo", "1999-02"))
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2024-03-01").param("fim", "2024-02-01"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'periodo')].codigo",
-						hasItem("ABAIXO_DO_MINIMO")));
-		mvc.perform(get("/gastos"))
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'intervaloValido')].codigo",
+						hasItem("INTERVALO_INVALIDO")));
+		mvc.perform(get("/gastos/intervalo").param("fim", "2024-02-01"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'periodo')].codigo",
+				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'inicio')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest())

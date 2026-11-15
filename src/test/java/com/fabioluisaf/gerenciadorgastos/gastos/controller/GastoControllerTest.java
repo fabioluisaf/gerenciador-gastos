@@ -199,18 +199,14 @@ class GastoControllerTest {
 	}
 
 	@Test
-	void rejeitaPeriodoInvalidoOuComBarraNaUrl() throws Exception {
-		for (final var periodo : List.of("02/2024", "2024/02", "2024-13", "00.2024",
-				"2024.02.29", "2024-0202.2024", "1999-12", "invalido")) {
-			mvc.perform(get("/gastos").param("periodo", periodo)).andExpect(status().isBadRequest());
-		}
+	void consultasRemovidasNaoEstaoMaisDisponiveis() throws Exception {
+		mvc.perform(get("/gastos").param("periodo", "2024-02")).andExpect(status().isMethodNotAllowed());
+		mvc.perform(get("/gastos/fatura/{id}", UUID.randomUUID())).andExpect(status().isNotFound());
 		verifyNoInteractions(service, consultaService);
 	}
 
 	@Test
 	void rejeitaFiltroDeMetodoInvalido() throws Exception {
-		mvc.perform(get("/gastos").param("periodo", "2024-02")
-				.param("metodoPagamentoId", "invalido")).andExpect(status().isBadRequest());
 		mvc.perform(get("/gastos/intervalo").param("inicio", "2024-02-01").param("fim", "2024-02-29")
 				.param("metodoPagamentoId", "invalido")).andExpect(status().isBadRequest());
 
@@ -301,13 +297,6 @@ class GastoControllerTest {
 		mvc.perform(get(endpoint).param("inicio", "2024-02-29").param("fim", "2024-02-29"))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.dados").isEmpty())
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(0));
-	}
-
-	@Test
-	void rejeitaIdentificadorDeFaturaInvalido() throws Exception {
-		mvc.perform(get("/gastos/fatura/invalido")).andExpect(status().isBadRequest());
-
-		verifyNoInteractions(service, consultaService);
 	}
 
 	@ParameterizedTest
