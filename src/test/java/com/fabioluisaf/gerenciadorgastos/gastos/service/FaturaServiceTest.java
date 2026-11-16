@@ -1,6 +1,5 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -29,7 +28,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 
 class FaturaServiceTest {
 
@@ -92,17 +90,6 @@ class FaturaServiceTest {
 		assertNull(service.sugerirPeriodo(credito, null));
 		assertNull(service.sugerirPeriodo(MetodoPagamento.criar(TipoMetodoPagamento.PIX, null, null),
 				LocalDate.of(2026, 2, 27)));
-	}
-
-	@Test
-	void validaExistenciaDaFatura() {
-		final var repository = mock(FaturaRepository.class);
-		final var service = new FaturaService(repository, mock(MetodoPagamentoService.class));
-		final var id = UUID.randomUUID();
-		when(repository.existsById(id)).thenReturn(true, false);
-
-		assertDoesNotThrow(() -> service.validarExistencia(id));
-		assertThrows(EntityNotFoundException.class, () -> service.validarExistencia(id));
 	}
 
 	@Test

@@ -16,7 +16,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,12 +30,6 @@ public class FaturaService {
 		metodoPagamentoService.buscarEntidadePorId(metodoPagamentoId);
 
 		return faturaRepository.listarResumosPorMetodoPagamentoId(metodoPagamentoId, pageable);
-	}
-
-	public void validarExistencia(UUID id) {
-		if (!faturaRepository.existsById(id)) {
-			throw new EntityNotFoundException("Fatura não encontrada: " + id);
-		}
 	}
 
 	@Transactional
