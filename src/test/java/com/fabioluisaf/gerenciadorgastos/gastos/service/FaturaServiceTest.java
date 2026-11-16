@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
@@ -27,7 +30,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Credito;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoRepository;
-
 
 class FaturaServiceTest {
 
@@ -116,6 +118,35 @@ class FaturaServiceTest {
 		assertEquals(LocalDate.of(2026, 11, 10), fatura.getDataFechamento());
 		assertEquals(LocalDate.of(2026, 11, 17), fatura.getDataVencimento());
 		verify(repository).save(fatura);
+		verify(metodoService).bloquearParaCriacaoFatura(metodo.getId());
+	}
+
+	@Test
+	void reutilizaFaturaCriadaEnquantoAguardavaOBloqueio() {
+		final var repository = mock(FaturaRepository.class);
+		final var metodoService = mock(MetodoPagamentoService.class);
+		final var service = new FaturaService(repository, metodoService);
+		final var metodo = new Credito(10, 17);
+		final var id = UUID.randomUUID();
+		final var periodo = YearMonth.of(2026, 11);
+		final var faturaExistente = new Fatura();
+		metodo.setId(id);
+		when(metodoService.buscarCreditoPorId(id, "FATURA_PERMITIDA_APENAS_PARA_CREDITO"))
+				.thenReturn(metodo);
+		when(repository.findByMetodoPagamentoIdAndDataFechamentoBetween(
+				id, periodo.atDay(1), periodo.atEndOfMonth()))
+				.thenReturn(Optional.empty())
+				.thenReturn(Optional.of(faturaExistente));
+
+		assertSame(faturaExistente, service.obterOuCriar(id, periodo));
+
+		final InOrder ordem = inOrder(repository, metodoService);
+		ordem.verify(repository).findByMetodoPagamentoIdAndDataFechamentoBetween(
+				id, periodo.atDay(1), periodo.atEndOfMonth());
+		ordem.verify(metodoService).bloquearParaCriacaoFatura(id);
+		ordem.verify(repository).findByMetodoPagamentoIdAndDataFechamentoBetween(
+				id, periodo.atDay(1), periodo.atEndOfMonth());
+		verify(repository, never()).save(any(Fatura.class));
 	}
 
 	@Test

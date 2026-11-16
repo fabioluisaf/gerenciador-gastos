@@ -76,6 +76,12 @@ public class MetodoPagamentoService {
 				.orElseThrow(() -> new EntityNotFoundException("Método de pagamento não encontrado: " + id));
 	}
 
+	@Transactional
+	public void bloquearParaCriacaoFatura(UUID id) {
+		metodoPagamentoRepository.findByIdForUpdate(id)
+				.orElseThrow(() -> new EntityNotFoundException("Método de pagamento não encontrado: " + id));
+	}
+
 	public Credito buscarCreditoPorId(UUID id, String codigoErro) {
 		final var metodo = buscarEntidadePorId(id);
         

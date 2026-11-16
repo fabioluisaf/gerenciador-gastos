@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.8
+- Compras parceladas limitadas a 1000 parcelas.
+- Valores monetários limitados a duas casas decimais; nomes e descrições, a 255 caracteres.
+- Proteção contra criação concorrente de faturas por método de pagamento.
+
 ## 1.4.7
 - Padronização dos DTOs de requisição e da conversão de datas.
 

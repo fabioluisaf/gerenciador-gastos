@@ -41,10 +41,25 @@ public class FaturaService {
 			throw new PagamentoInvalidoException("PERIODO_FATURA_OBRIGATORIO");
 		}
 
-		return faturaRepository
-				.findByMetodoPagamentoIdAndDataFechamentoBetween(
-						metodoPagamentoId, periodo.atDay(1), periodo.atEndOfMonth())
-				.orElseGet(() -> criar(metodo, dataFechamento(periodo, metodo.getDiaFechamento())));
+		final var inicio = periodo.atDay(1);
+		final var fim = periodo.atEndOfMonth();
+
+		var fatura = faturaRepository.findByMetodoPagamentoIdAndDataFechamentoBetween(
+				metodoPagamentoId, inicio, fim);
+
+		if (fatura.isPresent()) {
+			return fatura.get();
+		}
+
+		metodoPagamentoService.bloquearParaCriacaoFatura(metodoPagamentoId);
+		fatura = faturaRepository.findByMetodoPagamentoIdAndDataFechamentoBetween(
+				metodoPagamentoId, inicio, fim);
+				
+		if (fatura.isPresent()) {
+			return fatura.get();
+		}
+
+		return criar(metodo, dataFechamento(periodo, metodo.getDiaFechamento()));
 	}
 
 	public YearMonth sugerirPeriodo(MetodoPagamento metodo, LocalDate dataCompra) {

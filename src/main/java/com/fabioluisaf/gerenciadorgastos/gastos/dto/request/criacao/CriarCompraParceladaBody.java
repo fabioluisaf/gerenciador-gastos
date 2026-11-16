@@ -10,10 +10,12 @@ import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataDeserializer;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoDeserializer;
 
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 public record CriarCompraParceladaBody(
@@ -23,6 +25,7 @@ public record CriarCompraParceladaBody(
     LocalDate data,
 
     @NotBlank
+    @Size(max = 255)
     String nome,
 
     @NotNull
@@ -32,6 +35,7 @@ public record CriarCompraParceladaBody(
 
     @NotNull
     @Positive
+    @Max(1000)
     Integer quantidadeParcelas,
 
     @NotBlank
@@ -43,6 +47,7 @@ public record CriarCompraParceladaBody(
     @JsonDeserialize(using = PeriodoDeserializer.class)
     YearMonth faturaPeriodo,
 
+    @Size(max = 255)
     String descricao
 ) {
     public CompraParcelada toEntity() {

@@ -1,0 +1,104 @@
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+
+class RequestValidationTest {
+
+	private final LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+
+	@BeforeEach
+	void configurar() {
+		validator.afterPropertiesSet();
+	}
+
+	@Test
+	void aceitaLimitesDePrecisaoTamanhoEParcelas() {
+		final var nome = "n".repeat(255);
+		final var descricao = "d".repeat(255);
+		final var valor = new BigDecimal("99999999999999999.99");
+		final var metodoPagamentoId = UUID.randomUUID();
+
+		for (final var request : List.of(
+				new CriarGastoBody(LocalDate.of(2026, 1, 1), nome, valor, "Casa",
+						metodoPagamentoId, null, descricao, false),
+				new AtualizarGastoBody(LocalDate.of(2026, 1, 1), nome, valor, "Casa",
+						metodoPagamentoId, null, descricao, false),
+				new CriarCompraParceladaBody(LocalDate.of(2026, 1, 1), nome, valor, 1000,
+						"Casa", metodoPagamentoId, null, descricao),
+				new AtualizarCompraParceladaBody(nome, "Casa", metodoPagamentoId, null, descricao,
+						valor, 1000, LocalDate.of(2026, 1, 1), null),
+				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicaoFinanceira.NUBANK,
+						nome, null, null),
+				new AtualizarMetodoPagamentoBody(InstituicaoFinanceira.NUBANK, nome, null, null)
+		)) {
+			assertTrue(validator.validate(request).isEmpty(), request.getClass().getSimpleName());
+		}
+	}
+
+	@Test
+	void rejeitaValoresForaDosLimites() {
+		final var nomeLongo = "n".repeat(256);
+		final var descricaoLonga = "d".repeat(256);
+		final var metodoPagamentoId = UUID.randomUUID();
+
+		assertViolacoes(
+				new CriarGastoBody(LocalDate.of(2026, 1, 1), nomeLongo, new BigDecimal("1.001"),
+						"Casa", metodoPagamentoId, null, descricaoLonga, false),
+				Set.of("nome", "valor", "descricao")
+		);
+		assertViolacoes(
+				new AtualizarGastoBody(LocalDate.of(2026, 1, 1), nomeLongo, new BigDecimal("1.001"),
+						"Casa", metodoPagamentoId, null, descricaoLonga, false),
+				Set.of("nome", "valor", "descricao")
+		);
+		assertViolacoes(
+				new CriarCompraParceladaBody(LocalDate.of(2026, 1, 1), nomeLongo, BigDecimal.ONE, 1001,
+						"Casa", metodoPagamentoId, null, descricaoLonga),
+				Set.of("nome", "descricao", "quantidadeParcelas")
+		);
+		assertViolacoes(
+				new AtualizarCompraParceladaBody(nomeLongo, "Casa", metodoPagamentoId, null, descricaoLonga,
+						BigDecimal.ONE, 1001, LocalDate.of(2026, 1, 1), null),
+				Set.of("nome", "descricao", "quantidadeParcelas")
+		);
+		assertViolacoes(
+				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicaoFinanceira.NUBANK,
+						nomeLongo, null, null),
+				Set.of("nome")
+		);
+		assertViolacoes(
+				new AtualizarMetodoPagamentoBody(InstituicaoFinanceira.NUBANK, nomeLongo, null, null),
+				Set.of("nome")
+		);
+	}
+
+	private void assertViolacoes(Object request, Set<String> esperadas) {
+		final var obtidas = validator.validate(request).stream()
+				.map(violacao -> violacao.getPropertyPath().toString())
+				.collect(Collectors.toSet());
+
+		assertEquals(esperadas, obtidas,
+				() -> request.getClass().getSimpleName() + ": " + obtidas);
+	}
+}

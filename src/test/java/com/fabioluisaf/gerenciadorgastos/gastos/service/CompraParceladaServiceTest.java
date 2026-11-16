@@ -62,6 +62,8 @@ class CompraParceladaServiceTest {
 		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
 		metodoPagamento.setNome("Cartao Nubank");
 		when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodoPagamento));
+		when(metodoPagamentoRepository.findByIdForUpdate(metodoPagamento.getId()))
+				.thenReturn(Optional.of(metodoPagamento));
 		when(faturaRepository.save(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 		final var faturaService = new FaturaService(faturaRepository, metodoPagamentoService);
 		final var beans = new StaticListableBeanFactory();
