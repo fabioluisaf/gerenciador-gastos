@@ -50,6 +50,9 @@ public record AtualizarCompraParceladaBody(
     @JsonDeserialize(using = DataDeserializer.class)
     LocalDate data,
 
-    List<@NotNull @PositiveOrZero @Digits(integer = 17, fraction = 2) BigDecimal> valoresParcelas
+    List<@NotNull @PositiveOrZero @Digits(integer = 17, fraction = 2) BigDecimal> valoresParcelas,
+
+    @NotNull
+    Boolean realizado
 ) {
 }

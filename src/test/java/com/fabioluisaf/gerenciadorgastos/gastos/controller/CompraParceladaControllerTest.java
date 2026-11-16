@@ -140,7 +140,7 @@ class CompraParceladaControllerTest {
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"%s","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
 				"categoria":"Casa","metodoPagamentoId":"%s","faturaPeriodo":"%s",
-				"descricao":"Descricao","valoresParcelas":[30.25,69.75]}
+				"descricao":"Descricao","valoresParcelas":[30.25,69.75],"realizado":false}
 				""".formatted(dataAtualizacao, metodoPagamentoId, periodoAtualizacao))).andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.nome").value("Compra"))
 				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
@@ -158,6 +158,7 @@ class CompraParceladaControllerTest {
 		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, Month.MARCH, 20), captor.getValue().data());
 		org.junit.jupiter.api.Assertions.assertEquals(metodoPagamentoId, captor.getValue().metodoPagamentoId());
 		org.junit.jupiter.api.Assertions.assertEquals(YearMonth.of(2026, Month.APRIL), captor.getValue().faturaPeriodo());
+		org.junit.jupiter.api.Assertions.assertEquals(false, captor.getValue().realizado());
 		org.junit.jupiter.api.Assertions.assertEquals(
 				List.of(new BigDecimal("30.25"), new BigDecimal("69.75")),
 				captor.getValue().valoresParcelas()
@@ -198,12 +199,26 @@ class CompraParceladaControllerTest {
 	}
 
 	@Test
+	void rejeitaAtualizacaoSemRealizado() throws Exception {
+		for (final var realizado : List.of("", ",\"realizado\":null")) {
+			mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
+					{"data":"2026-01-31","nome":"Compra","valorTotal":100,"quantidadeParcelas":2,
+					"categoria":"Casa","metodoPagamentoId":"%s"%s}
+					""".formatted(metodoPagamentoId, realizado)))
+					.andExpect(status().isBadRequest())
+					.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo")
+							.value(org.hamcrest.Matchers.hasItem("CAMPO_OBRIGATORIO")));
+		}
+		verify(service, never()).atualizar(any(), any());
+	}
+
+	@Test
 	void rejeitaValoresDeParcelasInvalidos() throws Exception {
 		for (final var valores : List.of("[null,100]", "[-1,101]", "[0.001,99.999]",
 				"[100000000000000000,0]")) {
 			mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 					{"data":"2026-01-31","nome":"Compra","valorTotal":100,"quantidadeParcelas":2,
-					"categoria":"Casa","metodoPagamentoId":"%s","valoresParcelas":%s}
+					"categoria":"Casa","metodoPagamentoId":"%s","valoresParcelas":%s,"realizado":true}
 					""".formatted(metodoPagamentoId, valores)))
 					.andExpect(status().isBadRequest())
 					.andExpect(jsonPath("$.dados.mensagem").value("ERRO_DE_VALIDACAO"));
@@ -220,7 +235,7 @@ class CompraParceladaControllerTest {
 			);
 			mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 					{"data":"2026-01-31","nome":"Compra","valorTotal":100,"quantidadeParcelas":2,
-					"categoria":"Casa","metodoPagamentoId":"%s","valoresParcelas":[10,20]}
+					"categoria":"Casa","metodoPagamentoId":"%s","valoresParcelas":[10,20],"realizado":true}
 					""".formatted(metodoPagamentoId)))
 					.andExpect(status().isBadRequest())
 					.andExpect(jsonPath("$.dados.mensagem").value(mensagem));
@@ -237,7 +252,7 @@ class CompraParceladaControllerTest {
 				.andExpect(status().isBadRequest());
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
-				"categoria":"Casa","metodoPagamentoId":"%s"}
+				"categoria":"Casa","metodoPagamentoId":"%s","realizado":true}
 				""".formatted(metodoPagamentoId))
 				)
 				.andExpect(status().isBadRequest())
@@ -249,7 +264,7 @@ class CompraParceladaControllerTest {
 		mvc.perform(get("/compras-parceladas/{id}", id)).andExpect(status().isNotFound());
 		mvc.perform(put("/compras-parceladas/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"2026-01-31","nome":"Compra","valorTotal":100.00,"quantidadeParcelas":2,
-				"categoria":"Casa","metodoPagamentoId":"%s"}
+				"categoria":"Casa","metodoPagamentoId":"%s","realizado":true}
 				""".formatted(metodoPagamentoId))).andExpect(status().isNotFound());
 		mvc.perform(delete("/compras-parceladas/{id}", id)).andExpect(status().isNotFound());
 	}

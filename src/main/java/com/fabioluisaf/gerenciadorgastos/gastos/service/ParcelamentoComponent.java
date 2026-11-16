@@ -10,7 +10,6 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
@@ -26,14 +25,12 @@ public class ParcelamentoComponent {
 
 	private final FaturaService faturaService;
 
-	public void validarValores(AtualizarCompraParceladaBody request) {
-		final var valores = request.valoresParcelas();
-
+	public void validarValores(BigDecimal valorTotal, int quantidadeParcelas, List<BigDecimal> valores) {
 		if (valores == null) {
 			return;
 		}
 
-		if (valores.size() != request.quantidadeParcelas()) {
+		if (valores.size() != quantidadeParcelas) {
 			throw new ValoresParcelasInvalidosException("QUANTIDADE_VALORES_PARCELAS_INVALIDA");
 		}
 
@@ -43,23 +40,34 @@ public class ParcelamentoComponent {
 			soma = soma.add(Objects.requireNonNull(valor));
 		}
 
-		if (soma.compareTo(request.valorTotal()) != 0) {
+		if (soma.compareTo(valorTotal) != 0) {
 			throw new ValoresParcelasInvalidosException("SOMA_PARCELAS_DIFERENTE_DO_TOTAL");
 		}
 	}
 
 	public void gerarParcelas(CompraParcelada compra, int quantidade) {
-		final var valorParcela = compra.getValorTotal().divide(BigDecimal.valueOf(quantidade), 2, RoundingMode.DOWN);
-		final var valorPrimeiraParcela = compra.getValorTotal()
-				.subtract(valorParcela.multiply(BigDecimal.valueOf(quantidade - 1L)));
-
 		for (int indice = 0; indice < quantidade; indice++) {
 			final var parcela = new Gasto();
-			parcela.setValor(indice == 0 ? valorPrimeiraParcela : valorParcela);
+
 			parcela.setRealizado(true);
 			parcela.setCompraParcelada(compra);
 			parcela.setNumeroParcela(indice + 1);
+			
 			compra.getParcelas().add(parcela);
+		}
+
+		recalcularValores(compra);
+	}
+
+	public void recalcularValores(CompraParcelada compra) {
+		final var quantidade = compra.getParcelas().size();
+		final var valorParcela = compra.getValorTotal().divide(BigDecimal.valueOf(quantidade), 2, RoundingMode.DOWN);
+
+		final var valorPrimeiraParcela = compra.getValorTotal()
+				.subtract(valorParcela.multiply(BigDecimal.valueOf(quantidade - 1L)));
+
+		for (final var parcela : compra.getParcelas()) {
+			parcela.setValor(parcela.getNumeroParcela() == 1 ? valorPrimeiraParcela : valorParcela);
 		}
 	}
 
@@ -79,7 +87,7 @@ public class ParcelamentoComponent {
 			
 		for (final var parcela : compra.getParcelas()) {
 			final var indice = parcela.getNumeroParcela() - 1;
-			parcela.setData(indice == 0 ? dataInicial : dataInicial.withDayOfMonth(1).plusMonths(indice));
+			parcela.setData(dataInicial);
 			parcela.setNome(nome);
 			parcela.setCategoria(categoria);
 			parcela.setMetodoPagamento(metodo);

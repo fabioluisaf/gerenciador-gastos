@@ -45,9 +45,9 @@ class RequestValidationTest {
 				new AtualizarGastoBody(LocalDate.of(2026, 1, 1), nome, valor, "Casa",
 						metodoPagamentoId, null, descricao, false),
 				new CriarCompraParceladaBody(LocalDate.of(2026, 1, 1), nome, valor, 1000,
-						"Casa", metodoPagamentoId, null, descricao),
+						"Casa", metodoPagamentoId, null, descricao, null),
 				new AtualizarCompraParceladaBody(nome, "Casa", metodoPagamentoId, null, descricao,
-						valor, 1000, LocalDate.of(2026, 1, 1), null),
+						valor, 1000, LocalDate.of(2026, 1, 1), null, false),
 				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicaoFinanceira.NUBANK,
 						nome, null, null),
 				new AtualizarMetodoPagamentoBody(InstituicaoFinanceira.NUBANK, nome, null, null)
@@ -74,12 +74,12 @@ class RequestValidationTest {
 		);
 		assertViolacoes(
 				new CriarCompraParceladaBody(LocalDate.of(2026, 1, 1), nomeLongo, BigDecimal.ONE, 1001,
-						"Casa", metodoPagamentoId, null, descricaoLonga),
+						"Casa", metodoPagamentoId, null, descricaoLonga, null),
 				Set.of("nome", "descricao", "quantidadeParcelas")
 		);
 		assertViolacoes(
 				new AtualizarCompraParceladaBody(nomeLongo, "Casa", metodoPagamentoId, null, descricaoLonga,
-						BigDecimal.ONE, 1001, LocalDate.of(2026, 1, 1), null),
+						BigDecimal.ONE, 1001, LocalDate.of(2026, 1, 1), null, true),
 				Set.of("nome", "descricao", "quantidadeParcelas")
 		);
 		assertViolacoes(
@@ -100,5 +100,20 @@ class RequestValidationTest {
 
 		assertEquals(esperadas, obtidas,
 				() -> request.getClass().getSimpleName() + ": " + obtidas);
+	}
+
+	@Test
+	void validaValoresIndividuaisNaCriacao() {
+		for (final var valor : java.util.Arrays.asList(null, new BigDecimal("-0.01"),
+				new BigDecimal("0.001"), new BigDecimal("100000000000000000.00"))) {
+			assertViolacoes(new CriarCompraParceladaBody(
+					LocalDate.of(2026, 1, 1), "Compra", BigDecimal.ONE, 1, "Casa", UUID.randomUUID(),
+					null, null, java.util.Collections.singletonList(valor)
+			), Set.of("valoresParcelas[0].<list element>"));
+		}
+		assertTrue(validator.validate(new CriarCompraParceladaBody(
+				LocalDate.of(2026, 1, 1), "Compra", new BigDecimal("1.23"), 2, "Casa", UUID.randomUUID(),
+				null, null, List.of(BigDecimal.ZERO, new BigDecimal("1.23"))
+		)).isEmpty());
 	}
 }

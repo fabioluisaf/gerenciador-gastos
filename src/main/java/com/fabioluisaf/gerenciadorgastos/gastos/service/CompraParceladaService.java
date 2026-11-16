@@ -29,6 +29,8 @@ public class CompraParceladaService {
 
 	@Transactional
 	public CompraParcelada criar(@NotNull @Valid CriarCompraParceladaBody request) {
+		parcelamentoComponent.validarValores(request.valorTotal(), request.quantidadeParcelas(), request.valoresParcelas());
+
 		final var compra = request.toEntity();
 		final var metodo = metodoPagamentoService.buscarCreditoPorId(
 				request.metodoPagamentoId(), "COMPRA_PARCELADA_EXIGE_CREDITO"
@@ -39,7 +41,9 @@ public class CompraParceladaService {
 		final var faturas = parcelamentoComponent.obterFaturas(
 				metodo, periodoInicial, request.quantidadeParcelas()
 		);
+
 		parcelamentoComponent.gerarParcelas(compra, request.quantidadeParcelas());
+		parcelamentoComponent.aplicarValores(compra, request.valoresParcelas());
 		parcelamentoComponent.aplicarDados(
 				compra, request.data(), request.nome(), request.categoria(),
 				metodo, faturas, request.descricao()
@@ -50,7 +54,7 @@ public class CompraParceladaService {
 
 	@Transactional
 	public CompraParcelada atualizar(@NotNull UUID id, @NotNull @Valid AtualizarCompraParceladaBody request) {
-		parcelamentoComponent.validarValores(request);
+		parcelamentoComponent.validarValores(request.valorTotal(), request.quantidadeParcelas(), request.valoresParcelas());
 		final var metodo = metodoPagamentoService.buscarCreditoPorId(
 				request.metodoPagamentoId(), "COMPRA_PARCELADA_EXIGE_CREDITO"
 		);
@@ -72,13 +76,18 @@ public class CompraParceladaService {
 
 			compra.setValorTotal(request.valorTotal());
 			parcelamentoComponent.gerarParcelas(compra, request.quantidadeParcelas());
+		} else if (request.valoresParcelas() == null) {
+			parcelamentoComponent.recalcularValores(compra);
 		}
 
 		parcelamentoComponent.aplicarDados(
 				compra, request.data(), request.nome(), request.categoria(),
 				metodo, faturas, request.descricao()
 		);
+
 		parcelamentoComponent.aplicarValores(compra, request.valoresParcelas());
+
+		parcelas.forEach(parcela -> parcela.setRealizado(request.realizado()));
 
 		return compraParceladaRepository.saveAndFlush(compra);
 	}

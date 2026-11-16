@@ -74,7 +74,7 @@ class CompraParceladaServiceTest {
 		when(repository.saveAndFlush(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 		compra = service.criar(new CriarCompraParceladaBody(
 				LocalDate.of(2024, 1, 31), "Compra", new BigDecimal("100.00"), 3,
-				"Casa", metodoPagamento.getId(), null, "Original"
+				"Casa", metodoPagamento.getId(), null, "Original", null
 		));
 		id = UUID.randomUUID();
 		compra.setId(id);
@@ -83,10 +83,30 @@ class CompraParceladaServiceTest {
 	}
 
 	@Test
+	void criaComValoresIndividuaisERejeitaQuantidadeOuSomaDivergentes() {
+		final var valores = List.of(BigDecimal.ZERO, new BigDecimal("30.10"), new BigDecimal("69.90"));
+		final var criada = service.criar(new CriarCompraParceladaBody(
+				LocalDate.of(2024, 1, 31), "Compra", new BigDecimal("100.00"), 3,
+				"Casa", metodoPagamento.getId(), null, "Original", valores
+		));
+		assertEquals(valores, criada.getParcelas().stream().map(parcela -> parcela.getValor()).toList());
+
+		for (final var invalidos : List.of(List.of(BigDecimal.ONE), List.of(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE))) {
+			final var request = new CriarCompraParceladaBody(
+					LocalDate.of(2024, 1, 31), "Compra", new BigDecimal("100.00"), 3,
+					"Casa", metodoPagamento.getId(), null, "Original", invalidos
+			);
+			final var erro = assertThrows(ValoresParcelasInvalidosException.class, () -> service.criar(request));
+			assertEquals(invalidos.size() == 3 ? "SOMA_PARCELAS_DIFERENTE_DO_TOTAL"
+					: "QUANTIDADE_VALORES_PARCELAS_INVALIDA", erro.getMessage());
+		}
+	}
+
+	@Test
 	void usaFaturaInicialSelecionadaENaoASugerida() {
 		final var request = new AtualizarCompraParceladaBody(
 				"Novo", "Outra", metodoPagamento.getId(), YearMonth.of(2024, 5),
-				null, new BigDecimal("100.00"), 3, LocalDate.of(2024, 1, 31), null
+				null, new BigDecimal("100.00"), 3, LocalDate.of(2024, 1, 31), null, true
 		);
 
 		service.atualizar(id, request);
@@ -116,7 +136,7 @@ class CompraParceladaServiceTest {
 	}
 
 	@Test
-	void alteraValoresPorNumeroDaParcelaEPreservaQuandoOmitidos() {
+	void alteraValoresPorNumeroDaParcelaERecalculaQuandoOmitidosSemRecriar() {
 		final var antigas = List.copyOf(compra.getParcelas());
 		java.util.Collections.reverse(compra.getParcelas());
 		final var valores = List.of(new BigDecimal("0.00"), new BigDecimal("30.10"), new BigDecimal("69.90"));
@@ -126,11 +146,24 @@ class CompraParceladaServiceTest {
 			assertEquals(valores.get(indice), antigas.get(indice).getValor());
 		}
 		service.atualizar(id, request("100.00", 3));
-		for (int indice = 0; indice < antigas.size(); indice++) {
-			assertEquals(valores.get(indice), antigas.get(indice).getValor());
-			assertTrue(compra.getParcelas().contains(antigas.get(indice)));
-		}
+		assertEquals(List.of(new BigDecimal("33.34"), new BigDecimal("33.33"), new BigDecimal("33.33")),
+				antigas.stream().map(parcela -> parcela.getValor()).toList());
+		assertTrue(compra.getParcelas().containsAll(antigas));
 		verify(repository, never()).flush();
+	}
+
+	@Test
+	void alteraRealizadoDeTodasAsParcelasInclusiveQuandoRecriadas() {
+		for (final var quantidade : List.of(3, 4)) {
+			for (final var realizado : List.of(false, true)) {
+				service.atualizar(id, new AtualizarCompraParceladaBody(
+						"Compra", "Casa", metodoPagamento.getId(), null, "Original",
+						new BigDecimal("100.00"), quantidade, LocalDate.of(2024, 1, 31), null, realizado
+				));
+				assertEquals(quantidade, compra.getParcelas().size());
+				assertTrue(compra.getParcelas().stream().allMatch(parcela -> parcela.isRealizado() == realizado));
+			}
+		}
 	}
 
 	@Test
@@ -176,8 +209,7 @@ class CompraParceladaServiceTest {
 	@Test
 	void criaParcelasNumeradasComDatasEValoresCorretos() {
 		final var parcelas = compra.getParcelas();
-		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 1)),
-				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
+		assertTrue(parcelas.stream().allMatch(parcela -> LocalDate.of(2024, 1, 31).equals(parcela.getData())));
 		assertEquals(List.of(new BigDecimal("33.34"), new BigDecimal("33.33"), new BigDecimal("33.33")),
 				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getValor()).toList());
 		assertEquals(List.of(1, 2, 3),
@@ -193,8 +225,7 @@ class CompraParceladaServiceTest {
 		final var request = request("100.0", 3);
 		assertSame(compra, service.atualizar(id, request));
 		assertEquals(parcelas, compra.getParcelas());
-		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 1)),
-				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
+		assertTrue(parcelas.stream().allMatch(parcela -> LocalDate.of(2024, 1, 31).equals(parcela.getData())));
 		assertTrue(parcelas.stream().allMatch(p -> p.getNome().equals("Novo") && p.getCategoria().equals("Outra")
 				&& p.getMetodoPagamento() == metodoPagamento && p.getDescricao() == null));
 		verify(repository, never()).flush();
@@ -212,9 +243,7 @@ class CompraParceladaServiceTest {
 		assertEquals(List.of(new BigDecimal("25.01"), new BigDecimal("25.00"),
 				new BigDecimal("25.00"), new BigDecimal("25.00")),
 				novas.stream().map(parcela -> Objects.requireNonNull(parcela).getValor()).toList());
-		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1),
-				LocalDate.of(2024, 3, 1), LocalDate.of(2024, 4, 1)),
-				novas.stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
+		assertTrue(novas.stream().allMatch(parcela -> LocalDate.of(2024, 1, 31).equals(parcela.getData())));
 		assertTrue(novas.stream().allMatch(p -> p.isRealizado() && p.getCompraParcelada() == compra));
 		verify(repository).flush();
 	}
@@ -222,8 +251,7 @@ class CompraParceladaServiceTest {
 	@Test
 	void reduzQuantidadeMantendoMesInicial() {
 		service.atualizar(id, request("100.00", 2));
-		assertEquals(List.of(LocalDate.of(2024, 1, 31), LocalDate.of(2024, 2, 1)),
-				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
+		assertTrue(compra.getParcelas().stream().allMatch(parcela -> LocalDate.of(2024, 1, 31).equals(parcela.getData())));
 	}
 
 	@Test
@@ -240,23 +268,21 @@ class CompraParceladaServiceTest {
 	}
 
 	@Test
-	void alteraDataSemRecriarERecalculaMesesMesmoForaDeOrdem() {
+	void alteraDataDeTodasSemRecriarEAvancaSomenteFaturasMesmoForaDeOrdem() {
 		final var antigas = List.copyOf(compra.getParcelas());
 		java.util.Collections.reverse(compra.getParcelas());
 		final var data = LocalDate.of(2024, 12, 31);
 		service.atualizar(id, request("100.00", 3, data));
-		assertEquals(LocalDate.of(2024, 12, 31), antigas.get(0).getData());
-		assertEquals(LocalDate.of(2025, 1, 1), antigas.get(1).getData());
-		assertEquals(LocalDate.of(2025, 2, 1), antigas.get(2).getData());
+		assertTrue(antigas.stream().allMatch(parcela -> data.equals(parcela.getData())));
+		assertEquals(List.of(LocalDate.of(2025, 1, 31), LocalDate.of(2025, 2, 28), LocalDate.of(2025, 3, 31)),
+				antigas.stream().map(parcela -> parcela.getFatura().getDataFechamento()).toList());
 		verify(repository, never()).flush();
 	}
 
 	@Test
 	void recriaComNovaDataEQuantidade() {
 		service.atualizar(id, request("120.00", 4, LocalDate.of(2025, 1, 31)));
-		assertEquals(List.of(LocalDate.of(2025, 1, 31), LocalDate.of(2025, 2, 1),
-				LocalDate.of(2025, 3, 1), LocalDate.of(2025, 4, 1)),
-				compra.getParcelas().stream().map(parcela -> Objects.requireNonNull(parcela).getData()).toList());
+		assertTrue(compra.getParcelas().stream().allMatch(parcela -> LocalDate.of(2025, 1, 31).equals(parcela.getData())));
 		verify(repository).flush();
 	}
 
@@ -299,7 +325,7 @@ class CompraParceladaServiceTest {
 	private AtualizarCompraParceladaBody requestComValores(String total, int quantidade, List<BigDecimal> valores) {
 		return new AtualizarCompraParceladaBody(
 				"Novo", "Outra", metodoPagamento.getId(), null, null, new BigDecimal(total),
-				quantidade, LocalDate.of(2024, 1, 31), valores
+				quantidade, LocalDate.of(2024, 1, 31), valores, true
 		);
 	}
 
@@ -309,7 +335,7 @@ class CompraParceladaServiceTest {
 
 	private AtualizarCompraParceladaBody request(String total, int quantidade, LocalDate data) {
 		return new AtualizarCompraParceladaBody(
-				"Novo", "Outra", metodoPagamento.getId(), null, null, new BigDecimal(total), quantidade, data, null
+				"Novo", "Outra", metodoPagamento.getId(), null, null, new BigDecimal(total), quantidade, data, null, true
 		);
 	}
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.9
+- Valores personalizados por parcela também na criação, com validação da soma.
+- Recálculo automático das parcelas ao atualizar a compra sem informar valores individuais.
+- Atualização de compras parceladas passa a exigir o estado de realização, aplicado a todas as parcelas.
+- Todas as parcelas mantêm a data da compra; apenas as faturas avançam mensalmente.
+- Migração das parcelas existentes para a data da primeira, preservando as faturas e impedindo datas divergentes na mesma compra.
+
 ## 1.4.8
 - Compras parceladas limitadas a 1000 parcelas.
 - Valores monetários limitados a duas casas decimais; nomes e descrições, a 255 caracteres.

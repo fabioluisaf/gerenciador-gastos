@@ -3,6 +3,7 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
@@ -48,7 +49,9 @@ public record CriarCompraParceladaBody(
     YearMonth faturaPeriodo,
 
     @Size(max = 255)
-    String descricao
+    String descricao,
+
+    List<@NotNull @PositiveOrZero @Digits(integer = 17, fraction = 2) BigDecimal> valoresParcelas
 ) {
     public CompraParcelada toEntity() {
         final var compra = new CompraParcelada();
