@@ -2,7 +2,7 @@ package com.fabioluisaf.gerenciadorgastos.shared.validation;
 
 import java.time.LocalDate;
 
-public interface GastoComDataERealizacao {
+public interface RequestGastoComDataERealizacao {
 
 	LocalDate data();
 

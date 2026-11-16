@@ -31,7 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
@@ -149,11 +149,11 @@ class CompraParceladaControllerTest {
 				.andExpect(jsonPath("$.dados.quantidadeParcelas").value(2));
 		mvc.perform(delete("/compras-parceladas/{id}", id)).andExpect(status().isNoContent());
 		final var criacao = org.mockito.ArgumentCaptor.forClass(
-				com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaRequest.class);
+				com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaBody.class);
 		verify(service).criar(criacao.capture());
 		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, Month.JANUARY, 31), criacao.getValue().data());
 		org.junit.jupiter.api.Assertions.assertEquals(YearMonth.of(2026, Month.FEBRUARY), criacao.getValue().faturaPeriodo());
-		final var captor = org.mockito.ArgumentCaptor.forClass(AtualizarCompraParceladaRequest.class);
+		final var captor = org.mockito.ArgumentCaptor.forClass(AtualizarCompraParceladaBody.class);
 		verify(service).atualizar(eq(id), captor.capture());
 		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, Month.MARCH, 20), captor.getValue().data());
 		org.junit.jupiter.api.Assertions.assertEquals(metodoPagamentoId, captor.getValue().metodoPagamentoId());

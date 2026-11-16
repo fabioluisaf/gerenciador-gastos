@@ -5,12 +5,12 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record FaturaResumidaResponse(
-		UUID id,
+	UUID id,
 
-		LocalDate dataFechamento,
+	LocalDate dataFechamento,
 
-		LocalDate dataVencimento,
+	LocalDate dataVencimento,
 
-		BigDecimal valorTotal
+	BigDecimal valorTotal
 ) {
 }

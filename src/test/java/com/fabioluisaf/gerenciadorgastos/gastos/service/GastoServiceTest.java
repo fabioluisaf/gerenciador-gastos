@@ -19,8 +19,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
@@ -63,14 +63,14 @@ class GastoServiceTest {
 		when(faturaService.obterOuCriar(metodoId, periodo)).thenReturn(fatura);
 		when(repository.save(any(Gasto.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-		final var explicito = new CriarGastoRequest(null, "Compra", BigDecimal.TEN, "Casa",
+		final var explicito = new CriarGastoBody(null, "Compra", BigDecimal.TEN, "Casa",
 				metodoId, periodo, null, false);
 		assertSame(fatura, service.criar(explicito).getFatura());
-		final var sugerido = new CriarGastoRequest(data, "Compra", BigDecimal.TEN, "Casa",
+		final var sugerido = new CriarGastoBody(data, "Compra", BigDecimal.TEN, "Casa",
 				metodoId, null, null, true);
 		assertSame(fatura, service.criar(sugerido).getFatura());
 
-		final var semPeriodo = new CriarGastoRequest(null, "Compra", BigDecimal.TEN, "Casa",
+		final var semPeriodo = new CriarGastoBody(null, "Compra", BigDecimal.TEN, "Casa",
 				metodoId, null, null, false);
 		assertEquals("FATURA_OBRIGATORIA_SEM_DATA_DA_COMPRA",
 				assertThrows(PagamentoInvalidoException.class, () -> service.criar(semPeriodo)).getMessage());
@@ -81,7 +81,7 @@ class GastoServiceTest {
 
 	@Test
 	void criaGastoComDadosDaRequisicao() {
-		final var request = new CriarGastoRequest(
+		final var request = new CriarGastoBody(
 				null, "Mercado", new BigDecimal("25.50"), "Alimentacao",
 				metodoPagamento.getId(), null, "compra", false
 		);
@@ -106,7 +106,7 @@ class GastoServiceTest {
 		gasto.setId(id);
 		when(repository.findById(id)).thenReturn(Optional.of(gasto));
 		when(repository.save(gasto)).thenReturn(gasto);
-		final var request = new AtualizarGastoRequest(
+		final var request = new AtualizarGastoBody(
 				LocalDate.of(2026, 2, 16), "Novo", BigDecimal.ZERO, "Casa",
 				metodoPagamento.getId(), null, "atualizado", true
 		);

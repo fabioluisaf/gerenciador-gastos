@@ -8,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
@@ -36,7 +36,7 @@ public class MetodoPagamentoService {
 	}
 
 	@Transactional
-	public MetodoPagamento criar(CriarMetodoPagamentoRequest request) {
+	public MetodoPagamento criar(CriarMetodoPagamentoBody request) {
 		final var metodo = MetodoPagamento.criar(request.tipo(), request.diaFechamento(), request.diaVencimento());
 		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
 
@@ -44,7 +44,7 @@ public class MetodoPagamentoService {
 	}
 
 	@Transactional
-	public MetodoPagamento atualizar(UUID id, AtualizarMetodoPagamentoRequest request) {
+	public MetodoPagamento atualizar(UUID id, AtualizarMetodoPagamentoBody request) {
 		final var metodo = buscarEntidadePorId(id);
 
 		metodo.atualizarDiaFechamento(request.diaFechamento());
@@ -65,8 +65,8 @@ public class MetodoPagamentoService {
 	}
 
 	private void aplicarDados(
-			MetodoPagamento metodo, InstituicaoFinanceira instituicao, String nome
-	) {
+			MetodoPagamento metodo, InstituicaoFinanceira instituicao, String nome) {
+				
 		metodo.setInstituicaoFinanceira(instituicao);
 		metodo.setNome(nome);
 	}

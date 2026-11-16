@@ -4,10 +4,10 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 public class DataObrigatoriaSeRealizadoValidator
-		implements ConstraintValidator<DataObrigatoriaSeRealizado, GastoComDataERealizacao> {
+		implements ConstraintValidator<DataObrigatoriaSeRealizado, RequestGastoComDataERealizacao> {
 
 	@Override
-	public boolean isValid(GastoComDataERealizacao gasto, ConstraintValidatorContext context) {
+	public boolean isValid(RequestGastoComDataERealizacao gasto, ConstraintValidatorContext context) {
 		if (gasto == null || !Boolean.TRUE.equals(gasto.realizado()) || gasto.data() != null) {
 			return true;
 		}

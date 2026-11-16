@@ -39,10 +39,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
@@ -56,6 +56,7 @@ import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.exception.GlobalExceptionHandler;
 import com.fabioluisaf.gerenciadorgastos.shared.exception.NegocioExceptionHandler;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
+import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataConverter;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoConverter;
 
 // Eclipse cannot infer the non-null receiver of Spring Data property references.
@@ -93,6 +94,7 @@ class GastoControllerTest {
 		validator.afterPropertiesSet();
 		final var presenter = new ApiResponsePresenter(new ApiProperties("v1"));
 		final var conversionService = new DefaultFormattingConversionService();
+		conversionService.addConverter(new DataConverter());
 		conversionService.addConverter(new PeriodoConverter());
 		mvc = MockMvcBuilders.standaloneSetup(
 				new GastoController(service, consultaService, presenter)
@@ -115,8 +117,8 @@ class GastoControllerTest {
 				.andExpect(status().isCreated());
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content(conteudo))
 				.andExpect(status().isOk());
-		final var criacao = org.mockito.ArgumentCaptor.forClass(CriarGastoRequest.class);
-		final var atualizacao = org.mockito.ArgumentCaptor.forClass(AtualizarGastoRequest.class);
+		final var criacao = org.mockito.ArgumentCaptor.forClass(CriarGastoBody.class);
+		final var atualizacao = org.mockito.ArgumentCaptor.forClass(AtualizarGastoBody.class);
 		verify(service).criar(criacao.capture());
 		verify(service).atualizar(eq(id), atualizacao.capture());
 		org.junit.jupiter.api.Assertions.assertEquals(YearMonth.of(2026, 11), criacao.getValue().faturaPeriodo());
@@ -173,17 +175,17 @@ class GastoControllerTest {
 		final var fim = LocalDate.of(2026, 11, 30);
 		final var pageable = PageRequest.of(1, 1,
 				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
-		final var filtros = new FiltrarGastosRequest(null, null);
-		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), filtros, pageable))
+		final var filtros = new FiltrarGastosUrlParams(null, null);
+		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, fim), filtros, pageable))
 				.thenReturn(new PageImpl<>(List.of(gasto), pageable, 2));
 		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-30")
 				.param("page", "1").param("size", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(2));
-		verify(consultaService).listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), filtros, pageable);
+		verify(consultaService).listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, fim), filtros, pageable);
 
-		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, inicio), filtros,
+		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, inicio), filtros,
 				PageRequest.of(0, 10, pageable.getSort()))).thenReturn(Page.empty());
 		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-01"))
 				.andExpect(status().isOk());
@@ -196,6 +198,17 @@ class GastoControllerTest {
 				.andExpect(status().isBadRequest());
 		mvc.perform(get("/gastos/intervalo").param("inicio", "invalido").param("fim", "2026-11-30"))
 				.andExpect(status().isBadRequest());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "01/11/2026", "01-11-2026", "2026-11-01" })
+	void aceitaMultiplosFormatosDeDataNaConsulta(String data) throws Exception {
+		final var dataEsperada = LocalDate.of(2026, 11, 1);
+		final var request = new BuscarGastosPorIntervaloUrlParams(dataEsperada, dataEsperada);
+		when(consultaService.listarPorIntervalo(eq(request), any(), any())).thenReturn(Page.empty());
+
+		mvc.perform(get("/gastos/intervalo").param("inicio", data).param("fim", data))
+				.andExpect(status().isOk());
 	}
 
 	@Test
@@ -215,7 +228,7 @@ class GastoControllerTest {
 
 	@Test
 	void totalizaCategoriasDoIntervaloSemAplicarFiltrosDaLista() throws Exception {
-		final var request = new BuscarGastosPorIntervaloRequest(
+		final var request = new BuscarGastosPorIntervaloUrlParams(
 				LocalDate.of(2024, 2, 15), LocalDate.of(2024, 3, 5));
 		final var pageable = PageRequest.of(1, 2,
 				Sort.by(TypedPropertyPath.path(Gasto::getCategoria)));
@@ -241,7 +254,7 @@ class GastoControllerTest {
 
 	@Test
 	void totalizaMetodosDoIntervaloSemAplicarFiltrosDaLista() throws Exception {
-		final var request = new BuscarGastosPorIntervaloRequest(
+		final var request = new BuscarGastosPorIntervaloUrlParams(
 				LocalDate.of(2024, 2, 15), LocalDate.of(2024, 3, 5));
 		final var pageable = PageRequest.of(0, 10,
 				Sort.by(TypedPropertyPath.path(Gasto::getMetodoPagamento)
@@ -289,7 +302,7 @@ class GastoControllerTest {
 		mvc.perform(get(endpoint).param("inicio", "2024-02-01").param("fim", "2024-02-30"))
 				.andExpect(status().isBadRequest());
 		verifyNoInteractions(service, consultaService);
-		final var request = new BuscarGastosPorIntervaloRequest(
+		final var request = new BuscarGastosPorIntervaloUrlParams(
 				LocalDate.of(2024, 2, 29), LocalDate.of(2024, 2, 29));
 		when(consultaService.totalizarPorCategoria(eq(request), any())).thenReturn(Page.empty());
 		when(consultaService.totalizarPorMetodoPagamento(eq(request), any())).thenReturn(Page.empty());
@@ -303,7 +316,7 @@ class GastoControllerTest {
 	@ValueSource(strings = { "15-02-2026", "15/02/2026", "2026-02-15" })
 	void criaGastoComDataAlternativaERetornaResposta(String data) throws Exception {
 		when(service.criar(any())).thenAnswer(invocation -> {
-			final var request = invocation.getArgument(0, CriarGastoRequest.class);
+			final var request = invocation.getArgument(0, CriarGastoBody.class);
 			final var entidade = request.toEntity();
 			entidade.setId(id);
 			entidade.setMetodoPagamento(metodoPagamento);
@@ -334,7 +347,7 @@ class GastoControllerTest {
 				{"data":"%s","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
 				"metodoPagamentoId":"%s","realizado":false}
 				""".formatted(data, metodoPagamentoId))).andExpect(status().isOk());
-		final var captor = org.mockito.ArgumentCaptor.forClass(AtualizarGastoRequest.class);
+		final var captor = org.mockito.ArgumentCaptor.forClass(AtualizarGastoBody.class);
 		verify(service).atualizar(eq(id), captor.capture());
 		org.junit.jupiter.api.Assertions.assertEquals(LocalDate.of(2026, 2, 15), captor.getValue().data());
 	}
@@ -342,7 +355,7 @@ class GastoControllerTest {
 	@Test
 	void aceitaDataDeAnoBissexto() throws Exception {
 		when(service.criar(any())).thenAnswer(invocation -> {
-			final var request = invocation.getArgument(0, CriarGastoRequest.class);
+			final var request = invocation.getArgument(0, CriarGastoBody.class);
 			final var entidade = request.toEntity();
 			entidade.setId(id);
 			entidade.setMetodoPagamento(metodoPagamento);
@@ -377,7 +390,7 @@ class GastoControllerTest {
 	@Test
 	void criaGastoPendenteSemData() throws Exception {
 		when(service.criar(any())).thenAnswer(invocation -> {
-			final var request = invocation.getArgument(0, CriarGastoRequest.class);
+			final var request = invocation.getArgument(0, CriarGastoBody.class);
 			final var entidade = request.toEntity();
 			entidade.setId(id);
 			entidade.setMetodoPagamento(metodoPagamento);
@@ -417,7 +430,7 @@ class GastoControllerTest {
 	void consultaAtualizaEExcluiGasto() throws Exception {
 		when(service.buscarPorId(id)).thenReturn(gasto);
 		when(service.atualizar(eq(id), any())).thenAnswer(invocation -> {
-			final var request = invocation.getArgument(1, AtualizarGastoRequest.class);
+			final var request = invocation.getArgument(1, AtualizarGastoBody.class);
 			final var atualizado = new Gasto();
 			atualizado.setId(id);
 			atualizado.setData(request.data());

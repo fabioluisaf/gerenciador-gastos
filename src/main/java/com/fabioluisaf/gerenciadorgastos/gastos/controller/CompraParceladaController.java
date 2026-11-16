@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.CompraParceladaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.CompraParceladaService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
@@ -33,8 +33,8 @@ public class CompraParceladaController {
 
 	@PostMapping
 	public ResponseEntity<ApiResponse<CompraParceladaResponse>> criar(
-			@Valid @RequestBody CriarCompraParceladaRequest request
-	) {
+			@Valid @RequestBody CriarCompraParceladaBody request) {
+
 		final var compra = service.criar(request);
 		final var localizacao = ServletUriComponentsBuilder.fromCurrentRequestUri()
 				.path("/{id}")
@@ -51,15 +51,14 @@ public class CompraParceladaController {
 
 	@PutMapping("/{id}")
 	public ApiResponse<CompraParceladaResponse> atualizar(
-			@PathVariable UUID id, @Valid @RequestBody AtualizarCompraParceladaRequest request
-	) {
+			@PathVariable UUID id, @Valid @RequestBody AtualizarCompraParceladaBody request) {
+
 		return presenter.apresentar(CompraParceladaResponse.from(service.atualizar(id, request)));
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> excluir(@PathVariable UUID id) {
 		service.excluir(id);
-
 		return ResponseEntity.noContent().build();
 	}
 }

@@ -24,8 +24,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
@@ -70,7 +70,7 @@ class CompraParceladaServiceTest {
 		beans.addBean("compraParceladaService", service);
 		when(repository.save(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 		when(repository.saveAndFlush(any(CompraParcelada.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
-		compra = service.criar(new CriarCompraParceladaRequest(
+		compra = service.criar(new CriarCompraParceladaBody(
 				LocalDate.of(2024, 1, 31), "Compra", new BigDecimal("100.00"), 3,
 				"Casa", metodoPagamento.getId(), null, "Original"
 		));
@@ -82,7 +82,7 @@ class CompraParceladaServiceTest {
 
 	@Test
 	void usaFaturaInicialSelecionadaENaoASugerida() {
-		final var request = new AtualizarCompraParceladaRequest(
+		final var request = new AtualizarCompraParceladaBody(
 				"Novo", "Outra", metodoPagamento.getId(), YearMonth.of(2024, 5),
 				null, new BigDecimal("100.00"), 3, LocalDate.of(2024, 1, 31), null
 		);
@@ -294,19 +294,19 @@ class CompraParceladaServiceTest {
 		assertThrows(EntityNotFoundException.class, () -> service.buscarPorId(inexistente));
 	}
 
-	private AtualizarCompraParceladaRequest requestComValores(String total, int quantidade, List<BigDecimal> valores) {
-		return new AtualizarCompraParceladaRequest(
+	private AtualizarCompraParceladaBody requestComValores(String total, int quantidade, List<BigDecimal> valores) {
+		return new AtualizarCompraParceladaBody(
 				"Novo", "Outra", metodoPagamento.getId(), null, null, new BigDecimal(total),
 				quantidade, LocalDate.of(2024, 1, 31), valores
 		);
 	}
 
-	private AtualizarCompraParceladaRequest request(String total, int quantidade) {
+	private AtualizarCompraParceladaBody request(String total, int quantidade) {
 		return request(total, quantidade, LocalDate.of(2024, 1, 31));
 	}
 
-	private AtualizarCompraParceladaRequest request(String total, int quantidade, LocalDate data) {
-		return new AtualizarCompraParceladaRequest(
+	private AtualizarCompraParceladaBody request(String total, int quantidade, LocalDate data) {
+		return new AtualizarCompraParceladaBody(
 				"Novo", "Outra", metodoPagamento.getId(), null, null, new BigDecimal(total), quantidade, data, null
 		);
 	}

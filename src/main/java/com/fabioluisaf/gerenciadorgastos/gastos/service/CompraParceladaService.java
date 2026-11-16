@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;
 
@@ -28,7 +28,7 @@ public class CompraParceladaService {
 	private final ObjectProvider<CompraParceladaService> self;
 
 	@Transactional
-	public CompraParcelada criar(@NotNull @Valid CriarCompraParceladaRequest request) {
+	public CompraParcelada criar(@NotNull @Valid CriarCompraParceladaBody request) {
 		final var compra = request.toEntity();
 		final var metodo = metodoPagamentoService.buscarCreditoPorId(
 				request.metodoPagamentoId(), "COMPRA_PARCELADA_EXIGE_CREDITO"
@@ -49,7 +49,7 @@ public class CompraParceladaService {
 	}
 
 	@Transactional
-	public CompraParcelada atualizar(@NotNull UUID id, @NotNull @Valid AtualizarCompraParceladaRequest request) {
+	public CompraParcelada atualizar(@NotNull UUID id, @NotNull @Valid AtualizarCompraParceladaBody request) {
 		parcelamentoComponent.validarValores(request);
 		final var metodo = metodoPagamentoService.buscarCreditoPorId(
 				request.metodoPagamentoId(), "COMPRA_PARCELADA_EXIGE_CREDITO"

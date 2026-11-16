@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
@@ -60,22 +60,22 @@ class GastoConsultaServiceTest {
 		final var pageable = PageRequest.of(1, 10);
 		final var pagina = new PageImpl<Gasto>(List.of(), pageable, 12);
 		for (final var filtros : List.of(
-				new FiltrarGastosRequest(null, null),
-				new FiltrarGastosRequest(metodoPagamentoId, null),
-				new FiltrarGastosRequest(null, "Alimentacao"),
-				new FiltrarGastosRequest(metodoPagamentoId, "Alimentacao")
+				new FiltrarGastosUrlParams(null, null),
+				new FiltrarGastosUrlParams(metodoPagamentoId, null),
+				new FiltrarGastosUrlParams(null, "Alimentacao"),
+				new FiltrarGastosUrlParams(metodoPagamentoId, "Alimentacao")
 		)) {
 			when(repository.listarPorIntervalo(inicio, fim, filtros.metodoPagamentoId(), filtros.categoria(), pageable))
 					.thenReturn(pagina);
 
-			assertSame(pagina, service.listarPorIntervalo(new BuscarGastosPorIntervaloRequest(inicio, fim), filtros, pageable));
+			assertSame(pagina, service.listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, fim), filtros, pageable));
 			verify(repository).listarPorIntervalo(inicio, fim, filtros.metodoPagamentoId(), filtros.categoria(), pageable);
 		}
 	}
 
 	@Test
 	void totalizaIntervaloComPaginacaoDosGrupos() {
-		final var request = new BuscarGastosPorIntervaloRequest(
+		final var request = new BuscarGastosPorIntervaloUrlParams(
 				LocalDate.of(2026, 11, 25), LocalDate.of(2026, 12, 5));
 		final var pageable = PageRequest.of(1, 2);
 		final var categorias = new PageImpl<>(List.of(

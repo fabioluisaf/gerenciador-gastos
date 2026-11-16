@@ -1,23 +1,23 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.UUID;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataDeserializer;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoDeserializer;
 import com.fabioluisaf.gerenciadorgastos.shared.validation.DataObrigatoriaSeRealizado;
-import com.fabioluisaf.gerenciadorgastos.shared.validation.GastoComDataERealizacao;
+import com.fabioluisaf.gerenciadorgastos.shared.validation.RequestGastoComDataERealizacao;
 
-import tools.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import java.util.UUID;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @DataObrigatoriaSeRealizado
-public record CriarGastoRequest(
+public record AtualizarGastoBody(
+    
     @JsonDeserialize(using = DataDeserializer.class)
     LocalDate data,
 
@@ -41,16 +41,5 @@ public record CriarGastoRequest(
 
     @NotNull
     Boolean realizado
-) implements GastoComDataERealizacao {
-    public Gasto toEntity() {
-        final var gasto = new Gasto();
-        gasto.setData(data);
-        gasto.setNome(nome);
-        gasto.setValor(valor);
-        gasto.setCategoria(categoria);
-        gasto.setDescricao(descricao);
-        gasto.setRealizado(realizado);
-        
-        return gasto;
-    }
+) implements RequestGastoComDataERealizacao {
 }

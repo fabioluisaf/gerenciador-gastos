@@ -7,8 +7,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -28,7 +28,7 @@ public class GastoService {
 	private final FaturaService faturaService;
 
 	@Transactional
-	public Gasto criar(CriarGastoRequest request) {
+	public Gasto criar(CriarGastoBody request) {
 		final var entidade = request.toEntity();
 
 		aplicarMetodoPagamentoEFatura(
@@ -45,7 +45,7 @@ public class GastoService {
 	}
 
 	@Transactional
-	public Gasto atualizar(UUID id, AtualizarGastoRequest request) {
+	public Gasto atualizar(UUID id, AtualizarGastoBody request) {
 		final var entidade = buscarPorId(id);
 
 		validarGastoAvulso(entidade);
@@ -77,8 +77,8 @@ public class GastoService {
 	}
 
 	private void aplicarMetodoPagamentoEFatura(
-        Gasto gasto, UUID metodoPagamentoId, LocalDate data, YearMonth faturaPeriodo
-	) {
+        	Gasto gasto, UUID metodoPagamentoId, LocalDate data, YearMonth faturaPeriodo) {
+
 		final var metodo = metodoPagamentoService.buscarEntidadePorId(metodoPagamentoId);
 		gasto.setMetodoPagamento(metodo);
 

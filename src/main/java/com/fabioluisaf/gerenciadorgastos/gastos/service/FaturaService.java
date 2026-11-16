@@ -28,7 +28,6 @@ public class FaturaService {
 
 	public Page<FaturaResumidaResponse> listarPorMetodoPagamento(UUID metodoPagamentoId, Pageable pageable) {
 		metodoPagamentoService.buscarEntidadePorId(metodoPagamentoId);
-
 		return faturaRepository.listarResumosPorMetodoPagamentoId(metodoPagamentoId, pageable);
 	}
 
@@ -43,8 +42,9 @@ public class FaturaService {
 		}
 
 		return faturaRepository
-            .findByMetodoPagamentoIdAndDataFechamentoBetween(metodoPagamentoId, periodo.atDay(1), periodo.atEndOfMonth())
-            .orElseGet(() -> criar(metodo, dataFechamento(periodo, metodo.getDiaFechamento())));
+				.findByMetodoPagamentoIdAndDataFechamentoBetween(
+						metodoPagamentoId, periodo.atDay(1), periodo.atEndOfMonth())
+				.orElseGet(() -> criar(metodo, dataFechamento(periodo, metodo.getDiaFechamento())));
 	}
 
 	public YearMonth sugerirPeriodo(MetodoPagamento metodo, LocalDate dataCompra) {

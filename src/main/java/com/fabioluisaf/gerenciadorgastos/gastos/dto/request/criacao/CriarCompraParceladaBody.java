@@ -3,20 +3,21 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.UUID;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.DataDeserializer;
 import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoDeserializer;
 
-import tools.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import java.util.UUID;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
-public record CriarCompraParceladaRequest(
+public record CriarCompraParceladaBody(
+    
     @NotNull
     @JsonDeserialize(using = DataDeserializer.class)
     LocalDate data,

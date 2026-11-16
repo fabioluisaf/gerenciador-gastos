@@ -7,8 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
@@ -28,18 +28,23 @@ public class GastoConsultaService {
 		return gastoRepository.listarPeriodosComGastos();
 	}
 
-	public Page<Gasto> listarPorIntervalo(BuscarGastosPorIntervaloRequest request, FiltrarGastosRequest filtros, Pageable pageable) {
+	public Page<Gasto> listarPorIntervalo(
+			BuscarGastosPorIntervaloUrlParams request, 
+			FiltrarGastosUrlParams filtros, Pageable pageable) {
+
 		return gastoRepository.listarPorIntervalo(
 				request.inicio(), request.fim(), filtros.metodoPagamentoId(), filtros.categoria(), pageable);
 	}
 
-	public Page<TotalCategoriaResponse> totalizarPorCategoria(BuscarGastosPorIntervaloRequest request, Pageable pageable) {
+	public Page<TotalCategoriaResponse> totalizarPorCategoria(
+			BuscarGastosPorIntervaloUrlParams request, Pageable pageable) {
+			
 		return gastoRepository.totalizarPorCategoria(request.inicio(), request.fim(), pageable);
 	}
 
 	public Page<TotalMetodoPagamentoResponse> totalizarPorMetodoPagamento(
-			BuscarGastosPorIntervaloRequest request, Pageable pageable
-	) {
+			BuscarGastosPorIntervaloUrlParams request, Pageable pageable) {
+				
 		return gastoRepository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), pageable);
 	}
 }

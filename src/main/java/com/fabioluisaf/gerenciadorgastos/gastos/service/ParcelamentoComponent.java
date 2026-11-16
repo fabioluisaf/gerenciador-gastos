@@ -10,7 +10,7 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
@@ -26,7 +26,7 @@ public class ParcelamentoComponent {
 
 	private final FaturaService faturaService;
 
-	public void validarValores(AtualizarCompraParceladaRequest request) {
+	public void validarValores(AtualizarCompraParceladaBody request) {
 		final var valores = request.valoresParcelas();
 
 		if (valores == null) {
@@ -75,8 +75,8 @@ public class ParcelamentoComponent {
 
 	public void aplicarDados(
 			CompraParcelada compra, LocalDate dataInicial, String nome, String categoria,
-			MetodoPagamento metodo, List<Fatura> faturas, String descricao
-	) {
+			MetodoPagamento metodo, List<Fatura> faturas, String descricao) {
+			
 		for (final var parcela : compra.getParcelas()) {
 			final var indice = parcela.getNumeroParcela() - 1;
 			parcela.setData(indice == 0 ? dataInicial : dataInicial.withDayOfMonth(1).plusMonths(indice));
@@ -99,8 +99,8 @@ public class ParcelamentoComponent {
 	}
 
 	public YearMonth resolverPeriodoInicial(
-			MetodoPagamento metodo, LocalDate dataCompra, YearMonth periodoSelecionado
-	) {
+			MetodoPagamento metodo, LocalDate dataCompra, YearMonth periodoSelecionado) {
+				
 		final var periodo = periodoSelecionado != null
 				? periodoSelecionado
 				: faturaService.sugerirPeriodo(metodo, dataCompra);

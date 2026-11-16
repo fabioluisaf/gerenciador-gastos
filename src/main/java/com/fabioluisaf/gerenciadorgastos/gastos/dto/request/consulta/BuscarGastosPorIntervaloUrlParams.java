@@ -2,14 +2,16 @@ package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta;
 
 import java.time.LocalDate;
 
-import org.springframework.format.annotation.DateTimeFormat;
-
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 
-public record BuscarGastosPorIntervaloRequest(
-		@NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-		@NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim
+public record BuscarGastosPorIntervaloUrlParams(
+
+	@NotNull
+	LocalDate inicio,
+
+	@NotNull
+	LocalDate fim
 ) {
 	@AssertTrue
 	public boolean isIntervaloValido() {

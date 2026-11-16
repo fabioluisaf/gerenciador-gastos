@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResumidoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
@@ -44,7 +44,7 @@ public class GastoController {
 	private final ApiResponsePresenter presenter;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<GastoResumidoResponse>> criar(@Valid @RequestBody CriarGastoRequest request) {
+	public ResponseEntity<ApiResponse<GastoResumidoResponse>> criar(@Valid @RequestBody CriarGastoBody request) {
 		final var gasto = gastoService.criar(request);
 		final var localizacao = ServletUriComponentsBuilder.fromCurrentRequestUri()
 				.path("/{id}")
@@ -61,11 +61,12 @@ public class GastoController {
 
 	@GetMapping("/intervalo")
 	public ApiResponse<List<GastoResumidoResponse>> listarPorIntervalo(
-			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
-			@ModelAttribute FiltrarGastosRequest filtros,
-			@PageableDefault(sort = { "data", "id" }) Pageable pageable
-	) {
-		final var gastos = gastoConsultaService.listarPorIntervalo(request, filtros, pageable).map(GastoResumidoResponse::from);
+			@Valid @ModelAttribute BuscarGastosPorIntervaloUrlParams request,
+			@ModelAttribute FiltrarGastosUrlParams filtros,
+			@PageableDefault(sort = { "data", "id" }) Pageable pageable) {
+				
+		final var gastos = gastoConsultaService.listarPorIntervalo(request, filtros, pageable)
+				.map(GastoResumidoResponse::from);
 
 		return presenter.apresentarPagina(gastos);
 	}
@@ -77,32 +78,31 @@ public class GastoController {
 
 	@GetMapping("/totais/categoria")
 	public ApiResponse<List<TotalCategoriaResponse>> totalizarPorCategoria(
-			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
-			@PageableDefault(sort = "categoria") Pageable pageable
-	) {
+			@Valid @ModelAttribute BuscarGastosPorIntervaloUrlParams request,
+			@PageableDefault(sort = "categoria") Pageable pageable) {
+
 		return presenter.apresentarPagina(gastoConsultaService.totalizarPorCategoria(request, pageable));
 	}
 
 	@GetMapping("/totais/metodo-pagamento")
 	public ApiResponse<List<TotalMetodoPagamentoResponse>> totalizarPorMetodoPagamento(
-			@Valid @ModelAttribute BuscarGastosPorIntervaloRequest request,
-			@PageableDefault(sort = "metodoPagamento.id") Pageable pageable
-	) {
+			@Valid @ModelAttribute BuscarGastosPorIntervaloUrlParams request,
+			@PageableDefault(sort = "metodoPagamento.id") Pageable pageable) {
+
 		return presenter.apresentarPagina(gastoConsultaService.totalizarPorMetodoPagamento(request, pageable));
 	}
 
 	@PutMapping("/{id}")
 	public ApiResponse<GastoResumidoResponse> atualizar(
-        @PathVariable UUID id,
-        @Valid @RequestBody AtualizarGastoRequest request
-    ) {
+			@PathVariable UUID id,
+			@Valid @RequestBody AtualizarGastoBody request) {
+
 		return presenter.apresentar(GastoResumidoResponse.from(gastoService.atualizar(id, request)));
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> excluir(@PathVariable UUID id) {
 		gastoService.excluir(id);
-
 		return ResponseEntity.noContent().build();
 	}
 }

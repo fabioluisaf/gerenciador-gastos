@@ -21,7 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
@@ -101,16 +101,16 @@ class GastoRepositoryQueryTest {
 			final var hql = GastoRepository.class.getMethod("listarPorIntervalo", LocalDate.class, LocalDate.class,
 					UUID.class, String.class, org.springframework.data.domain.Pageable.class).getAnnotation(Query.class).value();
 			final var casos = Map.of(
-					new FiltrarGastosRequest(null, null),
+					new FiltrarGastosUrlParams(null, null),
 					Set.of(creditoDataFora.getId(), creditoSemData.getId(), pixInicio.getId(), pixFim.getId()),
-					new FiltrarGastosRequest(credito.getId(), null), Set.of(creditoDataFora.getId(), creditoSemData.getId()),
-					new FiltrarGastosRequest(pix.getId(), null), Set.of(pixInicio.getId(), pixFim.getId()),
-					new FiltrarGastosRequest(null, "Teste"), Set.of(creditoDataFora.getId(), pixInicio.getId()),
-					new FiltrarGastosRequest(null, "Outra"), Set.of(creditoSemData.getId(), pixFim.getId()),
-					new FiltrarGastosRequest(credito.getId(), "Teste"), Set.of(creditoDataFora.getId()),
-					new FiltrarGastosRequest(pix.getId(), "Outra"), Set.of(pixFim.getId()),
-					new FiltrarGastosRequest(UUID.randomUUID(), null), Set.<UUID>of(),
-					new FiltrarGastosRequest(null, "Inexistente"), Set.<UUID>of());
+					new FiltrarGastosUrlParams(credito.getId(), null), Set.of(creditoDataFora.getId(), creditoSemData.getId()),
+					new FiltrarGastosUrlParams(pix.getId(), null), Set.of(pixInicio.getId(), pixFim.getId()),
+					new FiltrarGastosUrlParams(null, "Teste"), Set.of(creditoDataFora.getId(), pixInicio.getId()),
+					new FiltrarGastosUrlParams(null, "Outra"), Set.of(creditoSemData.getId(), pixFim.getId()),
+					new FiltrarGastosUrlParams(credito.getId(), "Teste"), Set.of(creditoDataFora.getId()),
+					new FiltrarGastosUrlParams(pix.getId(), "Outra"), Set.of(pixFim.getId()),
+					new FiltrarGastosUrlParams(UUID.randomUUID(), null), Set.<UUID>of(),
+					new FiltrarGastosUrlParams(null, "Inexistente"), Set.<UUID>of());
 			for (final var caso : casos.entrySet()) {
 				final var filtros = caso.getKey();
 				final var resultados = session.createQuery(hql, Gasto.class)

@@ -28,10 +28,9 @@ public class FaturaController {
 	@GetMapping("/cartao/{id}")
 	public ApiResponse<List<FaturaResumidaResponse>> listarPorMetodoPagamento(
 			@PathVariable("id") UUID metodoPagamentoId,
-			@PageableDefault(sort = { "dataFechamento", "id" }) Pageable pageable
-	) {
-		final var faturas = service.listarPorMetodoPagamento(metodoPagamentoId, pageable);
+			@PageableDefault(sort = { "dataFechamento", "id" }) Pageable pageable) {
 
+		final var faturas = service.listarPorMetodoPagamento(metodoPagamentoId, pageable);
 		return presenter.apresentarPagina(faturas);
 	}
 }

@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoRequest;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoRequest;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.MetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
@@ -36,8 +36,8 @@ public class MetodoPagamentoController {
 
 	@PostMapping
 	public ResponseEntity<ApiResponse<MetodoPagamentoResponse>> criar(
-			@Valid @RequestBody CriarMetodoPagamentoRequest request
-	) {
+			@Valid @RequestBody CriarMetodoPagamentoBody request) {
+
 		final var metodo = service.criar(request);
 		final var localizacao = ServletUriComponentsBuilder.fromCurrentRequestUri()
 				.path("/{id}")
@@ -50,10 +50,9 @@ public class MetodoPagamentoController {
 
 	@GetMapping
 	public ApiResponse<List<MetodoPagamentoResponse>> listar(
-			@PageableDefault(sort = { "tipo", "instituicaoFinanceira", "nome" }) Pageable pageable
-	) {
-		final var metodos = service.listar(pageable).map(MetodoPagamentoResponse::from);
+			@PageableDefault(sort = { "tipo", "instituicaoFinanceira", "nome" }) Pageable pageable) {
 
+		final var metodos = service.listar(pageable).map(MetodoPagamentoResponse::from);
 		return presenter.apresentarPagina(metodos);
 	}
 
@@ -64,15 +63,14 @@ public class MetodoPagamentoController {
 
 	@PutMapping("/{id}")
 	public ApiResponse<MetodoPagamentoResponse> atualizar(
-			@PathVariable UUID id, @Valid @RequestBody AtualizarMetodoPagamentoRequest request
-	) {
+			@PathVariable UUID id, @Valid @RequestBody AtualizarMetodoPagamentoBody request) {
+
 		return presenter.apresentar(MetodoPagamentoResponse.from(service.atualizar(id, request)));
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> excluir(@PathVariable UUID id) {
 		service.excluir(id);
-
 		return ResponseEntity.noContent().build();
 	}
 }
