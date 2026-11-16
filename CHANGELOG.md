@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.7
+- Padronização dos DTOs de requisição e da conversão de datas.
+
+## 1.4.6
+- Remoção de código não utilizado.
+
 ## 1.4.5
 - Ajustes nos testes
 
