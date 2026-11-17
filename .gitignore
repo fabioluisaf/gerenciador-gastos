@@ -32,3 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 gerenciador-gastos.code-workspace
+
+### Ambiente ###
+.env
+.env.*
+!.env.example

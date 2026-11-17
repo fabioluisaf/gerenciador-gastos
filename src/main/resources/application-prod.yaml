@@ -1,0 +1,13 @@
+# Ambiente de produção: Swagger desabilitado e sem SQL no log.
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: WARN

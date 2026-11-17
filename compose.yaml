@@ -1,0 +1,54 @@
+# Ambiente local, para desenvolvimento na sua máquina:
+#   docker compose up --build
+#   docker compose up db            -> só o banco, para rodar a API pela IDE
+#
+# Os ambientes des e prod rodam no Kubernetes via Argo CD
+# (repositório gerenciador-gastos-deploy).
+
+name: gerenciador-gastos-local
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${DB_NOME:-gerenciador_gastos}
+      POSTGRES_USER: ${DB_USERNAME:?defina DB_USERNAME no .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    volumes:
+      - db-data:/var/lib/postgresql
+    ports:
+      - "${DB_PORTA_HOST:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    image: gerenciador-gastos-api:${VERSAO_APP:-latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://db:5432/${DB_NOME:-gerenciador_gastos}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      VERSAO_APP: ${VERSAO_APP:-0.0.0-des}
+      PORTA_APP: 8080
+    ports:
+      - "${API_PORTA_HOST:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ${FRONTEND_PATH:-../gerenciador-gastos-frontend-angular}
+    image: gerenciador-gastos-web:${VERSAO_WEB:-latest}
+    environment:
+      BACKEND_URL: http://api:8080
+    ports:
+      - "${WEB_PORTA_HOST:-4200}:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

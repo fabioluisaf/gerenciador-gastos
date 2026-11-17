@@ -1,6 +1,12 @@
+# Configuração comum a todos os ambientes.
+# Os valores sensíveis vêm sempre de variáveis de ambiente.
+# Sem perfil ativo, valem os padrões seguros (sem Swagger e sem log de SQL).
+
 server:
-  port: ${PORTA_APP}
+  port: ${PORTA_APP:8080}
   shutdown: graceful
+  # Respeita os cabeçalhos X-Forwarded-* do nginx (o frontend expõe a API em /api)
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -16,34 +22,13 @@ spring:
     open-in-view: true
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        "[format_sql]": true
 
 springdoc:
   api-docs:
-    enabled: true
+    enabled: false
   swagger-ui:
-    enabled: true
+    enabled: false
     path: /swagger
 
 api:
   versao: ${VERSAO_APP:}
-
-logging:
-  level:
-    org:
-      hibernate:
-        SQL: DEBUG
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false

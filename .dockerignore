@@ -1,0 +1,40 @@
+# Build
+target/
+build/
+!**/src/main/**/target/
+!**/src/main/**/build/
+
+# Maven wrapper jar (baixado pelo mvnw quando necessário)
+.mvn/wrapper/maven-wrapper.jar
+
+# Git / CI
+.git
+.gitignore
+.gitattributes
+.github
+
+# IDEs
+.vscode/
+.idea
+*.iws
+*.iml
+*.ipr
+.classpath
+.project
+.settings
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+*.code-workspace
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Docs e arquivos locais
+*.md
+mvnw.cmd
+.env
+.env.*
+*.log
