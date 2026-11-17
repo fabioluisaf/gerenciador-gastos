@@ -2,8 +2,7 @@
 #   docker compose up --build
 #   docker compose up db            -> só o banco, para rodar a API pela IDE
 #
-# Os ambientes des e prod rodam no Kubernetes via Argo CD
-# (repositório gerenciador-gastos-deploy).
+# Produção roda no Kubernetes via Argo CD (repositório gerenciador-gastos-deploy).
 
 name: gerenciador-gastos-local
 
