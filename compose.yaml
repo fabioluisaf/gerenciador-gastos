@@ -23,7 +23,7 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
+  gastos-api:
     build: .
     image: gerenciador-gastos-api:${VERSAO_APP:-latest}
     environment:
@@ -43,11 +43,11 @@ services:
     build: ${FRONTEND_PATH:-../gerenciador-gastos-frontend-angular}
     image: gerenciador-gastos-web:${VERSAO_WEB:-latest}
     environment:
-      BACKEND_URL: http://api:8080
+      BACKEND_URL: http://gastos-api:8080
     ports:
       - "${WEB_PORTA_HOST:-4200}:80"
     depends_on:
-      - api
+      - gastos-api
 
 volumes:
   db-data:
