@@ -35,7 +35,7 @@ public record GastoResumidoResponse(
 	public static GastoResumidoResponse from(Gasto entidade) {
 		final var compra = entidade.getCompraParcelada();
 		final var parcela = compra == null ? null : new ParcelaResumidaResponse(
-				entidade.getNumeroParcela(), compra.getQuantidadeParcelas()
+				entidade.getNumeroParcela(), compra.getQuantidadeParcelas(), compra.getId(), compra.getValorTotal()
 		);
 
 		return new GastoResumidoResponse(

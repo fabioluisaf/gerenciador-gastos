@@ -1,7 +1,8 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem;
 
 public record PeriodoComGastosResponse(
-	int ano,
-	int mes
+	Integer ano,
+	Integer mes,
+	long quantidade
 ) {
 }

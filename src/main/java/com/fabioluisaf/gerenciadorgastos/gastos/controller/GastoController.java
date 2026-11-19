@@ -21,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarPeriodosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResumidoResponse;
@@ -56,8 +57,17 @@ public class GastoController {
 	}
 
 	@GetMapping("/periodos")
-	public ApiResponse<List<PeriodoComGastosResponse>> listarPeriodosComGastos() {
-		return presenter.apresentar(gastoConsultaService.listarPeriodosComGastos());
+	public ApiResponse<List<PeriodoComGastosResponse>> listarPeriodosRealizados(
+			@ModelAttribute FiltrarPeriodosUrlParams filtros) {
+
+		return presenter.apresentar(gastoConsultaService.listarPeriodosRealizados(filtros));
+	}
+
+	@GetMapping("/planejados/periodos")
+	public ApiResponse<List<PeriodoComGastosResponse>> listarPeriodosPlanejados(
+			@ModelAttribute FiltrarPeriodosUrlParams filtros) {
+
+		return presenter.apresentar(gastoConsultaService.listarPeriodosPlanejados(filtros));
 	}
 
 	@GetMapping

@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -82,10 +83,37 @@ class InstituicaoFinanceiraControllerTest {
 	}
 
 	@Test
-	void criaSemIcone() throws Exception {
+	void criaSemIconeNemCor() throws Exception {
 		mvc.perform(multipart("/instituicoes-financeiras").param("nome", "Itaú"))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.dados.possuiIcone").value(false));
+				.andExpect(jsonPath("$.dados.possuiIcone").value(false))
+				.andExpect(jsonPath("$.dados.cor").doesNotExist());
+	}
+
+	@Test
+	void salvaACorEmMaiusculasESubstituiNaAtualizacao() throws Exception {
+		mvc.perform(multipart("/instituicoes-financeiras").param("nome", "Inter").param("cor", "#ff7a00"))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.dados.cor").value("#FF7A00"));
+
+		final var instituicao = existente("Caixa", null, null);
+		instituicao.setCor("#005CA9");
+		mvc.perform(multipart(HttpMethod.PUT, "/instituicoes-financeiras/{id}", instituicao.getId())
+				.param("nome", "Caixa"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados.cor").doesNotExist());
+		assertEquals(null, instituicao.getCor());
+	}
+
+	@Test
+	void rejeitaCorForaDoFormatoHexadecimal() throws Exception {
+		for (final var cor : List.of("red", "#12345", "#1234567", "005CA9", "#GGGGGG")) {
+			mvc.perform(multipart("/instituicoes-financeiras").param("nome", "Banco").param("cor", cor))
+					.andExpect(status().isBadRequest())
+					.andExpect(jsonPath("$.dados.errosValidacao[0].campo").value("cor"))
+					.andExpect(jsonPath("$.dados.errosValidacao[0].codigo").value("FORMATO_INVALIDO"));
+		}
+		verify(repository, never()).save(any());
 	}
 
 	@Test

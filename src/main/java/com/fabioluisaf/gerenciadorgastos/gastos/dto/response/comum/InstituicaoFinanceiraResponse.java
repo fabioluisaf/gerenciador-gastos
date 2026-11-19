@@ -7,10 +7,12 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinan
 public record InstituicaoFinanceiraResponse(
     UUID id,
     String nome,
-    boolean possuiIcone
+    boolean possuiIcone,
+    String cor
 ) {
 
 	public static InstituicaoFinanceiraResponse from(InstituicaoFinanceira entidade) {
-		return new InstituicaoFinanceiraResponse(entidade.getId(), entidade.getNome(), entidade.possuiIcone());
+		return new InstituicaoFinanceiraResponse(
+				entidade.getId(), entidade.getNome(), entidade.possuiIcone(), entidade.getCor());
 	}
 }

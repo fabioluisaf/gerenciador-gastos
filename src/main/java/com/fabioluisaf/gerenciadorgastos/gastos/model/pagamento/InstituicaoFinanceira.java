@@ -34,6 +34,9 @@ public class InstituicaoFinanceira {
 	@Column(name = "icone_tipo", length = 100)
 	private String iconeTipo;
 
+	@Column(length = 7)
+	private String cor;
+
 	public InstituicaoFinanceira(String nome) {
 		this.nome = nome;
 	}

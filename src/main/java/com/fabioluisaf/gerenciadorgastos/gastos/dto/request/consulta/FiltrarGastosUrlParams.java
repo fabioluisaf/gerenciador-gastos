@@ -1,6 +1,7 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.constraints.AssertTrue;
@@ -8,8 +9,8 @@ import jakarta.validation.constraints.AssertTrue;
 public record FiltrarGastosUrlParams(
 	LocalDate inicio,
 	LocalDate fim,
-	UUID metodoPagamentoId,
-	String categoria,
+	List<UUID> metodoPagamentoId,
+	List<String> categoria,
 	UUID faturaId
 ) {
 

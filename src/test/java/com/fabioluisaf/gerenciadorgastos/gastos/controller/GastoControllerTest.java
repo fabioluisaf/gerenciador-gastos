@@ -43,6 +43,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InstituicaoFi
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarPeriodosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
@@ -153,21 +154,46 @@ class GastoControllerTest {
 	}
 
 	@Test
-	void listaPeriodosComGastos() throws Exception {
-		when(consultaService.listarPeriodosComGastos()).thenReturn(List.of(
-				new PeriodoComGastosResponse(2025, 12),
-				new PeriodoComGastosResponse(2024, 2)
+	void listaPeriodosDosGastosRealizadosComQuantidade() throws Exception {
+		when(consultaService.listarPeriodosRealizados(any())).thenReturn(List.of(
+				new PeriodoComGastosResponse(2025, 12, 31),
+				new PeriodoComGastosResponse(2024, 2, 4)
 		));
 
 		mvc.perform(get("/gastos/periodos"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados[0].ano").value(2025))
 				.andExpect(jsonPath("$.dados[0].mes").value(12))
+				.andExpect(jsonPath("$.dados[0].quantidade").value(31))
 				.andExpect(jsonPath("$.dados[1].ano").value(2024))
 				.andExpect(jsonPath("$.dados[1].mes").value(2))
+				.andExpect(jsonPath("$.dados[1].quantidade").value(4))
 				.andExpect(jsonPath("$.paginacao").doesNotHaveJsonPath());
 
-		verify(consultaService).listarPeriodosComGastos();
+		verify(consultaService).listarPeriodosRealizados(new FiltrarPeriodosUrlParams(null, null));
+
+		final var metodoPagamentoId = UUID.randomUUID();
+		mvc.perform(get("/gastos/periodos").param("metodoPagamentoId", metodoPagamentoId.toString())
+				.param("categoria", "Casa", "Lazer"))
+				.andExpect(status().isOk());
+		verify(consultaService).listarPeriodosRealizados(
+				new FiltrarPeriodosUrlParams(List.of(metodoPagamentoId), List.of("Casa", "Lazer")));
+	}
+
+	@Test
+	void listaPeriodosDosGastosPlanejadosComGrupoSemData() throws Exception {
+		when(consultaService.listarPeriodosPlanejados(any())).thenReturn(List.of(
+				new PeriodoComGastosResponse(2026, 12, 3),
+				new PeriodoComGastosResponse(null, null, 5)
+		));
+
+		mvc.perform(get("/gastos/planejados/periodos").param("categoria", "Casa"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].ano").value(2026))
+				.andExpect(jsonPath("$.dados[1].ano").doesNotExist())
+				.andExpect(jsonPath("$.dados[1].quantidade").value(5));
+
+		verify(consultaService).listarPeriodosPlanejados(new FiltrarPeriodosUrlParams(null, List.of("Casa")));
 	}
 
 	@Test
@@ -188,14 +214,15 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(2));
 		verify(consultaService).listarRealizados(semFiltros, pageable);
 
-		final var metodoPagamentoId = UUID.randomUUID();
+		final var pix = UUID.randomUUID();
+		final var cartao = UUID.randomUUID();
 		final var faturaId = UUID.randomUUID();
 		mvc.perform(get("/gastos").param("inicio", "2026-11-01").param("fim", "2026-11-30")
-				.param("metodoPagamentoId", metodoPagamentoId.toString()).param("categoria", "Casa")
+				.param("metodoPagamentoId", pix.toString(), cartao.toString()).param("categoria", "Casa", "Lazer")
 				.param("faturaId", faturaId.toString()))
 				.andExpect(status().isOk());
 		verify(consultaService).listarRealizados(
-				new FiltrarGastosUrlParams(inicio, fim, metodoPagamentoId, "Casa", faturaId),
+				new FiltrarGastosUrlParams(inicio, fim, List.of(pix, cartao), List.of("Casa", "Lazer"), faturaId),
 				PageRequest.of(0, 10, ordenacao));
 
 		mvc.perform(get("/gastos").param("inicio", "2026-11-01")).andExpect(status().isOk());
@@ -214,7 +241,7 @@ class GastoControllerTest {
 	void listaPlanejadosEmEndpointProprioComOsMesmosFiltros() throws Exception {
 		final var ordenacao = Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId));
 		final var faturaId = UUID.randomUUID();
-		final var filtros = new FiltrarGastosUrlParams(null, LocalDate.of(2026, 12, 31), null, "Casa", faturaId);
+		final var filtros = new FiltrarGastosUrlParams(null, LocalDate.of(2026, 12, 31), null, List.of("Casa"), faturaId);
 		when(consultaService.listarPlanejados(any(), any())).thenReturn(Page.empty());
 		when(consultaService.listarPlanejados(filtros, PageRequest.of(0, 10, ordenacao)))
 				.thenReturn(new PageImpl<>(List.of(gasto), PageRequest.of(0, 10, ordenacao), 1));

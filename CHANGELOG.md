@@ -1,12 +1,16 @@
 # Changelog
 
 ## 2.0.0
-- **Quebra de contrato:** instituição financeira deixa de ser um enum (`NUBANK`/`CAIXA`) e vira um cadastro próprio com nome e ícone (CRUD em `/instituicoes-financeiras`, ícone em `GET /instituicoes-financeiras/{id}/icone`).
-  - Métodos de pagamento passam a receber `instituicaoFinanceiraId` e a devolver `instituicaoFinanceira` como objeto `{ id, nome, possuiIcone }`.
-  - Migração cria Nubank e Caixa com os ícones que estavam no frontend e liga os métodos de pagamento existentes a elas.
-- **Quebra de contrato:** `GET /gastos/intervalo` foi substituído por duas listagens paginadas, com os mesmos filtros opcionais (`inicio`, `fim`, `metodoPagamentoId`, `categoria` e o novo `faturaId`):
+- **Quebra de contrato:** instituição financeira deixa de ser um enum (`NUBANK`/`CAIXA`) e vira um cadastro próprio com nome, ícone e cor (CRUD em `/instituicoes-financeiras`, ícone em `GET /instituicoes-financeiras/{id}/icone`, cor opcional no formato `#RRGGBB`).
+  - Métodos de pagamento passam a receber `instituicaoFinanceiraId` e a devolver `instituicaoFinanceira` como objeto `{ id, nome, possuiIcone, cor }`.
+  - Migrações criam Nubank e Caixa com os ícones que estavam no frontend e as cores das marcas, e ligam os métodos de pagamento existentes a elas.
+- **Quebra de contrato:** `GET /gastos/intervalo` foi substituído por duas listagens paginadas, com os mesmos filtros opcionais (`inicio`, `fim`, `metodoPagamentoId`, `categoria` e o novo `faturaId`). `metodoPagamentoId` e `categoria` aceitam vários valores (repetindo o parâmetro): valores do mesmo filtro se somam, filtros diferentes se combinam:
   - `GET /gastos`: gastos realizados, dos mais recentes para os mais antigos;
   - `GET /gastos/planejados`: gastos ainda não realizados, dos mais próximos para os mais distantes, com os sem data no fim.
+  - Compras parceladas aparecem uma vez só, com a quantidade de parcelas e o valor total da compra; filtrando por fatura, aparece a parcela daquela fatura.
+- **Quebra de contrato:** nos totais e no filtro de período da listagem, gastos no crédito passam a contar pela data de **vencimento** da fatura (antes era a de fechamento); os demais métodos continuam pela data do gasto.
+- **Quebra de contrato:** `GET /gastos/periodos` passa a listar só os meses com gastos realizados, com a quantidade de cada mês (contando cada compra parcelada uma vez), e aceita os mesmos filtros de `metodoPagamentoId` e `categoria` da listagem.
+- `GET /gastos/planejados/periodos` lista os meses com gastos planejados, dos mais próximos para os mais distantes, com os mesmos filtros; os gastos sem data vêm num grupo próprio no fim, com `ano` e `mes` nulos.
 - Gastos avulsos aceitam valor negativo, para registrar estornos; eles abatem dos totais e da fatura. Compras parceladas continuam só com valores positivos ou zero.
 
 ## 1.4.9

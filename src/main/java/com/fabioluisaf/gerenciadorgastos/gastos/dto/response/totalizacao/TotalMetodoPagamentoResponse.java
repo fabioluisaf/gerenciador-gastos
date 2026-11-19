@@ -17,10 +17,10 @@ public record TotalMetodoPagamentoResponse(
 
 	public TotalMetodoPagamentoResponse(
 			UUID metodoPagamentoId, UUID instituicaoId, String instituicaoNome, boolean instituicaoPossuiIcone,
-			TipoMetodoPagamento tipo, String nome, BigDecimal realizado, BigDecimal planejado) {
+			String instituicaoCor, TipoMetodoPagamento tipo, String nome, BigDecimal realizado, BigDecimal planejado) {
 
 		this(metodoPagamentoId,
-				new InstituicaoFinanceiraResponse(instituicaoId, instituicaoNome, instituicaoPossuiIcone),
+				new InstituicaoFinanceiraResponse(instituicaoId, instituicaoNome, instituicaoPossuiIcone, instituicaoCor),
 				tipo, nome, realizado, planejado);
 	}
 }
