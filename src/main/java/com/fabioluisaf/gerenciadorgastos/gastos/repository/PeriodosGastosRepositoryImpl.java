@@ -38,11 +38,13 @@ public class PeriodosGastosRepositoryImpl implements PeriodosGastosRepository {
 
 		final var predicados = new ArrayList<Predicate>();
 		predicados.add(cb.equal(root.get("realizado"), realizado));
+
 		if (realizado) {
 			predicados.add(cb.isNotNull(data));
 		}
+
 		predicados.add(GastoSpecifications.umaLinhaPorCompra(root, cb));
-		predicados.addAll(GastoSpecifications.porMetodosECategorias(root, cb, filtro));
+		predicados.addAll(GastoSpecifications.porMetodosECategorias(root, filtro));
 
 		consulta.select(cb.construct(PeriodoComGastosResponse.class, ano, mes, cb.count(root)))
 				.where(predicados.toArray(Predicate[]::new))
@@ -50,6 +52,7 @@ public class PeriodosGastosRepositoryImpl implements PeriodosGastosRepository {
 				.orderBy(realizado
 						? List.of(cb.desc(ano), cb.desc(mes))
 						: List.of(cb.asc(ano, Nulls.LAST), cb.asc(mes, Nulls.LAST)));
+						
 		return entityManager.createQuery(consulta).getResultList();
 	}
 }

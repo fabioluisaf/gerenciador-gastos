@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarInstituicaoFinanceiraForm;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarInstituicaoFinanceiraForm;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarInstituicaoFinanceiraBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarInstituicaoFinanceiraBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InstituicaoFinanceiraResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.InstituicaoFinanceiraService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
@@ -44,9 +44,9 @@ public class InstituicaoFinanceiraController {
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<InstituicaoFinanceiraResponse>> criar(
-			@Valid @ModelAttribute CriarInstituicaoFinanceiraForm form) {
+			@Valid @ModelAttribute CriarInstituicaoFinanceiraBody request) {
 
-		final var instituicao = service.criar(form);
+		final var instituicao = service.criar(request);
 		final var localizacao = ServletUriComponentsBuilder.fromCurrentRequestUri()
 				.path("/{id}")
 				.buildAndExpand(instituicao.getId())
@@ -99,9 +99,9 @@ public class InstituicaoFinanceiraController {
 
 	@PutMapping(path = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ApiResponse<InstituicaoFinanceiraResponse> atualizar(
-			@PathVariable UUID id, @Valid @ModelAttribute AtualizarInstituicaoFinanceiraForm form) {
+			@PathVariable UUID id, @Valid @ModelAttribute AtualizarInstituicaoFinanceiraBody request) {
 
-		return presenter.apresentar(InstituicaoFinanceiraResponse.from(service.atualizar(id, form)));
+		return presenter.apresentar(InstituicaoFinanceiraResponse.from(service.atualizar(id, request)));
 	}
 
 	@DeleteMapping("/{id}")

@@ -1,4 +1,4 @@
-package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
+package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public record CriarInstituicaoFinanceiraForm(
+public record AtualizarInstituicaoFinanceiraBody(
 
     @NotBlank
     @Size(max = 255)

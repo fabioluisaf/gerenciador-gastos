@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarInstituicaoFinanceiraForm;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarInstituicaoFinanceiraForm;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarInstituicaoFinanceiraBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarInstituicaoFinanceiraBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.IconeInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.InstituicaoFinanceiraEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.InstituicaoFinanceiraExistenteException;
@@ -43,30 +43,30 @@ public class InstituicaoFinanceiraService {
 	}
 
 	@Transactional
-	public InstituicaoFinanceira criar(CriarInstituicaoFinanceiraForm form) {
-		final var nome = form.nome().strip();
+	public InstituicaoFinanceira criar(CriarInstituicaoFinanceiraBody request) {
+		final var nome = request.nome().strip();
 		if (instituicaoFinanceiraRepository.existsByNomeIgnoreCase(nome)) {
 			throw new InstituicaoFinanceiraExistenteException();
 		}
 
 		final var instituicao = new InstituicaoFinanceira(nome);
-		instituicao.setCor(normalizarCor(form.cor()));
-		aplicarIcone(instituicao, form.icone());
+		instituicao.setCor(normalizarCor(request.cor()));
+		aplicarIcone(instituicao, request.icone());
 
 		return instituicaoFinanceiraRepository.save(instituicao);
 	}
 
 	@Transactional
-	public InstituicaoFinanceira atualizar(UUID id, AtualizarInstituicaoFinanceiraForm form) {
+	public InstituicaoFinanceira atualizar(UUID id, AtualizarInstituicaoFinanceiraBody request) {
 		final var instituicao = buscarPorId(id);
-		final var nome = form.nome().strip();
+		final var nome = request.nome().strip();
 		if (instituicaoFinanceiraRepository.existsByNomeIgnoreCaseAndIdNot(nome, id)) {
 			throw new InstituicaoFinanceiraExistenteException();
 		}
 
 		instituicao.setNome(nome);
-		instituicao.setCor(normalizarCor(form.cor()));
-		aplicarIcone(instituicao, form.icone());
+		instituicao.setCor(normalizarCor(request.cor()));
+		aplicarIcone(instituicao, request.icone());
 
 		return instituicaoFinanceiraRepository.save(instituicao);
 	}

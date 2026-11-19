@@ -25,37 +25,41 @@ public final class GastoSpecifications {
 		return (root, query, cb) -> {
 			final var fatura = root.<Gasto, Fatura>join("fatura", JoinType.LEFT);
 			final var predicados = new ArrayList<Predicate>();
+
 			predicados.add(cb.equal(root.get("realizado"), realizado));
-			predicados.addAll(porMetodosECategorias(root, cb, filtro));
+			predicados.addAll(porMetodosECategorias(root, filtro));
 
 			final Expression<LocalDate> dataReferencia = cb.<LocalDate>selectCase()
 					.when(cb.equal(root.get("tipoMetodoPagamento"), TipoMetodoPagamento.CREDITO),
 							fatura.<LocalDate>get("dataVencimento"))
 					.otherwise(root.<LocalDate>get("data"));
+
 			if (filtro.inicio() != null) {
 				predicados.add(cb.greaterThanOrEqualTo(dataReferencia, filtro.inicio()));
 			}
 			if (filtro.fim() != null) {
 				predicados.add(cb.lessThanOrEqualTo(dataReferencia, filtro.fim()));
 			}
-
 			if (filtro.faturaId() != null) {
 				predicados.add(cb.equal(fatura.get("id"), filtro.faturaId()));
 			} else {
 				predicados.add(umaLinhaPorCompra(root, cb));
 			}
+
 			return cb.and(predicados.toArray(Predicate[]::new));
 		};
 	}
 
-	static List<Predicate> porMetodosECategorias(From<?, Gasto> root, CriteriaBuilder cb, FiltroGastos filtro) {
+	static List<Predicate> porMetodosECategorias(From<?, Gasto> root, FiltroGastos filtro) {
 		final var predicados = new ArrayList<Predicate>();
+
 		if (!filtro.metodoPagamentoIds().isEmpty()) {
 			predicados.add(root.get("metodoPagamento").get("id").in(filtro.metodoPagamentoIds()));
 		}
 		if (!filtro.categorias().isEmpty()) {
 			predicados.add(root.get("categoria").in(filtro.categorias()));
 		}
+
 		return predicados;
 	}
 
