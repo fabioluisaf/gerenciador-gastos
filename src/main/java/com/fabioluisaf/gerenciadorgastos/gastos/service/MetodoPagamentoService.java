@@ -12,7 +12,6 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.Atualiza
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.metodos.Credito;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
@@ -30,6 +29,7 @@ public class MetodoPagamentoService {
 	private final MetodoPagamentoRepository metodoPagamentoRepository;
 	private final GastoRepository gastoRepository;
 	private final FaturaRepository faturaRepository;
+	private final InstituicaoFinanceiraService instituicaoFinanceiraService;
 
 	public Page<MetodoPagamento> listar(Pageable pageable) {
 		return metodoPagamentoRepository.findAll(pageable);
@@ -38,7 +38,7 @@ public class MetodoPagamentoService {
 	@Transactional
 	public MetodoPagamento criar(CriarMetodoPagamentoBody request) {
 		final var metodo = MetodoPagamento.criar(request.tipo(), request.diaFechamento(), request.diaVencimento());
-		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
+		aplicarDados(metodo, request.instituicaoFinanceiraId(), request.nome());
 
 		return metodoPagamentoRepository.save(metodo);
 	}
@@ -49,7 +49,7 @@ public class MetodoPagamentoService {
 
 		metodo.atualizarDiaFechamento(request.diaFechamento());
 		metodo.atualizarDiaVencimento(request.diaVencimento());
-		aplicarDados(metodo, request.instituicaoFinanceira(), request.nome());
+		aplicarDados(metodo, request.instituicaoFinanceiraId(), request.nome());
 
 		return metodoPagamentoRepository.save(metodo);
 	}
@@ -65,9 +65,9 @@ public class MetodoPagamentoService {
 	}
 
 	private void aplicarDados(
-			MetodoPagamento metodo, InstituicaoFinanceira instituicao, String nome) {
-				
-		metodo.setInstituicaoFinanceira(instituicao);
+			MetodoPagamento metodo, UUID instituicaoFinanceiraId, String nome) {
+
+		metodo.setInstituicaoFinanceira(instituicaoFinanceiraService.buscarPorId(instituicaoFinanceiraId));
 		metodo.setNome(nome);
 	}
 

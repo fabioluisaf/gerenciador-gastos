@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0
+- **Quebra de contrato:** instituição financeira deixa de ser um enum (`NUBANK`/`CAIXA`) e vira um cadastro próprio com nome e ícone (CRUD em `/instituicoes-financeiras`, ícone em `GET /instituicoes-financeiras/{id}/icone`).
+  - Métodos de pagamento passam a receber `instituicaoFinanceiraId` e a devolver `instituicaoFinanceira` como objeto `{ id, nome, possuiIcone }`.
+  - Migração cria Nubank e Caixa com os ícones que estavam no frontend e liga os métodos de pagamento existentes a elas.
+- **Quebra de contrato:** `GET /gastos/intervalo` foi substituído por duas listagens paginadas, com os mesmos filtros opcionais (`inicio`, `fim`, `metodoPagamentoId`, `categoria` e o novo `faturaId`):
+  - `GET /gastos`: gastos realizados, dos mais recentes para os mais antigos;
+  - `GET /gastos/planejados`: gastos ainda não realizados, dos mais próximos para os mais distantes, com os sem data no fim.
+- Gastos avulsos aceitam valor negativo, para registrar estornos; eles abatem dos totais e da fatura. Compras parceladas continuam só com valores positivos ou zero.
+
 ## 1.4.9
 - Valores personalizados por parcela também na criação, com validação da soma.
 - Recálculo automático das parcelas ao atualizar a compra sem informar valores individuais.

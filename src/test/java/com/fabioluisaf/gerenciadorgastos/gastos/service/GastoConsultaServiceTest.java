@@ -16,13 +16,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InstituicaoFinanceiraResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
 
@@ -54,22 +55,27 @@ class GastoConsultaServiceTest {
 	}
 
 	@Test
-	void consultaIntervaloComPaginacao() {
+	void listaRepassandoTodosOsFiltros() {
 		final var inicio = LocalDate.of(2026, 11, 25);
 		final var fim = LocalDate.of(2026, 12, 5);
+		final var faturaId = UUID.randomUUID();
 		final var pageable = PageRequest.of(1, 10);
 		final var pagina = new PageImpl<Gasto>(List.of(), pageable, 12);
 		for (final var filtros : List.of(
-				new FiltrarGastosUrlParams(null, null),
-				new FiltrarGastosUrlParams(metodoPagamentoId, null),
-				new FiltrarGastosUrlParams(null, "Alimentacao"),
-				new FiltrarGastosUrlParams(metodoPagamentoId, "Alimentacao")
+				new FiltrarGastosUrlParams(null, null, null, null, null),
+				new FiltrarGastosUrlParams(inicio, fim, null, null, null),
+				new FiltrarGastosUrlParams(inicio, null, metodoPagamentoId, null, null),
+				new FiltrarGastosUrlParams(null, fim, null, "Alimentacao", null),
+				new FiltrarGastosUrlParams(null, null, metodoPagamentoId, "Alimentacao", faturaId)
 		)) {
-			when(repository.listarPorIntervalo(inicio, fim, filtros.metodoPagamentoId(), filtros.categoria(), pageable))
-					.thenReturn(pagina);
+			final var planejados = new PageImpl<Gasto>(List.of(), pageable, 3);
+			when(repository.listar(true, filtros.inicio(), filtros.fim(), filtros.metodoPagamentoId(),
+					filtros.categoria(), filtros.faturaId(), pageable)).thenReturn(pagina);
+			when(repository.listar(false, filtros.inicio(), filtros.fim(), filtros.metodoPagamentoId(),
+					filtros.categoria(), filtros.faturaId(), pageable)).thenReturn(planejados);
 
-			assertSame(pagina, service.listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, fim), filtros, pageable));
-			verify(repository).listarPorIntervalo(inicio, fim, filtros.metodoPagamentoId(), filtros.categoria(), pageable);
+			assertSame(pagina, service.listarRealizados(filtros, pageable));
+			assertSame(planejados, service.listarPlanejados(filtros, pageable));
 		}
 	}
 
@@ -82,7 +88,7 @@ class GastoConsultaServiceTest {
 				new TotalCategoriaResponse("Casa", new BigDecimal("10.50"), new BigDecimal("20.75"))
 		), pageable, 3);
 		final var metodos = new PageImpl<>(List.of(
-				new TotalMetodoPagamentoResponse(metodoPagamentoId, InstituicaoFinanceira.CAIXA,
+				new TotalMetodoPagamentoResponse(metodoPagamentoId, InstituicaoFinanceiraResponse.from(InstituicoesTeste.caixa()),
 						TipoMetodoPagamento.PIX, "Pix Caixa", new BigDecimal("10.50"), new BigDecimal("20.75"))
 		), pageable, 3);
 		when(repository.totalizarPorCategoria(request.inicio(), request.fim(), pageable)).thenReturn(categorias);

@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.GastoRealizadoSemDataException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.FaturaExistenteException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.IconeInvalidoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.InstituicaoFinanceiraEmUsoException;
+import com.fabioluisaf.gerenciadorgastos.gastos.exception.InstituicaoFinanceiraExistenteException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalidaException;
@@ -65,7 +68,9 @@ public class NegocioExceptionHandler {
 		return responder(HttpStatus.BAD_REQUEST, "DATA_OBRIGATORIA_PARA_GASTO_REALIZADO", request);
 	}
 
-	@ExceptionHandler({PagamentoInvalidoException.class, ValoresParcelasInvalidosException.class})
+	@ExceptionHandler({
+		PagamentoInvalidoException.class, ValoresParcelasInvalidosException.class, IconeInvalidoException.class
+	})
 	public ResponseEntity<ApiResponse<ErroResponse>> tratarRegraInvalida(
 			RuntimeException excecao, HttpServletRequest request
 	) {
@@ -77,6 +82,20 @@ public class NegocioExceptionHandler {
 			MetodoPagamentoEmUsoException excecao, HttpServletRequest request
 	) {
 		return responder(HttpStatus.CONFLICT, "METODO_PAGAMENTO_EM_USO", request);
+	}
+
+	@ExceptionHandler(InstituicaoFinanceiraEmUsoException.class)
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarInstituicaoFinanceiraEmUso(
+			InstituicaoFinanceiraEmUsoException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.CONFLICT, "INSTITUICAO_FINANCEIRA_EM_USO", request);
+	}
+
+	@ExceptionHandler(InstituicaoFinanceiraExistenteException.class)
+	public ResponseEntity<ApiResponse<ErroResponse>> tratarInstituicaoFinanceiraExistente(
+			InstituicaoFinanceiraExistenteException excecao, HttpServletRequest request
+	) {
+		return responder(HttpStatus.CONFLICT, "INSTITUICAO_FINANCEIRA_JA_EXISTE", request);
 	}
 
 	private ResponseEntity<ApiResponse<ErroResponse>> responder(

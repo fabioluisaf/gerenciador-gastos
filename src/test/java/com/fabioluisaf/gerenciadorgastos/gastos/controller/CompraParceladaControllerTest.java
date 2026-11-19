@@ -33,7 +33,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
@@ -63,7 +63,7 @@ class CompraParceladaControllerTest {
 		metodoPagamentoId = UUID.randomUUID();
 		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 10, 17);
 		metodoPagamento.setId(metodoPagamentoId);
-		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
+		metodoPagamento.setInstituicaoFinanceira(InstituicoesTeste.nubank());
 		metodoPagamento.setNome("Cartao Nubank");
 		compra = new CompraParcelada();
 		compra.setId(id);

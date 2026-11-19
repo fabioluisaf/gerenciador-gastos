@@ -82,7 +82,7 @@ class GlobalExceptionHandlerTest {
 	@Test
 	void reportaErrosEstruturadosParaCamposInvalidos() throws Exception {
 		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
-				{"nome":"  ","valor":-1,"categoria":"","realizado":null}
+				{"nome":"  ","valor":-1.001,"categoria":"","realizado":null}
 				"""))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.status").value(400))
@@ -94,14 +94,14 @@ class GlobalExceptionHandlerTest {
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'nome')].codigo",
 						hasItem("CAMPO_NAO_PODE_FICAR_VAZIO")))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'valor')].codigo",
-						hasItem("DEVE_SER_ZERO_OU_POSITIVO")))
+						hasItem("FORMATO_NUMERICO_INVALIDO")))
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'realizado')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));
-		mvc.perform(get("/gastos/intervalo").param("inicio", "2024-03-01").param("fim", "2024-02-01"))
+		mvc.perform(get("/gastos").param("inicio", "2024-03-01").param("fim", "2024-02-01"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'intervaloValido')].codigo",
 						hasItem("INTERVALO_INVALIDO")));
-		mvc.perform(get("/gastos/intervalo").param("fim", "2024-02-01"))
+		mvc.perform(get("/gastos/totais/categoria").param("fim", "2024-02-01"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.errosValidacao[?(@.campo == 'inicio')].codigo",
 						hasItem("CAMPO_OBRIGATORIO")));

@@ -35,16 +35,26 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
     """)
 	List<PeriodoComGastosResponse> listarPeriodosComGastos();
 
-	@EntityGraph(attributePaths = { "compraParcelada", "metodoPagamento", "fatura" })
+	String DATA_REFERENCIA = """
+        (case when g.tipoMetodoPagamento = com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO
+            then f.dataFechamento else g.data end)
+        """;
+
+	@EntityGraph(attributePaths = { "compraParcelada", "metodoPagamento", "metodoPagamento.instituicaoFinanceira", "fatura" })
 	@Query("""
         select g from Gasto g left join g.fatura f
-        where
-        """ + CONDICAO_INTERVALO + """
+        where g.realizado = :realizado
+        and (cast(:inicio as LocalDate) is null or """ + DATA_REFERENCIA + """
+         >= :inicio)
+        and (cast(:fim as LocalDate) is null or """ + DATA_REFERENCIA + """
+         <= :fim)
         and (:metodoPagamentoId is null or g.metodoPagamento.id = :metodoPagamentoId)
         and (:categoria is null or g.categoria = :categoria)
+        and (:faturaId is null or f.id = :faturaId)
     """)
-	Page<Gasto> listarPorIntervalo(
-			LocalDate inicio, LocalDate fim, UUID metodoPagamentoId, String categoria, Pageable pageable);
+	Page<Gasto> listar(
+			boolean realizado, LocalDate inicio, LocalDate fim, UUID metodoPagamentoId, String categoria,
+			UUID faturaId, Pageable pageable);
 
 	@Query(value = """
         select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse(
@@ -64,14 +74,14 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 
 	@Query(value = """
         select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse(
-            m.id, m.instituicaoFinanceira, m.tipo, m.nome,
+            m.id, i.id, i.nome, case when i.iconeTipo is null then false else true end, m.tipo, m.nome,
             sum(case when g.realizado = true then g.valor else 0 end),
             sum(g.valor)
         )
-        from Gasto g join g.metodoPagamento m left join g.fatura f
+        from Gasto g join g.metodoPagamento m join m.instituicaoFinanceira i left join g.fatura f
         where
         """ + CONDICAO_INTERVALO + """
-        group by m.id, m.instituicaoFinanceira, m.tipo, m.nome
+        group by m.id, i.id, i.nome, i.iconeTipo, m.tipo, m.nome
     """, countQuery = """
         select count(distinct g.metodoPagamento.id) from Gasto g left join g.fatura f
         where
@@ -83,6 +93,6 @@ public interface GastoRepository extends JpaRepository<Gasto, UUID>{
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
 
 	@Override
-	@EntityGraph(attributePaths = {"compraParcelada", "metodoPagamento", "fatura"})
+	@EntityGraph(attributePaths = { "compraParcelada", "metodoPagamento", "metodoPagamento.instituicaoFinanceira", "fatura" })
 	Optional<Gasto> findById(UUID id);
 }

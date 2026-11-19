@@ -50,7 +50,7 @@ public class MetodoPagamentoController {
 
 	@GetMapping
 	public ApiResponse<List<MetodoPagamentoResponse>> listar(
-			@PageableDefault(sort = { "tipo", "instituicaoFinanceira", "nome" }) Pageable pageable) {
+			@PageableDefault(sort = { "tipo", "instituicaoFinanceira.nome", "nome" }) Pageable pageable) {
 
 		final var metodos = service.listar(pageable).map(MetodoPagamentoResponse::from);
 		return presenter.apresentarPagina(metodos);

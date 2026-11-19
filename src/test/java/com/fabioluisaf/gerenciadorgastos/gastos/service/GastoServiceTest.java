@@ -26,7 +26,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.exception.ParcelaOperacaoInvalid
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
@@ -46,7 +46,7 @@ class GastoServiceTest {
 		faturaService = mock(FaturaService.class);
 		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null, null);
 		metodoPagamento.setId(UUID.randomUUID());
-		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+		metodoPagamento.setInstituicaoFinanceira(InstituicoesTeste.caixa());
 		metodoPagamento.setNome("Pix Caixa");
 		service = new GastoService(repository, metodoPagamentoService, faturaService);
 	}

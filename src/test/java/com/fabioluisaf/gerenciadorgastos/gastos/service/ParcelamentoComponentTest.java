@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 
@@ -27,7 +27,7 @@ class ParcelamentoComponentTest {
 		final var faturaService = mock(FaturaService.class);
 		final var metodo = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31, 7);
 		metodo.setId(UUID.randomUUID());
-		metodo.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
+		metodo.setInstituicaoFinanceira(InstituicoesTeste.nubank());
 		final var primeiraFatura = new Fatura();
 		final var segundaFatura = new Fatura();
 		when(faturaService.obterOuCriar(metodo.getId(), YearMonth.of(2024, 1))).thenReturn(primeiraFatura);

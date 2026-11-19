@@ -16,4 +16,6 @@ public interface MetodoPagamentoRepository extends JpaRepository<MetodoPagamento
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select metodo from MetodoPagamento metodo where metodo.id = :id")
 	Optional<MetodoPagamento> findByIdForUpdate(UUID id);
+
+	boolean existsByInstituicaoFinanceiraId(UUID instituicaoFinanceiraId);
 }

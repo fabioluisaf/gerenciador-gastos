@@ -95,6 +95,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 				case 404 -> "RECURSO_NAO_ENCONTRADO";
 				case 405 -> "METODO_HTTP_NAO_PERMITIDO";
 				case 406 -> "FORMATO_DE_RESPOSTA_NAO_ACEITO";
+				case 413 -> "ARQUIVO_MUITO_GRANDE";
 				case 415 -> "TIPO_DE_CONTEUDO_NAO_SUPORTADO";
 				default -> "NAO_FOI_POSSIVEL_PROCESSAR_A_REQUISICAO";
 			};

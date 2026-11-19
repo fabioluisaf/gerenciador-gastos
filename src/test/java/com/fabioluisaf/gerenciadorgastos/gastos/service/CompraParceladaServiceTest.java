@@ -29,7 +29,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraP
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;
@@ -54,12 +54,13 @@ class CompraParceladaServiceTest {
 		repository = mock(CompraParceladaRepository.class);
 		metodoPagamentoRepository = mock(MetodoPagamentoRepository.class);
 		final var metodoPagamentoService = new MetodoPagamentoService(
-				metodoPagamentoRepository, mock(GastoRepository.class), mock(FaturaRepository.class)
+				metodoPagamentoRepository, mock(GastoRepository.class), mock(FaturaRepository.class),
+				mock(InstituicaoFinanceiraService.class)
 		);
 		faturaRepository = mock(FaturaRepository.class);
 		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31, 7);
 		metodoPagamento.setId(UUID.randomUUID());
-		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
+		metodoPagamento.setInstituicaoFinanceira(InstituicoesTeste.nubank());
 		metodoPagamento.setNome("Cartao Nubank");
 		when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodoPagamento));
 		when(metodoPagamentoRepository.findByIdForUpdate(metodoPagamento.getId()))

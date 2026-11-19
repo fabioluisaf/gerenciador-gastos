@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -59,16 +60,22 @@ public class GastoController {
 		return presenter.apresentar(gastoConsultaService.listarPeriodosComGastos());
 	}
 
-	@GetMapping("/intervalo")
-	public ApiResponse<List<GastoResumidoResponse>> listarPorIntervalo(
-			@Valid @ModelAttribute BuscarGastosPorIntervaloUrlParams request,
-			@ModelAttribute FiltrarGastosUrlParams filtros,
-			@PageableDefault(sort = { "data", "id" }) Pageable pageable) {
-				
-		final var gastos = gastoConsultaService.listarPorIntervalo(request, filtros, pageable)
-				.map(GastoResumidoResponse::from);
+	@GetMapping
+	public ApiResponse<List<GastoResumidoResponse>> listarRealizados(
+			@Valid @ModelAttribute FiltrarGastosUrlParams filtros,
+			@PageableDefault(sort = { "data", "id" }, direction = Direction.DESC) Pageable pageable) {
 
-		return presenter.apresentarPagina(gastos);
+		return presenter.apresentarPagina(
+				gastoConsultaService.listarRealizados(filtros, pageable).map(GastoResumidoResponse::from));
+	}
+
+	@GetMapping("/planejados")
+	public ApiResponse<List<GastoResumidoResponse>> listarPlanejados(
+			@Valid @ModelAttribute FiltrarGastosUrlParams filtros,
+			@PageableDefault(sort = { "data", "id" }) Pageable pageable) {
+
+		return presenter.apresentarPagina(
+				gastoConsultaService.listarPlanejados(filtros, pageable).map(GastoResumidoResponse::from));
 	}
 
 	@GetMapping("/{id}")

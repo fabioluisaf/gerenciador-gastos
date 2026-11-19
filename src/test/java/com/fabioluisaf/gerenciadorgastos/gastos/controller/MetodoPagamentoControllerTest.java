@@ -25,12 +25,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FaturaRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
+import com.fabioluisaf.gerenciadorgastos.gastos.repository.InstituicaoFinanceiraRepository;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.MetodoPagamentoRepository;
+import com.fabioluisaf.gerenciadorgastos.gastos.service.InstituicaoFinanceiraService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
 import com.fabioluisaf.gerenciadorgastos.shared.exception.GlobalExceptionHandler;
@@ -45,8 +47,12 @@ class MetodoPagamentoControllerTest {
 	@BeforeEach
 	void configurar() {
 		repository = mock(MetodoPagamentoRepository.class);
+		final var instituicaoRepository = mock(InstituicaoFinanceiraRepository.class);
+		when(instituicaoRepository.findById(InstituicoesTeste.NUBANK_ID)).thenReturn(Optional.of(InstituicoesTeste.nubank()));
+		when(instituicaoRepository.findById(InstituicoesTeste.CAIXA_ID)).thenReturn(Optional.of(InstituicoesTeste.caixa()));
 		final var service = new MetodoPagamentoService(
-				repository, mock(GastoRepository.class), mock(FaturaRepository.class)
+				repository, mock(GastoRepository.class), mock(FaturaRepository.class),
+				new InstituicaoFinanceiraService(instituicaoRepository, repository)
 		);
 		final var presenter = new ApiResponsePresenter(new ApiProperties("v1"));
 		final var validator = new LocalValidatorFactoryBean();
@@ -58,7 +64,7 @@ class MetodoPagamentoControllerTest {
 	}
 
 	@Test
-	void criaEAtualizaInstituicaoFinanceiraTipada() throws Exception {
+	void criaEAtualizaInstituicaoFinanceiraPeloId() throws Exception {
 		final var id = UUID.randomUUID();
 		when(repository.save(any(MetodoPagamento.class))).thenAnswer(invocacao -> {
 			final MetodoPagamento metodo = invocacao.getArgument(0);
@@ -69,19 +75,20 @@ class MetodoPagamentoControllerTest {
 		final var metodo = MetodoPagamento.criar(TipoMetodoPagamento.PIX, null, null);
 		when(repository.findById(id)).thenReturn(Optional.of(metodo));
 
-		for (final var instituicao : InstituicaoFinanceira.values()) {
+		for (final var instituicao : List.of(InstituicoesTeste.nubank(), InstituicoesTeste.caixa())) {
 			final var conteudo = """
-					{"tipo":"PIX","instituicaoFinanceira":"%s","nome":"Conta"}
-					""".formatted(instituicao.name());
+					{"tipo":"PIX","instituicaoFinanceiraId":"%s","nome":"Conta"}
+					""".formatted(instituicao.getId());
 			mvc.perform(post("/metodos-pagamento").contentType(MediaType.APPLICATION_JSON).content(conteudo))
 					.andExpect(status().isCreated())
-					.andExpect(jsonPath("$.dados.instituicaoFinanceira").value(instituicao.name()));
+					.andExpect(jsonPath("$.dados.instituicaoFinanceira.id").value(instituicao.getId().toString()))
+					.andExpect(jsonPath("$.dados.instituicaoFinanceira.nome").value(instituicao.getNome()));
 			mvc.perform(put("/metodos-pagamento/{id}", id)
 					.contentType(MediaType.APPLICATION_JSON).content("""
-							{"instituicaoFinanceira":"%s","nome":"Conta"}
-							""".formatted(instituicao.name())))
+							{"instituicaoFinanceiraId":"%s","nome":"Conta"}
+							""".formatted(instituicao.getId())))
 					.andExpect(status().isOk())
-					.andExpect(jsonPath("$.dados.instituicaoFinanceira").value(instituicao.name()));
+					.andExpect(jsonPath("$.dados.instituicaoFinanceira.nome").value(instituicao.getNome()));
 			assertEquals(instituicao, metodo.getInstituicaoFinanceira());
 		}
 	}
@@ -108,7 +115,7 @@ class MetodoPagamentoControllerTest {
 			final var fechamento = esperado == TipoMetodoPagamento.CREDITO ? "10" : "null";
 			final var vencimento = esperado == TipoMetodoPagamento.CREDITO ? "17" : "null";
 			final var conteudo = """
-					{"tipo":"%s","instituicaoFinanceira":"CAIXA","nome":"Conta","diaFechamento":%s,"diaVencimento":%s}
+					{"tipo":"%s","instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Conta","diaFechamento":%s,"diaVencimento":%s}
 					""".formatted(tipo, fechamento, vencimento);
 			mvc.perform(post("/metodos-pagamento").contentType(MediaType.APPLICATION_JSON).content(conteudo))
 					.andExpect(status().isCreated())
@@ -117,7 +124,7 @@ class MetodoPagamentoControllerTest {
 							esperado == TipoMetodoPagamento.CREDITO ? 17 : null));
 			mvc.perform(put("/metodos-pagamento/{id}", id)
 					.contentType(MediaType.APPLICATION_JSON).content("""
-							{"instituicaoFinanceira":"CAIXA","nome":"Atualizado","diaFechamento":%s,"diaVencimento":%s}
+							{"instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Atualizado","diaFechamento":%s,"diaVencimento":%s}
 							""".formatted(fechamento, vencimento)))
 					.andExpect(status().isOk())
 					.andExpect(jsonPath("$.dados.tipo").value(esperado.name()));
@@ -138,7 +145,7 @@ class MetodoPagamentoControllerTest {
 
 		mvc.perform(put("/metodos-pagamento/{id}", id).contentType(MediaType.APPLICATION_JSON)
 				.content("""
-						{"instituicaoFinanceira":"CAIXA","nome":"Alterado","diaFechamento":20,"diaVencimento":27}
+						{"instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Alterado","diaFechamento":20,"diaVencimento":27}
 						"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados.tipo").value("CREDITO"))
@@ -165,13 +172,13 @@ class MetodoPagamentoControllerTest {
 					? "DIA_FECHAMENTO_OBRIGATORIO_PARA_CREDITO"
 					: "DIA_FECHAMENTO_PERMITIDO_APENAS_PARA_CREDITO";
 			final var conteudo = """
-					{"tipo":"%s","instituicaoFinanceira":"CAIXA","nome":"Alterado","diaFechamento":%s}
+					{"tipo":"%s","instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Alterado","diaFechamento":%s}
 					""".formatted(tipo.name(), diaInvalido);
 			mvc.perform(post("/metodos-pagamento").contentType(MediaType.APPLICATION_JSON).content(conteudo))
 					.andExpect(status().isBadRequest())
 					.andExpect(jsonPath("$.dados.mensagem").value(codigo));
 			mvc.perform(put("/metodos-pagamento/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
-					{"instituicaoFinanceira":"CAIXA","nome":"Alterado","diaFechamento":%s}
+					{"instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Alterado","diaFechamento":%s}
 					""".formatted(diaInvalido)))
 					.andExpect(status().isBadRequest())
 					.andExpect(jsonPath("$.dados.mensagem").value(codigo));
@@ -189,7 +196,7 @@ class MetodoPagamentoControllerTest {
 			when(repository.findById(id)).thenReturn(Optional.of(metodo));
 			for (final var request : List.of(post("/metodos-pagamento"), put("/metodos-pagamento/{id}", id))) {
 				final var resultado = mvc.perform(request.contentType(MediaType.APPLICATION_JSON).content("""
-						{"tipo":"CREDITO","instituicaoFinanceira":"CAIXA","nome":"Cartao","diaFechamento":10,"diaVencimento":%s}
+						{"tipo":"CREDITO","instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Cartao","diaFechamento":10,"diaVencimento":%s}
 						""".formatted(dia)))
 						.andExpect(status().isBadRequest());
 				if (dia.equals("null")) {
@@ -203,7 +210,7 @@ class MetodoPagamentoControllerTest {
 			assertEquals(17, metodo.getDiaVencimento());
 		}
 		mvc.perform(post("/metodos-pagamento").contentType(MediaType.APPLICATION_JSON).content("""
-				{"tipo":"CREDITO","instituicaoFinanceira":"CAIXA","nome":"Cartao","diaFechamento":10}
+				{"tipo":"CREDITO","instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Cartao","diaFechamento":10}
 				"""))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.mensagem").value("DIA_VENCIMENTO_OBRIGATORIO_PARA_CREDITO"));
@@ -220,7 +227,7 @@ class MetodoPagamentoControllerTest {
 			when(repository.findById(id)).thenReturn(Optional.of(MetodoPagamento.criar(tipo, null, null)));
 			for (final var request : List.of(post("/metodos-pagamento"), put("/metodos-pagamento/{id}", id))) {
 				mvc.perform(request.contentType(MediaType.APPLICATION_JSON).content("""
-						{"tipo":"%s","instituicaoFinanceira":"CAIXA","nome":"Conta","diaVencimento":17}
+						{"tipo":"%s","instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Conta","diaVencimento":17}
 						""".formatted(tipo.name())))
 						.andExpect(status().isBadRequest())
 						.andExpect(jsonPath("$.dados.mensagem").value("DIA_VENCIMENTO_PERMITIDO_APENAS_PARA_CREDITO"));
@@ -233,7 +240,7 @@ class MetodoPagamentoControllerTest {
 	void rejeitaTipoAusenteOuInvalidoNaCriacao() throws Exception {
 		for (final var valor : List.of("null", "\"\"", "\"desconhecido\"")) {
 			final var conteudo = """
-					{"tipo":%s,"instituicaoFinanceira":"CAIXA","nome":"Conta"}
+					{"tipo":%s,"instituicaoFinanceiraId":"00000000-0000-0000-0000-00000000000b","nome":"Conta"}
 					""".formatted(valor);
 			final var resultado = mvc.perform(post("/metodos-pagamento")
 					.contentType(MediaType.APPLICATION_JSON).content(conteudo))
@@ -251,9 +258,9 @@ class MetodoPagamentoControllerTest {
 
 	@Test
 	void rejeitaInstituicaoAusenteOuInvalidaNaCriacaoEAtualizacao() throws Exception {
-		for (final var valor : List.of("null", "\"\"", "\"DESCONHECIDA\"")) {
+		for (final var valor : List.of("null", "\"DESCONHECIDA\"")) {
 			final var conteudo = """
-					{"tipo":"PIX","instituicaoFinanceira":%s,"nome":"Conta"}
+					{"tipo":"PIX","instituicaoFinanceiraId":%s,"nome":"Conta"}
 					""".formatted(valor);
 			for (final var request : List.of(post("/metodos-pagamento"),
 					put("/metodos-pagamento/{id}", UUID.randomUUID()))) {
@@ -261,7 +268,7 @@ class MetodoPagamentoControllerTest {
 						.andExpect(status().isBadRequest());
 				if (valor.equals("null")) {
 					resultado.andExpect(jsonPath(
-							"$.dados.errosValidacao[?(@.campo == 'instituicaoFinanceira')].codigo",
+							"$.dados.errosValidacao[?(@.campo == 'instituicaoFinanceiraId')].codigo",
 							hasItem("CAMPO_OBRIGATORIO")));
 				} else {
 					resultado.andExpect(jsonPath("$.dados.mensagem").value("REQUISICAO_INVALIDA"));
@@ -269,5 +276,16 @@ class MetodoPagamentoControllerTest {
 			}
 		}
 		verifyNoInteractions(repository);
+	}
+
+	@Test
+	void respondeNaoEncontradoParaInstituicaoInexistente() throws Exception {
+		final var conteudo = """
+				{"tipo":"PIX","instituicaoFinanceiraId":"%s","nome":"Conta"}
+				""".formatted(UUID.randomUUID());
+		mvc.perform(post("/metodos-pagamento").contentType(MediaType.APPLICATION_JSON).content(conteudo))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"));
+		verify(repository, never()).save(any());
 	}
 }

@@ -28,12 +28,18 @@ public class GastoConsultaService {
 		return gastoRepository.listarPeriodosComGastos();
 	}
 
-	public Page<Gasto> listarPorIntervalo(
-			BuscarGastosPorIntervaloUrlParams request, 
-			FiltrarGastosUrlParams filtros, Pageable pageable) {
+	public Page<Gasto> listarRealizados(FiltrarGastosUrlParams filtros, Pageable pageable) {
+		return listar(true, filtros, pageable);
+	}
 
-		return gastoRepository.listarPorIntervalo(
-				request.inicio(), request.fim(), filtros.metodoPagamentoId(), filtros.categoria(), pageable);
+	public Page<Gasto> listarPlanejados(FiltrarGastosUrlParams filtros, Pageable pageable) {
+		return listar(false, filtros, pageable);
+	}
+
+	private Page<Gasto> listar(boolean realizado, FiltrarGastosUrlParams filtros, Pageable pageable) {
+		return gastoRepository.listar(
+				realizado, filtros.inicio(), filtros.fim(), filtros.metodoPagamentoId(), filtros.categoria(),
+				filtros.faturaId(), pageable);
 	}
 
 	public Page<TotalCategoriaResponse> totalizarPorCategoria(

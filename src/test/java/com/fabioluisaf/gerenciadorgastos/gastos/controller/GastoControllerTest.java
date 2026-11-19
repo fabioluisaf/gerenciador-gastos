@@ -39,6 +39,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.InstituicaoFinanceiraResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
@@ -47,7 +48,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoCom
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
@@ -79,7 +80,7 @@ class GastoControllerTest {
 		metodoPagamentoId = UUID.randomUUID();
 		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.DEBITO, null, null);
 		metodoPagamento.setId(metodoPagamentoId);
-		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+		metodoPagamento.setInstituicaoFinanceira(InstituicoesTeste.caixa());
 		metodoPagamento.setNome("Debito Caixa");
 		gasto = new Gasto();
 		gasto.setId(id);
@@ -170,58 +171,87 @@ class GastoControllerTest {
 	}
 
 	@Test
-	void listaIntervaloComPaginacaoEValidaDatas() throws Exception {
+	void listaTodosOsGastosComPaginacaoEFiltrosOpcionais() throws Exception {
 		final var inicio = LocalDate.of(2026, 11, 1);
 		final var fim = LocalDate.of(2026, 11, 30);
-		final var pageable = PageRequest.of(1, 1,
-				Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId)));
-		final var filtros = new FiltrarGastosUrlParams(null, null);
-		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, fim), filtros, pageable))
+		final var ordenacao = Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId))
+				.descending();
+		final var pageable = PageRequest.of(1, 1, ordenacao);
+		final var semFiltros = new FiltrarGastosUrlParams(null, null, null, null, null);
+		when(consultaService.listarRealizados(any(), any())).thenReturn(Page.empty());
+		when(consultaService.listarRealizados(semFiltros, pageable))
 				.thenReturn(new PageImpl<>(List.of(gasto), pageable, 2));
-		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-30")
-				.param("page", "1").param("size", "1"))
+
+		mvc.perform(get("/gastos").param("page", "1").param("size", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados[0].id").value(id.toString()))
 				.andExpect(jsonPath("$.paginacao.totalElementos").value(2));
-		verify(consultaService).listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, fim), filtros, pageable);
+		verify(consultaService).listarRealizados(semFiltros, pageable);
 
-		when(consultaService.listarPorIntervalo(new BuscarGastosPorIntervaloUrlParams(inicio, inicio), filtros,
-				PageRequest.of(0, 10, pageable.getSort()))).thenReturn(Page.empty());
-		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01").param("fim", "2026-11-01"))
+		final var metodoPagamentoId = UUID.randomUUID();
+		final var faturaId = UUID.randomUUID();
+		mvc.perform(get("/gastos").param("inicio", "2026-11-01").param("fim", "2026-11-30")
+				.param("metodoPagamentoId", metodoPagamentoId.toString()).param("categoria", "Casa")
+				.param("faturaId", faturaId.toString()))
 				.andExpect(status().isOk());
-		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-30").param("fim", "2026-11-01"))
+		verify(consultaService).listarRealizados(
+				new FiltrarGastosUrlParams(inicio, fim, metodoPagamentoId, "Casa", faturaId),
+				PageRequest.of(0, 10, ordenacao));
+
+		mvc.perform(get("/gastos").param("inicio", "2026-11-01")).andExpect(status().isOk());
+		mvc.perform(get("/gastos").param("fim", "2026-11-30")).andExpect(status().isOk());
+		mvc.perform(get("/gastos").param("inicio", "2026-11-01").param("fim", "2026-11-01"))
+				.andExpect(status().isOk());
+		mvc.perform(get("/gastos").param("inicio", "2026-11-30").param("fim", "2026-11-01"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.dados.errosValidacao[0].codigo").value("INTERVALO_INVALIDO"));
-		mvc.perform(get("/gastos/intervalo").param("inicio", "2026-11-01"))
+		mvc.perform(get("/gastos").param("inicio", "invalido"))
 				.andExpect(status().isBadRequest());
-		mvc.perform(get("/gastos/intervalo").param("fim", "2026-11-30"))
-				.andExpect(status().isBadRequest());
-		mvc.perform(get("/gastos/intervalo").param("inicio", "invalido").param("fim", "2026-11-30"))
-				.andExpect(status().isBadRequest());
+		verify(consultaService, never()).listarPlanejados(any(), any());
+	}
+
+	@Test
+	void listaPlanejadosEmEndpointProprioComOsMesmosFiltros() throws Exception {
+		final var ordenacao = Sort.by(TypedPropertyPath.path(Gasto::getData), TypedPropertyPath.path(Gasto::getId));
+		final var faturaId = UUID.randomUUID();
+		final var filtros = new FiltrarGastosUrlParams(null, LocalDate.of(2026, 12, 31), null, "Casa", faturaId);
+		when(consultaService.listarPlanejados(any(), any())).thenReturn(Page.empty());
+		when(consultaService.listarPlanejados(filtros, PageRequest.of(0, 10, ordenacao)))
+				.thenReturn(new PageImpl<>(List.of(gasto), PageRequest.of(0, 10, ordenacao), 1));
+
+		mvc.perform(get("/gastos/planejados").param("fim", "2026-12-31").param("categoria", "Casa")
+				.param("faturaId", faturaId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].id").value(id.toString()));
+		mvc.perform(get("/gastos/planejados").param("inicio", "2026-12-31").param("fim", "2026-12-01"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.errosValidacao[0].codigo").value("INTERVALO_INVALIDO"));
+		verify(consultaService, never()).listarRealizados(any(), any());
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "01/11/2026", "01-11-2026", "2026-11-01" })
 	void aceitaMultiplosFormatosDeDataNaConsulta(String data) throws Exception {
 		final var dataEsperada = LocalDate.of(2026, 11, 1);
-		final var request = new BuscarGastosPorIntervaloUrlParams(dataEsperada, dataEsperada);
-		when(consultaService.listarPorIntervalo(eq(request), any(), any())).thenReturn(Page.empty());
+		final var filtros = new FiltrarGastosUrlParams(dataEsperada, dataEsperada, null, null, null);
+		when(consultaService.listarRealizados(eq(filtros), any())).thenReturn(Page.empty());
 
-		mvc.perform(get("/gastos/intervalo").param("inicio", data).param("fim", data))
+		mvc.perform(get("/gastos").param("inicio", data).param("fim", data))
 				.andExpect(status().isOk());
 	}
 
 	@Test
 	void consultasRemovidasNaoEstaoMaisDisponiveis() throws Exception {
-		mvc.perform(get("/gastos").param("periodo", "2024-02")).andExpect(status().isMethodNotAllowed());
+		mvc.perform(get("/gastos/intervalo").param("inicio", "2024-02-01").param("fim", "2024-02-29"))
+				.andExpect(status().isBadRequest());
 		mvc.perform(get("/gastos/fatura/{id}", UUID.randomUUID())).andExpect(status().isNotFound());
 		verifyNoInteractions(service, consultaService);
 	}
 
 	@Test
-	void rejeitaFiltroDeMetodoInvalido() throws Exception {
-		mvc.perform(get("/gastos/intervalo").param("inicio", "2024-02-01").param("fim", "2024-02-29")
-				.param("metodoPagamentoId", "invalido")).andExpect(status().isBadRequest());
+	void rejeitaFiltrosDeMetodoEFaturaInvalidos() throws Exception {
+		mvc.perform(get("/gastos").param("metodoPagamentoId", "invalido")).andExpect(status().isBadRequest());
+		mvc.perform(get("/gastos").param("faturaId", "invalido")).andExpect(status().isBadRequest());
 
 		verifyNoInteractions(service, consultaService);
 	}
@@ -260,7 +290,7 @@ class GastoControllerTest {
 				Sort.by(TypedPropertyPath.path(Gasto::getMetodoPagamento)
 						.then(MetodoPagamento::getId)));
 		when(consultaService.totalizarPorMetodoPagamento(request, pageable)).thenReturn(new PageImpl<>(List.of(
-				new TotalMetodoPagamentoResponse(metodoPagamentoId, InstituicaoFinanceira.CAIXA,
+				new TotalMetodoPagamentoResponse(metodoPagamentoId, InstituicaoFinanceiraResponse.from(InstituicoesTeste.caixa()),
 						TipoMetodoPagamento.DEBITO, "Debito Caixa", new BigDecimal("10.00"), new BigDecimal("25.50"))
 		), pageable, 1));
 		final var consulta = get("/gastos/totais/metodo-pagamento")
@@ -270,7 +300,7 @@ class GastoControllerTest {
 		mvc.perform(consulta).andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados[0]").value(aMapWithSize(6)))
 				.andExpect(jsonPath("$.dados[0].metodoPagamentoId").value(metodoPagamentoId.toString()))
-				.andExpect(jsonPath("$.dados[0].instituicaoFinanceira").value("CAIXA"))
+				.andExpect(jsonPath("$.dados[0].instituicaoFinanceira.nome").value("Caixa"))
 				.andExpect(jsonPath("$.dados[0].tipo").value("DEBITO"))
 				.andExpect(jsonPath("$.dados[0].nome").value("Debito Caixa"))
 				.andExpect(jsonPath("$.dados[0].realizado").value(10.00))
@@ -341,7 +371,7 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.categoria").value("Alimentacao"))
 				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
 				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
+				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira.nome").value("Caixa"));
 		when(service.atualizar(eq(id), any())).thenReturn(gasto);
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":"%s","nome":"Mercado","valor":25.50,"categoria":"Alimentacao",
@@ -412,7 +442,7 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
 				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
 				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
+				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira.nome").value("Caixa"));
 	}
 
 	@Test
@@ -460,7 +490,7 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.categoria").value("Casa"))
 				.andExpect(jsonPath("$.dados.metodoPagamento").value(aMapWithSize(2)))
 				.andExpect(jsonPath("$.dados.metodoPagamento.tipo").value("DEBITO"))
-				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira").value("CAIXA"));
+				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira.nome").value("Caixa"));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":null,"nome":"Pendente","valor":0,"categoria":"Casa",
 				"metodoPagamentoId":"%s","realizado":false}
