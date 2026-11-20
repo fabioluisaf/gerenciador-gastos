@@ -51,8 +51,20 @@ public record CriarCompraParceladaBody(
     @Size(max = 255)
     String descricao,
 
-    List<@NotNull @PositiveOrZero @Digits(integer = 17, fraction = 2) BigDecimal> valoresParcelas
+    List<@NotNull @PositiveOrZero @Digits(integer = 17, fraction = 2) BigDecimal> valoresParcelas,
+    Boolean realizado
 ) {
+    public CriarCompraParceladaBody(
+            LocalDate data, String nome, BigDecimal valorTotal, Integer quantidadeParcelas, String categoria,
+            UUID metodoPagamentoId, YearMonth faturaPeriodo, String descricao, List<BigDecimal> valoresParcelas) {
+        this(data, nome, valorTotal, quantidadeParcelas, categoria, metodoPagamentoId, faturaPeriodo, descricao,
+                valoresParcelas, null);
+    }
+
+    public boolean estaRealizada() {
+        return realizado == null || realizado;
+    }
+
     public CompraParcelada toEntity() {
         final var compra = new CompraParcelada();
         compra.setValorTotal(valorTotal);

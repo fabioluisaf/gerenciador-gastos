@@ -221,6 +221,17 @@ class CompraParceladaServiceTest {
 	}
 
 	@Test
+	void criaParcelasPlanejadasQuandoACompraAindaNaoFoiRealizada() {
+		final var planejada = service.criar(new CriarCompraParceladaBody(
+				LocalDate.of(2024, 5, 10), "Viagem", new BigDecimal("300.00"), 3,
+				"Lazer", metodoPagamento.getId(), null, null, null, false
+		));
+
+		assertEquals(3, planejada.getParcelas().size());
+		assertTrue(planejada.getParcelas().stream().noneMatch(parcela -> parcela.isRealizado()));
+	}
+
+	@Test
 	void alteraDadosDeTodasSemAlterarDatas() {
 		final var parcelas = List.copyOf(compra.getParcelas());
 		final var request = request("100.0", 3);
