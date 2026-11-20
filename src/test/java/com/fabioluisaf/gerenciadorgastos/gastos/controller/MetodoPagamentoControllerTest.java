@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
@@ -42,16 +44,18 @@ import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresente
 class MetodoPagamentoControllerTest {
 
 	private MetodoPagamentoRepository repository;
+	private GastoRepository gastoRepository;
 	private MockMvc mvc;
 
 	@BeforeEach
 	void configurar() {
 		repository = mock(MetodoPagamentoRepository.class);
+		gastoRepository = mock(GastoRepository.class);
 		final var instituicaoRepository = mock(InstituicaoFinanceiraRepository.class);
 		when(instituicaoRepository.findById(InstituicoesTeste.NUBANK_ID)).thenReturn(Optional.of(InstituicoesTeste.nubank()));
 		when(instituicaoRepository.findById(InstituicoesTeste.CAIXA_ID)).thenReturn(Optional.of(InstituicoesTeste.caixa()));
 		final var service = new MetodoPagamentoService(
-				repository, mock(GastoRepository.class), mock(FaturaRepository.class),
+				repository, gastoRepository, mock(FaturaRepository.class),
 				new InstituicaoFinanceiraService(instituicaoRepository, repository)
 		);
 		final var presenter = new ApiResponsePresenter(new ApiProperties("v1"));
@@ -287,5 +291,20 @@ class MetodoPagamentoControllerTest {
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"));
 		verify(repository, never()).save(any());
+	}
+
+	@Test
+	void listaAQuantidadeDeGastosDeCadaMetodoDePagamento() throws Exception {
+		final var credito = UUID.randomUUID();
+		final var pix = UUID.randomUUID();
+		when(gastoRepository.contarGastosPorMetodoPagamento()).thenReturn(List.of(
+				new UsoMetodoPagamentoResponse(credito, 12L), new UsoMetodoPagamentoResponse(pix, 3L)));
+
+		mvc.perform(get("/metodos-pagamento/uso"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].metodoPagamentoId").value(credito.toString()))
+				.andExpect(jsonPath("$.dados[0].quantidadeGastos").value(12))
+				.andExpect(jsonPath("$.dados[1].metodoPagamentoId").value(pix.toString()))
+				.andExpect(jsonPath("$.dados[1].quantidadeGastos").value(3));
 	}
 }

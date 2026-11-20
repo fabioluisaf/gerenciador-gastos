@@ -11,6 +11,7 @@
 - **Quebra de contrato:** nos totais e no filtro de período da listagem, gastos no crédito passam a contar pela data de **vencimento** da fatura (antes era a de fechamento); os demais métodos continuam pela data do gasto.
 - **Quebra de contrato:** `GET /gastos/periodos` passa a listar só os meses com gastos realizados, com a quantidade de cada mês (contando cada compra parcelada uma vez), e aceita os mesmos filtros de `metodoPagamentoId` e `categoria` da listagem.
 - `GET /gastos/planejados/periodos` lista os meses com gastos planejados, dos mais próximos para os mais distantes, com os mesmos filtros; os gastos sem data vêm num grupo próprio no fim, com `ano` e `mes` nulos.
+- `GET /metodos-pagamento/uso` devolve quantos gastos cada método de pagamento tem, contando cada compra parcelada uma vez; métodos sem gastos não aparecem.
 - Gastos avulsos aceitam valor negativo, para registrar estornos; eles abatem dos totais e da fatura. Compras parceladas continuam só com valores positivos ou zero.
 
 ## 1.4.9

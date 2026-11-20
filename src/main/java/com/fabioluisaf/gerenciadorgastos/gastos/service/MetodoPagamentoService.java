@@ -1,5 +1,6 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.Hibernate;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.MetodoPagamentoEmUsoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
@@ -33,6 +35,10 @@ public class MetodoPagamentoService {
 
 	public Page<MetodoPagamento> listar(Pageable pageable) {
 		return metodoPagamentoRepository.findAll(pageable);
+	}
+
+	public List<UsoMetodoPagamentoResponse> contarUso() {
+		return gastoRepository.contarGastosPorMetodoPagamento();
 	}
 
 	@Transactional

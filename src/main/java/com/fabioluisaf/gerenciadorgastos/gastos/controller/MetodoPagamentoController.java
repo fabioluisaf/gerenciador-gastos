@@ -19,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.MetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
@@ -54,6 +55,11 @@ public class MetodoPagamentoController {
 
 		final var metodos = service.listar(pageable).map(MetodoPagamentoResponse::from);
 		return presenter.apresentarPagina(metodos);
+	}
+
+	@GetMapping("/uso")
+	public ApiResponse<List<UsoMetodoPagamentoResponse>> listarUso() {
+		return presenter.apresentar(service.contarUso());
 	}
 
 	@GetMapping("/{id}")
