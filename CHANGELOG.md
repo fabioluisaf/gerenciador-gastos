@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.0.0
+- **Quebra de contrato:** removidos `GET /metodos-pagamento/{id}` e `GET /instituicoes-financeiras/{id}`, que só repetiam o que as listagens já devolvem (o ícone em `GET /instituicoes-financeiras/{id}/icone` continua).
 - **Quebra de contrato:** instituição financeira deixa de ser um enum (`NUBANK`/`CAIXA`) e vira um cadastro próprio com nome, ícone e cor (CRUD em `/instituicoes-financeiras`, ícone em `GET /instituicoes-financeiras/{id}/icone`, cor opcional no formato `#RRGGBB`).
   - Métodos de pagamento passam a receber `instituicaoFinanceiraId` e a devolver `instituicaoFinanceira` como objeto `{ id, nome, possuiIcone, cor }`.
   - Migrações criam Nubank e Caixa com os ícones que estavam no frontend e as cores das marcas, e ligam os métodos de pagamento existentes a elas.

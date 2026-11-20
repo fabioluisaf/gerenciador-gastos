@@ -62,11 +62,6 @@ public class MetodoPagamentoController {
 		return presenter.apresentar(service.contarUso());
 	}
 
-	@GetMapping("/{id}")
-	public ApiResponse<MetodoPagamentoResponse> buscarPorId(@PathVariable UUID id) {
-		return presenter.apresentar(MetodoPagamentoResponse.from(service.buscarEntidadePorId(id)));
-	}
-
 	@PutMapping("/{id}")
 	public ApiResponse<MetodoPagamentoResponse> atualizar(
 			@PathVariable UUID id, @Valid @RequestBody AtualizarMetodoPagamentoBody request) {

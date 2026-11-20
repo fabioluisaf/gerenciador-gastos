@@ -198,7 +198,7 @@ class InstituicaoFinanceiraControllerTest {
 
 		mvc.perform(get("/instituicoes-financeiras/{id}/icone", semIcone.getId()))
 				.andExpect(status().isNotFound());
-		mvc.perform(get("/instituicoes-financeiras/{id}", UUID.randomUUID()))
+		mvc.perform(get("/instituicoes-financeiras/{id}/icone", UUID.randomUUID()))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.dados.mensagem").value("RECURSO_NAO_ENCONTRADO"));
 	}

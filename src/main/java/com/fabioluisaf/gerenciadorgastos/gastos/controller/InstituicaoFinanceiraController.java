@@ -63,11 +63,6 @@ public class InstituicaoFinanceiraController {
 		return presenter.apresentarPagina(service.listar(pageable).map(InstituicaoFinanceiraResponse::from));
 	}
 
-	@GetMapping("/{id}")
-	public ApiResponse<InstituicaoFinanceiraResponse> buscarPorId(@PathVariable UUID id) {
-		return presenter.apresentar(InstituicaoFinanceiraResponse.from(service.buscarPorId(id)));
-	}
-
 	@GetMapping("/{id}/icone")
 	public ResponseEntity<byte[]> buscarIcone(@PathVariable UUID id, WebRequest request) {
 		final var instituicao = service.buscarPorId(id);
