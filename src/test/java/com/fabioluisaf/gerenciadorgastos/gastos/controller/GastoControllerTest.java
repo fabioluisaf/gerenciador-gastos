@@ -52,6 +52,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.config.ApiProperties;
@@ -530,5 +531,17 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.nome").value("Pendente"));
 		mvc.perform(delete("/gastos/{id}", id)).andExpect(status().isNoContent());
 		verify(service).excluir(id);
+	}
+
+	@Test
+	void listaAsCategoriasDaMaisUsadaParaAMenosUsada() throws Exception {
+		when(consultaService.listarCategorias()).thenReturn(List.of(
+				new UsoCategoriaResponse("Casa", 9L), new UsoCategoriaResponse("Lazer", 2L)));
+
+		mvc.perform(get("/gastos/categorias"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.dados[0].categoria").value("Casa"))
+				.andExpect(jsonPath("$.dados[0].quantidadeGastos").value(9))
+				.andExpect(jsonPath("$.dados[1].categoria").value("Lazer"));
 	}
 }

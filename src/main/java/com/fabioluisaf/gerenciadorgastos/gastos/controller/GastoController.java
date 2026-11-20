@@ -28,6 +28,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResum
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
@@ -86,6 +87,11 @@ public class GastoController {
 
 		return presenter.apresentarPagina(
 				gastoConsultaService.listarPlanejados(filtros, pageable).map(GastoResumidoResponse::from));
+	}
+
+	@GetMapping("/categorias")
+	public ApiResponse<List<UsoCategoriaResponse>> listarCategorias() {
+		return presenter.apresentar(gastoConsultaService.listarCategorias());
 	}
 
 	@GetMapping("/{id}")

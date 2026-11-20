@@ -13,6 +13,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarPeri
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.FiltroGastos;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.GastoRepository;
@@ -61,5 +62,9 @@ public class GastoConsultaService {
 			BuscarGastosPorIntervaloUrlParams request, Pageable pageable) {
 				
 		return gastoRepository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), pageable);
+	}
+
+	public List<UsoCategoriaResponse> listarCategorias() {
+		return gastoRepository.contarGastosPorCategoria();
 	}
 }

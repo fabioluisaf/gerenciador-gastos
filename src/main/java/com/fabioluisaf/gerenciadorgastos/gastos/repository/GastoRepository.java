@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
@@ -75,6 +76,17 @@ public interface GastoRepository
         group by g.metodoPagamento.id
     """)
 	List<UsoMetodoPagamentoResponse> contarGastosPorMetodoPagamento();
+
+	@Query("""
+        select new com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse(
+            g.categoria, count(g)
+        )
+        from Gasto g
+        where g.compraParcelada is null or g.numeroParcela = 1
+        group by g.categoria
+        order by count(g) desc, g.categoria
+    """)
+	List<UsoCategoriaResponse> contarGastosPorCategoria();
 
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
 

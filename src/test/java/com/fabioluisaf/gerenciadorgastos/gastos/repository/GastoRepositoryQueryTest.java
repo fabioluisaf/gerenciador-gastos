@@ -26,6 +26,7 @@ import org.springframework.data.jpa.repository.query.QueryUtils;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
@@ -167,6 +168,12 @@ class GastoRepositoryQueryTest {
 					periodos.listarPeriodosPlanejados(FiltroGastos.porMetodosECategorias(null, null)));
 			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 1), new PeriodoComGastosResponse(null, null, 1)),
 					periodos.listarPeriodosPlanejados(FiltroGastos.porMetodosECategorias(List.of(credito.getId()), null)));
+
+			final var consultaUsoCategorias = GastoRepository.class.getMethod("contarGastosPorCategoria")
+					.getAnnotation(Query.class);
+			assertEquals(List.of(new UsoCategoriaResponse("Teste", 7L), new UsoCategoriaResponse("Outra", 2L),
+					new UsoCategoriaResponse("Fora", 1L)),
+					session.createQuery(consultaUsoCategorias.value(), UsoCategoriaResponse.class).getResultList());
 
 			final var consultaCategorias = GastoRepository.class.getMethod("totalizarPorCategoria",
 					LocalDate.class, LocalDate.class, Pageable.class).getAnnotation(Query.class);
@@ -384,7 +391,7 @@ class GastoRepositoryQueryTest {
 						Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId));
 					case "totalizarPorCategoria" ->
 						Sort.by(TypedPropertyPath.path(Gasto::getCategoria));
-					case "contarGastosPorMetodoPagamento" -> Sort.unsorted();
+					case "contarGastosPorMetodoPagamento", "contarGastosPorCategoria" -> Sort.unsorted();
 					case "totalizarPorMetodoPagamento" ->
 						Sort.by(TypedPropertyPath.path(Gasto::getMetodoPagamento)
 								.then(MetodoPagamento::getId));
