@@ -10,6 +10,7 @@ import com.fabioluisaf.gerenciadorgastos.shared.serialization.PeriodoDeserialize
 import com.fabioluisaf.gerenciadorgastos.shared.validation.DataObrigatoriaSeRealizado;
 import com.fabioluisaf.gerenciadorgastos.shared.validation.RequestGastoComDataERealizacao;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -45,4 +46,8 @@ public record AtualizarGastoBody(
     @NotNull
     Boolean realizado
 ) implements RequestGastoComDataERealizacao {
+	@AssertTrue(message = "DATA_OU_FATURA_OBRIGATORIA")
+	public boolean isDataOuFaturaInformada() {
+		return data != null || faturaPeriodo != null;
+	}
 }

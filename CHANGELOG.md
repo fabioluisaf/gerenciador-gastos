@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.0.0
+- Gasto precisa ter data ou mês da fatura (`DATA_OU_FATURA_OBRIGATORIA`, validado no corpo da requisição); como só o crédito aceita fatura, fora dele a data passa a ser obrigatória também nos planejados. O banco ganhou a mesma regra (V12).
 - Gastos planejados sem data entram no mês do vencimento da fatura, tanto em `GET /gastos/planejados/periodos` quanto na ordem de `GET /gastos/planejados`; a listagem passa a devolver `dataVencimentoFatura` nos gastos no crédito.
 - **Quebra de contrato:** removidos `GET /metodos-pagamento/{id}` e `GET /instituicoes-financeiras/{id}`, que só repetiam o que as listagens já devolvem (o ícone em `GET /instituicoes-financeiras/{id}/icone` continua).
 - **Quebra de contrato:** instituição financeira deixa de ser um enum (`NUBANK`/`CAIXA`) e vira um cadastro próprio com nome, ícone e cor (CRUD em `/instituicoes-financeiras`, ícone em `GET /instituicoes-financeiras/{id}/icone`, cor opcional no formato `#RRGGBB`).

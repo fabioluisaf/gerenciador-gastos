@@ -446,7 +446,7 @@ class GastoControllerTest {
 	}
 
 	@Test
-	void criaGastoPendenteSemData() throws Exception {
+	void criaGastoPlanejadoSemDataNaFaturaEscolhida() throws Exception {
 		when(service.criar(any())).thenAnswer(invocation -> {
 			final var request = invocation.getArgument(0, CriarGastoBody.class);
 			final var entidade = request.toEntity();
@@ -457,7 +457,7 @@ class GastoControllerTest {
 
 		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":null,"nome":"Conta de luz","valor":80,"categoria":"Casa",
-				"metodoPagamentoId":"%s","realizado":false}
+				"metodoPagamentoId":"%s","faturaPeriodo":"2026-12","realizado":false}
 				""".formatted(metodoPagamentoId)))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.dados").value(aMapWithSize(8)))
@@ -521,7 +521,7 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados.metodoPagamento.instituicaoFinanceira.nome").value("Caixa"));
 		mvc.perform(put("/gastos/{id}", id).contentType(MediaType.APPLICATION_JSON).content("""
 				{"data":null,"nome":"Pendente","valor":0,"categoria":"Casa",
-				"metodoPagamentoId":"%s","realizado":false}
+				"metodoPagamentoId":"%s","faturaPeriodo":"2026-12","realizado":false}
 				""".formatted(metodoPagamentoId)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.dados").value(aMapWithSize(8)))
@@ -543,5 +543,17 @@ class GastoControllerTest {
 				.andExpect(jsonPath("$.dados[0].categoria").value("Casa"))
 				.andExpect(jsonPath("$.dados[0].quantidadeGastos").value(9))
 				.andExpect(jsonPath("$.dados[1].categoria").value("Lazer"));
+	}
+
+	@Test
+	void rejeitaGastoPlanejadoSemDataNemFatura() throws Exception {
+		mvc.perform(post("/gastos").contentType(MediaType.APPLICATION_JSON).content("""
+				{"nome":"Aluguel","valor":10,"categoria":"Casa","realizado":false,
+				"metodoPagamentoId":"%s"}
+				""".formatted(metodoPagamentoId)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.dados.errosValidacao[0].campo").value("dataOuFaturaInformada"))
+				.andExpect(jsonPath("$.dados.errosValidacao[0].codigo").value("DATA_OU_FATURA_OBRIGATORIA"));
+		verifyNoInteractions(service);
 	}
 }

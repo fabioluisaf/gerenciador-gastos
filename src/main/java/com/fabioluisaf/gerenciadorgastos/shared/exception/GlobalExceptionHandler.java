@@ -3,6 +3,7 @@ package com.fabioluisaf.gerenciadorgastos.shared.exception;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,7 @@ import tools.jackson.databind.exc.MismatchedInputException;
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	private static final String ERRO_DE_VALIDACAO = "ERRO_DE_VALIDACAO";
+	private static final Pattern CODIGO_DE_ERRO = Pattern.compile("[A-Z][A-Z_]*");
 
 	private final ApiResponsePresenter presenter;
 
@@ -54,7 +56,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		final var erros = excecao.getBindingResult().getAllErrors().stream()
 				.map(erro -> new ErroValidacao(
 						erro instanceof FieldError campo ? campo.getField() : null,
-						traduzirCodigoValidacao(erro.getCode())
+						traduzirCodigoValidacao(erro.getCode(), erro.getDefaultMessage())
 				))
 				.toList();
 
@@ -115,14 +117,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return super.handleExceptionInternal(excecao, resposta, headers, status, request);
 	}
 
-	private String traduzirCodigoValidacao(String codigo) {
+	private String traduzirCodigoValidacao(String codigo, String mensagem) {
 		if (codigo == null) {
 			return ERRO_DE_VALIDACAO;
+		}
+		if ("AssertTrue".equals(codigo) && mensagem != null && CODIGO_DE_ERRO.matcher(mensagem).matches()) {
+			return mensagem;
 		}
 		return switch (codigo) {
 			case "NotBlank" -> "CAMPO_NAO_PODE_FICAR_VAZIO";
 			case "NotNull" -> "CAMPO_OBRIGATORIO";
-			case "AssertTrue" -> "INTERVALO_INVALIDO";
 			case "Positive" -> "DEVE_SER_POSITIVO";
 			case "PositiveOrZero" -> "DEVE_SER_ZERO_OU_POSITIVO";
 			case "Min", "AnoMinimo" -> "ABAIXO_DO_MINIMO";

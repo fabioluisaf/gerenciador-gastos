@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -136,5 +137,23 @@ class RequestValidationTest {
 				LocalDate.of(2026, 1, 1), "Compra", new BigDecimal("1.23"), 2, "Casa", UUID.randomUUID(),
 				null, null, List.of(BigDecimal.ZERO, new BigDecimal("1.23"))
 		)).isEmpty());
+	}
+
+	@Test
+	void exigeDataOuFaturaEmGastoPlanejado() {
+		final var metodoPagamentoId = UUID.randomUUID();
+		final var periodo = YearMonth.of(2026, 12);
+
+		for (final var request : List.of(
+				new CriarGastoBody(null, "Aluguel", BigDecimal.TEN, "Casa", metodoPagamentoId, null, null, false),
+				new AtualizarGastoBody(null, "Aluguel", BigDecimal.TEN, "Casa", metodoPagamentoId, null, null, false))) {
+			assertEquals(Set.of("DATA_OU_FATURA_OBRIGATORIA"), validator.validate(request).stream()
+					.map(violacao -> violacao.getMessage()).collect(Collectors.toSet()));
+		}
+
+		assertTrue(validator.validate(new CriarGastoBody(null, "Viagem", BigDecimal.TEN, "Lazer",
+				metodoPagamentoId, periodo, null, false)).isEmpty());
+		assertTrue(validator.validate(new AtualizarGastoBody(null, "Viagem", BigDecimal.TEN, "Lazer",
+				metodoPagamentoId, periodo, null, false)).isEmpty());
 	}
 }

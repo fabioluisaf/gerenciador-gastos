@@ -13,7 +13,7 @@ public record BuscarGastosPorIntervaloUrlParams(
 	@NotNull
 	LocalDate fim
 ) {
-	@AssertTrue
+	@AssertTrue(message = "INTERVALO_INVALIDO")
 	public boolean isIntervaloValido() {
 		return inicio == null || fim == null || !inicio.isAfter(fim);
 	}

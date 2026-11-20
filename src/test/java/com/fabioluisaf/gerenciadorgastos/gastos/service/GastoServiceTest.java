@@ -82,7 +82,7 @@ class GastoServiceTest {
 	@Test
 	void criaGastoComDadosDaRequisicao() {
 		final var request = new CriarGastoBody(
-				null, "Mercado", new BigDecimal("25.50"), "Alimentacao",
+				LocalDate.of(2026, 12, 5), "Mercado", new BigDecimal("25.50"), "Alimentacao",
 				metodoPagamento.getId(), null, "compra", false
 		);
 		when(metodoPagamentoService.buscarEntidadePorId(metodoPagamento.getId())).thenReturn(metodoPagamento);
