@@ -163,11 +163,16 @@ class GastoRepositoryQueryTest {
 			assertEquals(List.of(new PeriodoComGastosResponse(2026, 10, 1)),
 					periodos.listarPeriodosRealizados(FiltroGastos.porMetodosECategorias(
 							List.of(pix.getId(), debito.getId()), List.of("Fora"))));
-			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 2), new PeriodoComGastosResponse(2026, 12, 1),
-					new PeriodoComGastosResponse(null, null, 2)),
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 3), new PeriodoComGastosResponse(2026, 12, 1),
+					new PeriodoComGastosResponse(null, null, 1)),
 					periodos.listarPeriodosPlanejados(FiltroGastos.porMetodosECategorias(null, null)));
-			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 1), new PeriodoComGastosResponse(null, null, 1)),
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 2)),
 					periodos.listarPeriodosPlanejados(FiltroGastos.porMetodosECategorias(List.of(credito.getId()), null)));
+			final var planejados = listar(session, false, filtro(null, null, null, null, null)).stream()
+					.map(Gasto::getId).toList();
+			assertEquals(creditoSemFatura.getId(), planejados.get(0));
+			assertEquals(Set.of(creditoSemData.getId(), pixFim.getId()), Set.copyOf(planejados.subList(1, 3)));
+			assertEquals(List.of(pixDepois.getId(), pixSemData.getId()), planejados.subList(3, 5));
 
 			final var consultaUsoCategorias = GastoRepository.class.getMethod("contarGastosPorCategoria")
 					.getAnnotation(Query.class);

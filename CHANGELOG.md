@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.0.0
+- Gastos planejados sem data entram no mês do vencimento da fatura, tanto em `GET /gastos/planejados/periodos` quanto na ordem de `GET /gastos/planejados`; a listagem passa a devolver `dataVencimentoFatura` nos gastos no crédito.
 - **Quebra de contrato:** removidos `GET /metodos-pagamento/{id}` e `GET /instituicoes-financeiras/{id}`, que só repetiam o que as listagens já devolvem (o ícone em `GET /instituicoes-financeiras/{id}/icone` continua).
 - **Quebra de contrato:** instituição financeira deixa de ser um enum (`NUBANK`/`CAIXA`) e vira um cadastro próprio com nome, ícone e cor (CRUD em `/instituicoes-financeiras`, ícone em `GET /instituicoes-financeiras/{id}/icone`, cor opcional no formato `#RRGGBB`).
   - Métodos de pagamento passam a receber `instituicaoFinanceiraId` e a devolver `instituicaoFinanceira` como objeto `{ id, nome, possuiIcone, cor }`.

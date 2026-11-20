@@ -14,6 +14,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Predicate;
 
 public final class GastoSpecifications {
@@ -44,6 +45,12 @@ public final class GastoSpecifications {
 				predicados.add(cb.equal(fatura.get("id"), filtro.faturaId()));
 			} else {
 				predicados.add(umaLinhaPorCompra(root, cb));
+			}
+
+			if (!realizado && !Long.class.equals(query.getResultType())) {
+				final Expression<LocalDate> referencia =
+						cb.coalesce(root.<LocalDate>get("data"), fatura.<LocalDate>get("dataVencimento"));
+				query.orderBy(cb.asc(referencia, Nulls.LAST), cb.asc(root.get("id")));
 			}
 
 			return cb.and(predicados.toArray(Predicate[]::new));
