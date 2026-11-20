@@ -1,6 +1,7 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import java.util.UUID;
+
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 
 import jakarta.validation.constraints.Max;
@@ -15,7 +16,7 @@ public record CriarMetodoPagamentoBody(
 	TipoMetodoPagamento tipo,
 
 	@NotNull 
-	InstituicaoFinanceira instituicaoFinanceira,
+	UUID instituicaoFinanceiraId,
 
 	@NotBlank 
 	@Size(max = 255)

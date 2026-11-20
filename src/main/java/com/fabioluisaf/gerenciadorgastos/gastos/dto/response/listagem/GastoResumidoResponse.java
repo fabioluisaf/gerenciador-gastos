@@ -29,13 +29,17 @@ public record GastoResumidoResponse(
     boolean realizado,
     
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    ParcelaResumidaResponse parcela
+    ParcelaResumidaResponse parcela,
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonSerialize(using = DataSerializer.class)
+    LocalDate dataVencimentoFatura
 ) {
 
 	public static GastoResumidoResponse from(Gasto entidade) {
 		final var compra = entidade.getCompraParcelada();
 		final var parcela = compra == null ? null : new ParcelaResumidaResponse(
-				entidade.getNumeroParcela(), compra.getQuantidadeParcelas()
+				entidade.getNumeroParcela(), compra.getQuantidadeParcelas(), compra.getId(), compra.getValorTotal()
 		);
 
 		return new GastoResumidoResponse(
@@ -47,7 +51,8 @@ public record GastoResumidoResponse(
 				MetodoPagamentoResumidoResponse.from(entidade.getMetodoPagamento()),
 				entidade.getDescricao(),
 				entidade.isRealizado(),
-				parcela
+				parcela,
+				entidade.getFatura() == null ? null : entidade.getFatura().getDataVencimento()
 		);
 	}
 }

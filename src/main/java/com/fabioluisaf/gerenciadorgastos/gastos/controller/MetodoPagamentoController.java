@@ -19,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.AtualizarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.comum.MetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.MetodoPagamentoService;
 import com.fabioluisaf.gerenciadorgastos.shared.dto.ApiResponse;
 import com.fabioluisaf.gerenciadorgastos.shared.presentation.ApiResponsePresenter;
@@ -50,15 +51,15 @@ public class MetodoPagamentoController {
 
 	@GetMapping
 	public ApiResponse<List<MetodoPagamentoResponse>> listar(
-			@PageableDefault(sort = { "tipo", "instituicaoFinanceira", "nome" }) Pageable pageable) {
+			@PageableDefault(sort = { "tipo", "instituicaoFinanceira.nome", "nome" }) Pageable pageable) {
 
 		final var metodos = service.listar(pageable).map(MetodoPagamentoResponse::from);
 		return presenter.apresentarPagina(metodos);
 	}
 
-	@GetMapping("/{id}")
-	public ApiResponse<MetodoPagamentoResponse> buscarPorId(@PathVariable UUID id) {
-		return presenter.apresentar(MetodoPagamentoResponse.from(service.buscarEntidadePorId(id)));
+	@GetMapping("/uso")
+	public ApiResponse<List<UsoMetodoPagamentoResponse>> listarUso() {
+		return presenter.apresentar(service.contarUso());
 	}
 
 	@PutMapping("/{id}")

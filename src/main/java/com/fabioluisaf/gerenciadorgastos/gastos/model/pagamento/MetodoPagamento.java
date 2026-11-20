@@ -15,11 +15,14 @@ import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -43,8 +46,8 @@ public abstract class MetodoPagamento {
 	@Enumerated(EnumType.STRING)
 	private TipoMetodoPagamento tipo;
 
-	@Column(name = "instituicao_financeira", nullable = false)
-	@Enumerated(EnumType.STRING)
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "instituicao_financeira_id", nullable = false)
 	@Setter
 	private InstituicaoFinanceira instituicaoFinanceira;
 

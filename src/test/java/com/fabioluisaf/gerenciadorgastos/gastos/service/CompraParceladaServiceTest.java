@@ -29,7 +29,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraP
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.PagamentoInvalidoException;
 import com.fabioluisaf.gerenciadorgastos.gastos.exception.ValoresParcelasInvalidosException;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.MetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 import com.fabioluisaf.gerenciadorgastos.gastos.repository.CompraParceladaRepository;
@@ -54,12 +54,13 @@ class CompraParceladaServiceTest {
 		repository = mock(CompraParceladaRepository.class);
 		metodoPagamentoRepository = mock(MetodoPagamentoRepository.class);
 		final var metodoPagamentoService = new MetodoPagamentoService(
-				metodoPagamentoRepository, mock(GastoRepository.class), mock(FaturaRepository.class)
+				metodoPagamentoRepository, mock(GastoRepository.class), mock(FaturaRepository.class),
+				mock(InstituicaoFinanceiraService.class)
 		);
 		faturaRepository = mock(FaturaRepository.class);
 		metodoPagamento = MetodoPagamento.criar(TipoMetodoPagamento.CREDITO, 31, 7);
 		metodoPagamento.setId(UUID.randomUUID());
-		metodoPagamento.setInstituicaoFinanceira(InstituicaoFinanceira.NUBANK);
+		metodoPagamento.setInstituicaoFinanceira(InstituicoesTeste.nubank());
 		metodoPagamento.setNome("Cartao Nubank");
 		when(metodoPagamentoRepository.findById(metodoPagamento.getId())).thenReturn(Optional.of(metodoPagamento));
 		when(metodoPagamentoRepository.findByIdForUpdate(metodoPagamento.getId()))
@@ -217,6 +218,17 @@ class CompraParceladaServiceTest {
 		assertTrue(parcelas.stream().allMatch(parcela -> parcela.isRealizado() && parcela.getCompraParcelada() == compra));
 		assertEquals(List.of(LocalDate.of(2024, 2, 29), LocalDate.of(2024, 3, 31), LocalDate.of(2024, 4, 30)),
 				parcelas.stream().map(parcela -> Objects.requireNonNull(parcela).getFatura().getDataFechamento()).toList());
+	}
+
+	@Test
+	void criaParcelasPlanejadasQuandoACompraAindaNaoFoiRealizada() {
+		final var planejada = service.criar(new CriarCompraParceladaBody(
+				LocalDate.of(2024, 5, 10), "Viagem", new BigDecimal("300.00"), 3,
+				"Lazer", metodoPagamento.getId(), null, null, null, false
+		));
+
+		assertEquals(3, planejada.getParcelas().size());
+		assertTrue(planejada.getParcelas().stream().noneMatch(parcela -> parcela.isRealizado()));
 	}
 
 	@Test

@@ -43,6 +43,7 @@ public class CompraParceladaService {
 		);
 
 		parcelamentoComponent.gerarParcelas(compra, request.quantidadeParcelas());
+		compra.getParcelas().forEach(parcela -> parcela.setRealizado(request.estaRealizada()));
 		parcelamentoComponent.aplicarValores(compra, request.valoresParcelas());
 		parcelamentoComponent.aplicarDados(
 				compra, request.data(), request.nome(), request.categoria(),

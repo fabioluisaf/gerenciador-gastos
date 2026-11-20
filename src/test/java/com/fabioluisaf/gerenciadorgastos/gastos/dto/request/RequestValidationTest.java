@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -20,7 +21,7 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.Atualiza
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarCompraParceladaBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarMetodoPagamentoBody;
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicoesTeste;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento;
 
 class RequestValidationTest {
@@ -48,12 +49,33 @@ class RequestValidationTest {
 						"Casa", metodoPagamentoId, null, descricao, null),
 				new AtualizarCompraParceladaBody(nome, "Casa", metodoPagamentoId, null, descricao,
 						valor, 1000, LocalDate.of(2026, 1, 1), null, false),
-				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicaoFinanceira.NUBANK,
+				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicoesTeste.NUBANK_ID,
 						nome, null, null),
-				new AtualizarMetodoPagamentoBody(InstituicaoFinanceira.NUBANK, nome, null, null)
+				new AtualizarMetodoPagamentoBody(InstituicoesTeste.NUBANK_ID, nome, null, null)
 		)) {
 			assertTrue(validator.validate(request).isEmpty(), request.getClass().getSimpleName());
 		}
+	}
+
+	@Test
+	void aceitaEstornoComValorNegativoApenasEmGastoAvulso() {
+		final var estorno = new BigDecimal("-50.00");
+		final var metodoPagamentoId = UUID.randomUUID();
+		final var data = LocalDate.of(2026, 1, 1);
+
+		assertTrue(validator.validate(new CriarGastoBody(data, "Estorno", estorno, "Casa",
+				metodoPagamentoId, null, null, true)).isEmpty());
+		assertTrue(validator.validate(new AtualizarGastoBody(data, "Estorno", estorno, "Casa",
+				metodoPagamentoId, null, null, true)).isEmpty());
+
+		final var compra = validator.validate(new CriarCompraParceladaBody(data, "Compra", estorno, 2,
+				"Casa", metodoPagamentoId, null, null, null));
+		assertEquals(Set.of("valorTotal"), compra.stream()
+				.map(violacao -> violacao.getPropertyPath().toString()).collect(Collectors.toSet()));
+		final var atualizacao = validator.validate(new AtualizarCompraParceladaBody("Compra", "Casa",
+				metodoPagamentoId, null, null, estorno, 2, data, null, true));
+		assertEquals(Set.of("valorTotal"), atualizacao.stream()
+				.map(violacao -> violacao.getPropertyPath().toString()).collect(Collectors.toSet()));
 	}
 
 	@Test
@@ -83,12 +105,12 @@ class RequestValidationTest {
 				Set.of("nome", "descricao", "quantidadeParcelas")
 		);
 		assertViolacoes(
-				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicaoFinanceira.NUBANK,
+				new CriarMetodoPagamentoBody(TipoMetodoPagamento.PIX, InstituicoesTeste.NUBANK_ID,
 						nomeLongo, null, null),
 				Set.of("nome")
 		);
 		assertViolacoes(
-				new AtualizarMetodoPagamentoBody(InstituicaoFinanceira.NUBANK, nomeLongo, null, null),
+				new AtualizarMetodoPagamentoBody(InstituicoesTeste.NUBANK_ID, nomeLongo, null, null),
 				Set.of("nome")
 		);
 	}
@@ -115,5 +137,23 @@ class RequestValidationTest {
 				LocalDate.of(2026, 1, 1), "Compra", new BigDecimal("1.23"), 2, "Casa", UUID.randomUUID(),
 				null, null, List.of(BigDecimal.ZERO, new BigDecimal("1.23"))
 		)).isEmpty());
+	}
+
+	@Test
+	void exigeDataOuFaturaEmGastoPlanejado() {
+		final var metodoPagamentoId = UUID.randomUUID();
+		final var periodo = YearMonth.of(2026, 12);
+
+		for (final var request : List.of(
+				new CriarGastoBody(null, "Aluguel", BigDecimal.TEN, "Casa", metodoPagamentoId, null, null, false),
+				new AtualizarGastoBody(null, "Aluguel", BigDecimal.TEN, "Casa", metodoPagamentoId, null, null, false))) {
+			assertEquals(Set.of("DATA_OU_FATURA_OBRIGATORIA"), validator.validate(request).stream()
+					.map(violacao -> violacao.getMessage()).collect(Collectors.toSet()));
+		}
+
+		assertTrue(validator.validate(new CriarGastoBody(null, "Viagem", BigDecimal.TEN, "Lazer",
+				metodoPagamentoId, periodo, null, false)).isEmpty());
+		assertTrue(validator.validate(new AtualizarGastoBody(null, "Viagem", BigDecimal.TEN, "Lazer",
+				metodoPagamentoId, periodo, null, false)).isEmpty());
 	}
 }

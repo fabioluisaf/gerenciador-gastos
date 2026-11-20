@@ -45,7 +45,7 @@ services:
     environment:
       BACKEND_URL: http://gastos-api:8080
     ports:
-      - "${WEB_PORTA_HOST:-4200}:80"
+      - "${WEB_PORTA_HOST:-4200}:8080"
     depends_on:
       - gastos-api
 

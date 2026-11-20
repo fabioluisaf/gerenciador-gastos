@@ -1,6 +1,6 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.InstituicaoFinanceira;
+import java.util.UUID;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
 public record AtualizarMetodoPagamentoBody(
 	
 	@NotNull 
-	InstituicaoFinanceira instituicaoFinanceira,
+	UUID instituicaoFinanceiraId,
 
 	@NotBlank 
 	@Size(max = 255)

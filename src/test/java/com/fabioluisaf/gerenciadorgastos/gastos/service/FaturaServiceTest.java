@@ -153,7 +153,8 @@ class FaturaServiceTest {
 	void buscaCreditoDesembrulhandoProxyDoMetodoPagamento() {
 		final var repository = mock(MetodoPagamentoRepository.class);
 		final var service = new MetodoPagamentoService(
-				repository, mock(GastoRepository.class), mock(FaturaRepository.class)
+				repository, mock(GastoRepository.class), mock(FaturaRepository.class),
+				mock(InstituicaoFinanceiraService.class)
 		);
 		final var credito = new Credito(10, 17);
 		final var id = UUID.randomUUID();

@@ -31,7 +31,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, UUID> {
 	boolean existsByMetodoPagamentoId(UUID metodoPagamentoId);
 
 	@EntityGraph(attributePaths = { 
-        "metodoPagamento", "gastos", "gastos.metodoPagamento", 
+        "metodoPagamento", "metodoPagamento.instituicaoFinanceira", "gastos", "gastos.metodoPagamento",
         "gastos.fatura", "gastos.compraParcelada" 
     })
 	Optional<Fatura> findByMetodoPagamentoIdAndDataFechamentoBetween(

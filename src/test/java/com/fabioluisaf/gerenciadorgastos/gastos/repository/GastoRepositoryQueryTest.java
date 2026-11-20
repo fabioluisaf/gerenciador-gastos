@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.stream.Stream;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.hibernate.cfg.Configuration;
+import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.core.TypedPropertyPath;
 import org.springframework.data.domain.Sort;
@@ -21,9 +23,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.CompraParcelada;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.Fatura;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -47,6 +51,7 @@ class GastoRepositoryQueryTest {
 				.addAnnotatedClass(CompraParcelada.class)
 				.addAnnotatedClass(Fatura.class)
 				.addAnnotatedClass(MetodoPagamento.class)
+				.addAnnotatedClass(InstituicaoFinanceira.class)
 				.addAnnotatedClass(Credito.class)
 				.addAnnotatedClass(Debito.class)
 				.addAnnotatedClass(Pix.class)
@@ -61,12 +66,14 @@ class GastoRepositoryQueryTest {
 		try (final var factory = configuration.buildSessionFactory();
 				final var session = factory.openSession()) {
 			session.beginTransaction();
+			final var caixa = new InstituicaoFinanceira("Caixa");
+			session.persist(caixa);
 			final var credito = new Credito(1, 10);
 			credito.setNome("Cartao");
-			credito.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+			credito.setInstituicaoFinanceira(caixa);
 			final var pix = new Pix();
 			pix.setNome("Pix");
-			pix.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+			pix.setInstituicaoFinanceira(caixa);
 			session.persist(credito);
 			session.persist(pix);
 			final var faturaInicio = criarFatura(credito, inicio);
@@ -81,63 +88,97 @@ class GastoRepositoryQueryTest {
 			final var pixFim = criarGasto(pix, null, fim, false);
 			creditoSemData.setCategoria("Outra");
 			pixFim.setCategoria("Outra");
+			final var creditoFaturaFora = criarGasto(credito, faturaFora, inicio, true);
+			final var creditoSemFatura = criarGasto(credito, null, inicio, false);
+			final var pixAntes = criarGasto(pix, null, inicio.minusDays(1), true);
+			final var pixDepois = criarGasto(pix, null, fim.plusDays(1), false);
+			final var pixSemData = criarGasto(pix, null, null, false);
 			for (final var gasto : new Gasto[] { creditoDataFora, creditoSemData, pixInicio, pixFim,
-					criarGasto(credito, faturaFora, inicio, true),
-					criarGasto(credito, null, inicio, false),
-					criarGasto(pix, null, inicio.minusDays(1), true),
-					criarGasto(pix, null, fim.plusDays(1), false),
-					criarGasto(pix, null, null, false) }) {
+					creditoFaturaFora, creditoSemFatura, pixAntes, pixDepois, pixSemData }) {
 				session.persist(gasto);
 			}
 			final var debito = new Debito();
 			debito.setNome("Debito");
-			debito.setInstituicaoFinanceira(InstituicaoFinanceira.CAIXA);
+			debito.setInstituicaoFinanceira(caixa);
 			session.persist(debito);
 			final var gastoFora = criarGasto(debito, null, inicio.minusDays(1), true);
 			gastoFora.setCategoria("Fora");
 			session.persist(gastoFora);
 			session.flush();
 			session.clear();
-			final var hql = GastoRepository.class.getMethod("listarPorIntervalo", LocalDate.class, LocalDate.class,
-					UUID.class, String.class, org.springframework.data.domain.Pageable.class).getAnnotation(Query.class).value();
-			final var casos = Map.of(
-					new FiltrarGastosUrlParams(null, null),
-					Set.of(creditoDataFora.getId(), creditoSemData.getId(), pixInicio.getId(), pixFim.getId()),
-					new FiltrarGastosUrlParams(credito.getId(), null), Set.of(creditoDataFora.getId(), creditoSemData.getId()),
-					new FiltrarGastosUrlParams(pix.getId(), null), Set.of(pixInicio.getId(), pixFim.getId()),
-					new FiltrarGastosUrlParams(null, "Teste"), Set.of(creditoDataFora.getId(), pixInicio.getId()),
-					new FiltrarGastosUrlParams(null, "Outra"), Set.of(creditoSemData.getId(), pixFim.getId()),
-					new FiltrarGastosUrlParams(credito.getId(), "Teste"), Set.of(creditoDataFora.getId()),
-					new FiltrarGastosUrlParams(pix.getId(), "Outra"), Set.of(pixFim.getId()),
-					new FiltrarGastosUrlParams(UUID.randomUUID(), null), Set.<UUID>of(),
-					new FiltrarGastosUrlParams(null, "Inexistente"), Set.<UUID>of());
+			final var realizados = Set.of(creditoDataFora.getId(), pixInicio.getId(), creditoFaturaFora.getId(),
+					pixAntes.getId(), gastoFora.getId());
+			final var todos = Stream.of(creditoDataFora, creditoSemData, pixInicio, pixFim, creditoFaturaFora,
+					creditoSemFatura, pixAntes, pixDepois, pixSemData, gastoFora).map(Gasto::getId)
+					.collect(Collectors.toSet());
+			final var casos = Map.ofEntries(
+					Map.entry(filtro(null, null, null, null, null), todos),
+					Map.entry(filtro(inicio, fim, null, null, null),
+							Set.of(creditoDataFora.getId(), creditoSemData.getId(), pixInicio.getId(), pixFim.getId())),
+					Map.entry(filtro(inicio, fim, credito.getId(), null, null),
+							Set.of(creditoDataFora.getId(), creditoSemData.getId())),
+					Map.entry(filtro(inicio, fim, pix.getId(), null, null), Set.of(pixInicio.getId(), pixFim.getId())),
+					Map.entry(filtro(inicio, fim, null, "Teste", null), Set.of(creditoDataFora.getId(), pixInicio.getId())),
+					Map.entry(filtro(inicio, fim, null, "Outra", null), Set.of(creditoSemData.getId(), pixFim.getId())),
+					Map.entry(filtro(inicio, fim, credito.getId(), "Teste", null), Set.of(creditoDataFora.getId())),
+					Map.entry(filtro(inicio, fim, pix.getId(), "Outra", null), Set.of(pixFim.getId())),
+					Map.entry(filtro(inicio, fim, UUID.randomUUID(), null, null), Set.<UUID>of()),
+					Map.entry(filtro(inicio, fim, null, "Inexistente", null), Set.<UUID>of()),
+					Map.entry(filtro(inicio, null, null, null, null), Set.of(creditoDataFora.getId(), creditoSemData.getId(),
+							creditoFaturaFora.getId(), pixInicio.getId(), pixFim.getId(), pixDepois.getId())),
+					Map.entry(filtro(null, fim, null, null, null), Set.of(creditoDataFora.getId(), creditoSemData.getId(),
+							pixInicio.getId(), pixFim.getId(), pixAntes.getId(), gastoFora.getId())),
+					Map.entry(filtro(null, null, null, null, faturaFim.getId()), Set.of(creditoSemData.getId())),
+					Map.entry(filtro(null, null, null, null, faturaFora.getId()), Set.of(creditoFaturaFora.getId())),
+					Map.entry(filtro(inicio, fim, null, null, faturaFora.getId()), Set.<UUID>of()),
+					Map.entry(filtro(null, null, pix.getId(), null, null), Set.of(pixInicio.getId(), pixFim.getId(),
+							pixAntes.getId(), pixDepois.getId(), pixSemData.getId())),
+					Map.entry(filtro(null, null, null, "Fora", null), Set.of(gastoFora.getId())),
+					Map.entry(FiltroGastos.porMetodosECategorias(List.of(credito.getId(), pix.getId()), null),
+							Set.of(creditoDataFora.getId(), creditoSemData.getId(), pixInicio.getId(), pixFim.getId(),
+									creditoFaturaFora.getId(), creditoSemFatura.getId(), pixAntes.getId(),
+									pixDepois.getId(), pixSemData.getId())),
+					Map.entry(FiltroGastos.porMetodosECategorias(null, List.of("Outra", "Fora")),
+							Set.of(creditoSemData.getId(), pixFim.getId(), gastoFora.getId())),
+					Map.entry(FiltroGastos.porMetodosECategorias(List.of(pix.getId(), debito.getId()), List.of("Outra", "Fora")),
+							Set.of(pixFim.getId(), gastoFora.getId())));
 			for (final var caso : casos.entrySet()) {
-				final var filtros = caso.getKey();
-				final var resultados = session.createQuery(hql, Gasto.class)
-						.setParameter("inicio", inicio)
-						.setParameter("fim", fim)
-						.setParameter("metodoPagamentoId", filtros.metodoPagamentoId())
-						.setParameter("categoria", filtros.categoria())
-						.getResultList().stream().map(Gasto::getId).collect(Collectors.toSet());
-				assertEquals(caso.getValue(), resultados, filtros.toString());
-				final var total = session.createQuery(hql.replace("select g from Gasto g", "select count(g) from Gasto g"),
-						Long.class)
-						.setParameter("inicio", inicio)
-						.setParameter("fim", fim)
-						.setParameter("metodoPagamentoId", filtros.metodoPagamentoId())
-						.setParameter("categoria", filtros.categoria())
-						.getSingleResult();
-				assertEquals((long) caso.getValue().size(), total, filtros.toString());
+				for (final var realizado : List.of(true, false)) {
+					final var filtros = caso.getKey();
+					final var esperados = caso.getValue().stream()
+							.filter(gastoId -> realizados.contains(gastoId) == realizado)
+							.collect(Collectors.toSet());
+					final var descricao = filtros + " realizado=" + realizado;
+					final var resultados = listar(session, realizado, filtros).stream()
+							.map(Gasto::getId).collect(Collectors.toSet());
+					assertEquals(esperados, resultados, descricao);
+					assertEquals((long) esperados.size(), contar(session, realizado, filtros), descricao);
+				}
 			}
-			final var pagina = session.createQuery(hql + " order by g.id", Gasto.class)
-					.setParameter("inicio", inicio)
-					.setParameter("fim", fim)
-					.setParameter("metodoPagamentoId", null)
-					.setParameter("categoria", null)
-					.setFirstResult(2)
-					.setMaxResults(2)
-					.getResultList();
-			assertEquals(2, pagina.size());
+			final var periodos = new PeriodosGastosRepositoryImpl(session);
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 2), new PeriodoComGastosResponse(2026, 10, 3)),
+					periodos.listarPeriodosRealizados(FiltroGastos.porMetodosECategorias(null, null)));
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 1), new PeriodoComGastosResponse(2026, 10, 1)),
+					periodos.listarPeriodosRealizados(FiltroGastos.porMetodosECategorias(List.of(pix.getId()), null)));
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 10, 1)),
+					periodos.listarPeriodosRealizados(FiltroGastos.porMetodosECategorias(
+							List.of(pix.getId(), debito.getId()), List.of("Fora"))));
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 3), new PeriodoComGastosResponse(2026, 12, 1),
+					new PeriodoComGastosResponse(null, null, 1)),
+					periodos.listarPeriodosPlanejados(FiltroGastos.porMetodosECategorias(null, null)));
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 2)),
+					periodos.listarPeriodosPlanejados(FiltroGastos.porMetodosECategorias(List.of(credito.getId()), null)));
+			final var planejados = listar(session, false, filtro(null, null, null, null, null)).stream()
+					.map(Gasto::getId).toList();
+			assertEquals(creditoSemFatura.getId(), planejados.get(0));
+			assertEquals(Set.of(creditoSemData.getId(), pixFim.getId()), Set.copyOf(planejados.subList(1, 3)));
+			assertEquals(List.of(pixDepois.getId(), pixSemData.getId()), planejados.subList(3, 5));
+
+			final var consultaUsoCategorias = GastoRepository.class.getMethod("contarGastosPorCategoria")
+					.getAnnotation(Query.class);
+			assertEquals(List.of(new UsoCategoriaResponse("Teste", 7L), new UsoCategoriaResponse("Outra", 2L),
+					new UsoCategoriaResponse("Fora", 1L)),
+					session.createQuery(consultaUsoCategorias.value(), UsoCategoriaResponse.class).getResultList());
 
 			final var consultaCategorias = GastoRepository.class.getMethod("totalizarPorCategoria",
 					LocalDate.class, LocalDate.class, Pageable.class).getAnnotation(Query.class);
@@ -160,6 +201,14 @@ class GastoRepositoryQueryTest {
 			assertEquals(Map.of(
 					credito.getId(), List.of(BigDecimal.ONE, BigDecimal.TWO),
 					pix.getId(), List.of(BigDecimal.ONE, BigDecimal.TWO)), totaisMetodos);
+			for (final var total : session.createQuery(consultaMetodos.value(), TotalMetodoPagamentoResponse.class)
+					.setParameter("inicio", inicio)
+					.setParameter("fim", fim)
+					.getResultList()) {
+				assertEquals(caixa.getId(), total.instituicaoFinanceira().id());
+				assertEquals("Caixa", total.instituicaoFinanceira().nome());
+				assertEquals(false, total.instituicaoFinanceira().possuiIcone());
+			}
 
 			for (final var consulta : List.of(consultaCategorias, consultaMetodos)) {
 				assertEquals(2L, session.createQuery(consulta.countQuery(), Long.class)
@@ -185,11 +234,111 @@ class GastoRepositoryQueryTest {
 		}
 	}
 
-	private Fatura criarFatura(MetodoPagamento metodo, LocalDate fechamento) {
+	@Test
+	void listaCadaCompraParceladaUmaVezExcetoNoFiltroPorFatura() throws Exception {
+		final var configuration = new Configuration()
+				.addAnnotatedClass(Gasto.class)
+				.addAnnotatedClass(CompraParcelada.class)
+				.addAnnotatedClass(Fatura.class)
+				.addAnnotatedClass(MetodoPagamento.class)
+				.addAnnotatedClass(InstituicaoFinanceira.class)
+				.addAnnotatedClass(Credito.class)
+				.addAnnotatedClass(Debito.class)
+				.addAnnotatedClass(Pix.class)
+				.addAnnotatedClass(Boleto.class)
+				.addAnnotatedClass(Doc.class)
+				.addAnnotatedClass(Ted.class)
+				.setProperty("hibernate.connection.driver_class", "org.h2.Driver")
+				.setProperty("hibernate.connection.url", "jdbc:h2:mem:gastos_parcelados;DB_CLOSE_DELAY=-1")
+				.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+		final var dataCompra = LocalDate.of(2026, 11, 9);
+		try (final var factory = configuration.buildSessionFactory();
+				final var session = factory.openSession()) {
+			session.beginTransaction();
+			final var nubank = new InstituicaoFinanceira("Nubank");
+			session.persist(nubank);
+			final var credito = new Credito(14, 21);
+			credito.setNome("Cartao");
+			credito.setInstituicaoFinanceira(nubank);
+			session.persist(credito);
+			final var compra = new CompraParcelada();
+			compra.setValorTotal(BigDecimal.valueOf(300));
+			session.persist(compra);
+			final var faturas = new ArrayList<Fatura>();
+			for (int numero = 1; numero <= 3; numero++) {
+				final var fatura = criarFatura(credito, LocalDate.of(2026, 11, 14).plusMonths(numero - 1L));
+				session.persist(fatura);
+				faturas.add(fatura);
+				final var parcela = criarGasto(credito, fatura, dataCompra, true);
+				parcela.setCompraParcelada(compra);
+				parcela.setNumeroParcela(numero);
+				session.persist(parcela);
+			}
+			final var avulso = criarGasto(credito, faturas.get(1), dataCompra, true);
+			session.persist(avulso);
+			final var pix = new Pix();
+			pix.setNome("Pix");
+			pix.setInstituicaoFinanceira(nubank);
+			session.persist(pix);
+			session.persist(criarGasto(pix, null, dataCompra, false));
+			final var semUso = new Pix();
+			semUso.setNome("Sem uso");
+			semUso.setInstituicaoFinanceira(nubank);
+			session.persist(semUso);
+			session.flush();
+			session.clear();
+
+			final var listados = listar(session, true, filtro(null, null, null, null, null));
+			assertEquals(2, listados.size());
+			assertEquals(Set.of(1), listados.stream().filter((gasto) -> gasto.getCompraParcelada() != null)
+					.map(Gasto::getNumeroParcela).collect(Collectors.toSet()));
+
+			final var naFatura = listar(session, true, filtro(null, null, null, null, faturas.get(1).getId()));
+			assertEquals(2, naFatura.size());
+			assertEquals(Set.of(2), naFatura.stream().filter((gasto) -> gasto.getCompraParcelada() != null)
+					.map(Gasto::getNumeroParcela).collect(Collectors.toSet()));
+
+			assertEquals(List.of(new PeriodoComGastosResponse(2026, 11, 2)), new PeriodosGastosRepositoryImpl(session)
+					.listarPeriodosRealizados(FiltroGastos.porMetodosECategorias(null, null)));
+
+			final var consultaUso = GastoRepository.class.getMethod("contarGastosPorMetodoPagamento")
+					.getAnnotation(Query.class);
+			final var uso = session.createQuery(consultaUso.value(), UsoMetodoPagamentoResponse.class)
+					.getResultList().stream().collect(Collectors.toMap(
+							UsoMetodoPagamentoResponse::metodoPagamentoId, UsoMetodoPagamentoResponse::quantidadeGastos));
+			assertEquals(Map.of(credito.getId(), 2L, pix.getId(), 1L), uso);
+			session.getTransaction().rollback();
+		}
+	}
+
+	private static FiltroGastos filtro(
+			LocalDate inicio, LocalDate fim, UUID metodoPagamentoId, String categoria, UUID faturaId) {
+		return FiltroGastos.de(inicio, fim, metodoPagamentoId == null ? null : List.of(metodoPagamentoId),
+				categoria == null ? null : List.of(categoria), faturaId);
+	}
+
+	private static List<Gasto> listar(Session session, boolean realizado, FiltroGastos filtro) {
+		final var cb = session.getCriteriaBuilder();
+		final var consulta = cb.createQuery(Gasto.class);
+		final var root = consulta.from(Gasto.class);
+		consulta.where(GastoSpecifications.listagem(realizado, filtro).toPredicate(root, consulta, cb));
+		return session.createQuery(consulta).getResultList();
+	}
+
+	private static long contar(Session session, boolean realizado, FiltroGastos filtro) {
+		final var cb = session.getCriteriaBuilder();
+		final var consulta = cb.createQuery(Long.class);
+		final var root = consulta.from(Gasto.class);
+		consulta.select(cb.count(root))
+				.where(GastoSpecifications.listagem(realizado, filtro).toPredicate(root, consulta, cb));
+		return session.createQuery(consulta).getSingleResult();
+	}
+
+	private Fatura criarFatura(MetodoPagamento metodo, LocalDate vencimento) {
 		final var fatura = new Fatura();
 		fatura.setMetodoPagamento(metodo);
-		fatura.setDataFechamento(fechamento);
-		fatura.setDataVencimento(fechamento.plusDays(10));
+		fatura.setDataFechamento(vencimento.minusDays(7));
+		fatura.setDataVencimento(vencimento);
 		return fatura;
 	}
 
@@ -212,6 +361,7 @@ class GastoRepositoryQueryTest {
 				.addAnnotatedClass(CompraParcelada.class)
 				.addAnnotatedClass(Fatura.class)
 				.addAnnotatedClass(MetodoPagamento.class)
+				.addAnnotatedClass(InstituicaoFinanceira.class)
 				.addAnnotatedClass(Credito.class)
 				.addAnnotatedClass(Debito.class)
 				.addAnnotatedClass(Pix.class)
@@ -242,11 +392,11 @@ class GastoRepositoryQueryTest {
 					continue;
 				}
 				final var sort = switch (method.getName()) {
-					case "listarPeriodosComGastos" -> Sort.unsorted();
 					case "listarResumosPorMetodoPagamentoId" ->
 						Sort.by(TypedPropertyPath.path(Fatura::getDataFechamento), TypedPropertyPath.path(Fatura::getId));
 					case "totalizarPorCategoria" ->
 						Sort.by(TypedPropertyPath.path(Gasto::getCategoria));
+					case "contarGastosPorMetodoPagamento", "contarGastosPorCategoria" -> Sort.unsorted();
 					case "totalizarPorMetodoPagamento" ->
 						Sort.by(TypedPropertyPath.path(Gasto::getMetodoPagamento)
 								.then(MetodoPagamento::getId));
