@@ -11,7 +11,8 @@ public record FiltrarGastosUrlParams(
 	LocalDate fim,
 	List<UUID> metodoPagamentoId,
 	List<String> categoria,
-	UUID faturaId
+	UUID faturaId,
+	String nome
 ) {
 
 	@AssertTrue(message = "INTERVALO_INVALIDO")

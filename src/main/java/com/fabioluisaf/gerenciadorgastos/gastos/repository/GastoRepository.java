@@ -20,7 +20,8 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMeto
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 
 public interface GastoRepository
-		extends JpaRepository<Gasto, UUID>, JpaSpecificationExecutor<Gasto>, PeriodosGastosRepository {
+		extends JpaRepository<Gasto, UUID>, JpaSpecificationExecutor<Gasto>, PeriodosGastosRepository,
+		TotaisGastosRepository {
 
 	String CONDICAO_INTERVALO = """
         ((g.tipoMetodoPagamento = com.fabioluisaf.gerenciadorgastos.gastos.model.pagamento.TipoMetodoPagamento.CREDITO

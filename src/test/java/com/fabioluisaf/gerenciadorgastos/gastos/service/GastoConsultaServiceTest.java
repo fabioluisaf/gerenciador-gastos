@@ -58,7 +58,7 @@ class GastoConsultaServiceTest {
 		when(repository.listarPeriodosRealizados(filtro)).thenReturn(periodos);
 
 		assertSame(periodos, service.listarPeriodosRealizados(
-				new FiltrarPeriodosUrlParams(List.of(metodoPagamentoId), List.of("Lazer", "Casa", "Casa"))));
+				new FiltrarPeriodosUrlParams(List.of(metodoPagamentoId), List.of("Lazer", "Casa", "Casa"), null)));
 		verify(repository).listarPeriodosRealizados(filtro);
 	}
 
@@ -69,7 +69,7 @@ class GastoConsultaServiceTest {
 		final var realizados = new PageImpl<Gasto>(List.of(), pageable, 12);
 		final var planejados = new PageImpl<Gasto>(List.of(), pageable, 3);
 		final var filtros = new FiltrarGastosUrlParams(
-				LocalDate.of(2026, 11, 1), null, List.of(metodoPagamentoId), List.of("Casa"), null);
+				LocalDate.of(2026, 11, 1), null, List.of(metodoPagamentoId), List.of("Casa"), null, null);
 		when(repository.findAll(any(Specification.class), eq(pageable))).thenReturn(realizados, planejados);
 
 		assertSame(realizados, service.listarRealizados(filtros, pageable));

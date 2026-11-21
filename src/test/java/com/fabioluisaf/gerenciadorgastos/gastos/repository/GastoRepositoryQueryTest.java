@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.query.QueryUtils;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoMetodoPagamentoResponse;
@@ -309,6 +310,84 @@ class GastoRepositoryQueryTest {
 			assertEquals(Map.of(credito.getId(), 2L, pix.getId(), 1L), uso);
 			session.getTransaction().rollback();
 		}
+	}
+
+	@Test
+	void filtraPorNomeSemAcentoEMaiusculaETotalizaOsFiltrados() throws Exception {
+		final var configuration = new Configuration()
+				.addAnnotatedClass(Gasto.class)
+				.addAnnotatedClass(CompraParcelada.class)
+				.addAnnotatedClass(Fatura.class)
+				.addAnnotatedClass(MetodoPagamento.class)
+				.addAnnotatedClass(InstituicaoFinanceira.class)
+				.addAnnotatedClass(Credito.class)
+				.addAnnotatedClass(Debito.class)
+				.addAnnotatedClass(Pix.class)
+				.addAnnotatedClass(Boleto.class)
+				.addAnnotatedClass(Doc.class)
+				.addAnnotatedClass(Ted.class)
+				.setProperty("hibernate.connection.driver_class", "org.h2.Driver")
+				.setProperty("hibernate.connection.url", "jdbc:h2:mem:gastos_nome;DB_CLOSE_DELAY=-1")
+				.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+		final var inicio = LocalDate.of(2026, 11, 1);
+		final var fim = LocalDate.of(2026, 11, 30);
+		try (final var factory = configuration.buildSessionFactory();
+				final var session = factory.openSession()) {
+			session.beginTransaction();
+			final var caixa = new InstituicaoFinanceira("Caixa");
+			session.persist(caixa);
+			final var pix = new Pix();
+			pix.setNome("Pix");
+			pix.setInstituicaoFinanceira(caixa);
+			session.persist(pix);
+			final var acai = criarGasto(pix, null, inicio, true);
+			acai.setNome("Açaí da Praça");
+			acai.setValor(new BigDecimal("10.50"));
+			final var acaiPlanejado = criarGasto(pix, null, fim, false);
+			acaiPlanejado.setNome("ACAI grande");
+			acaiPlanejado.setValor(new BigDecimal("4.00"));
+			final var acaiForaDoMes = criarGasto(pix, null, fim.plusDays(1), true);
+			acaiForaDoMes.setNome("acai");
+			final var desconto = criarGasto(pix, null, inicio, true);
+			desconto.setNome("Cupom 100% off");
+			final var mercado = criarGasto(pix, null, inicio, true);
+			mercado.setNome("Mercado");
+			mercado.setCategoria("Casa");
+			mercado.setValor(new BigDecimal("50.00"));
+			for (final var gasto : List.of(acai, acaiPlanejado, acaiForaDoMes, desconto, mercado)) {
+				session.persist(gasto);
+			}
+			session.flush();
+			session.clear();
+
+			final var nomes = Map.of(
+					"  açaí ", Set.of(acai.getId(), acaiForaDoMes.getId()),
+					"praca", Set.of(acai.getId()),
+					"0%", Set.of(desconto.getId()),
+					"_", Set.<UUID>of());
+			nomes.forEach((nome, esperados) -> assertEquals(esperados,
+					listar(session, true, filtro(null, null, null, null, null).comNome(nome)).stream()
+							.map(Gasto::getId).collect(Collectors.toSet()),
+					nome));
+
+			final var totais = new TotaisGastosRepositoryImpl(session);
+			assertEquals(new TotalGastosResponse(new BigDecimal("10.50"), new BigDecimal("14.50")),
+					normalizar(totais.totalizar(filtro(inicio, fim, null, null, null).comNome("acai"))));
+			assertEquals(new TotalGastosResponse(new BigDecimal("61.50"), new BigDecimal("65.50")),
+					normalizar(totais.totalizar(filtro(inicio, fim, null, null, null))));
+			assertEquals(new TotalGastosResponse(new BigDecimal("50.00"), new BigDecimal("50.00")),
+					normalizar(totais.totalizar(filtro(inicio, fim, pix.getId(), "Casa", null))));
+			assertEquals(new TotalGastosResponse(new BigDecimal("0.00"), new BigDecimal("0.00")),
+					normalizar(totais.totalizar(filtro(inicio, fim, null, null, null).comNome("inexistente"))));
+			assertEquals(Set.of(new PeriodoComGastosResponse(2026, 12, 1), new PeriodoComGastosResponse(2026, 11, 1)),
+					Set.copyOf(new PeriodosGastosRepositoryImpl(session).listarPeriodosRealizados(
+							FiltroGastos.porMetodosECategorias(null, null).comNome("acai"))));
+			session.getTransaction().rollback();
+		}
+	}
+
+	private static TotalGastosResponse normalizar(TotalGastosResponse total) {
+		return new TotalGastosResponse(total.realizado().setScale(2), total.planejado().setScale(2));
 	}
 
 	private static FiltroGastos filtro(

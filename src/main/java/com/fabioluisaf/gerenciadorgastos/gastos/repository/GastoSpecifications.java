@@ -28,12 +28,9 @@ public final class GastoSpecifications {
 			final var predicados = new ArrayList<Predicate>();
 
 			predicados.add(cb.equal(root.get("realizado"), realizado));
-			predicados.addAll(porMetodosECategorias(root, filtro));
+			predicados.addAll(porMetodosECategorias(root, cb, filtro));
 
-			final Expression<LocalDate> dataReferencia = cb.<LocalDate>selectCase()
-					.when(cb.equal(root.get("tipoMetodoPagamento"), TipoMetodoPagamento.CREDITO),
-							fatura.<LocalDate>get("dataVencimento"))
-					.otherwise(root.<LocalDate>get("data"));
+			final var dataReferencia = dataReferencia(root, fatura, cb);
 
 			if (filtro.inicio() != null) {
 				predicados.add(cb.greaterThanOrEqualTo(dataReferencia, filtro.inicio()));
@@ -57,7 +54,10 @@ public final class GastoSpecifications {
 		};
 	}
 
-	static List<Predicate> porMetodosECategorias(From<?, Gasto> root, FiltroGastos filtro) {
+	private static final String COM_ACENTO = "áàâãäéèêëíìîïóòôõöúùûüçñ";
+	private static final String SEM_ACENTO = "aaaaaeeeeiiiiooooouuuucn";
+
+	static List<Predicate> porMetodosECategorias(From<?, Gasto> root, CriteriaBuilder cb, FiltroGastos filtro) {
 		final var predicados = new ArrayList<Predicate>();
 
 		if (!filtro.metodoPagamentoIds().isEmpty()) {
@@ -66,8 +66,24 @@ public final class GastoSpecifications {
 		if (!filtro.categorias().isEmpty()) {
 			predicados.add(root.get("categoria").in(filtro.categorias()));
 		}
+		if (filtro.nome() != null) {
+			final var nomeNormalizado = cb.function("translate", String.class, cb.lower(root.get("nome")),
+					cb.literal(COM_ACENTO), cb.literal(SEM_ACENTO));
+			predicados.add(cb.like(nomeNormalizado, "%" + escaparLike(filtro.nome()) + "%", '!'));
+		}
 
 		return predicados;
+	}
+
+	private static String escaparLike(String valor) {
+		return valor.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+	}
+
+	static Expression<LocalDate> dataReferencia(From<?, Gasto> root, From<?, Fatura> fatura, CriteriaBuilder cb) {
+		return cb.<LocalDate>selectCase()
+				.when(cb.equal(root.get("tipoMetodoPagamento"), TipoMetodoPagamento.CREDITO),
+						fatura.<LocalDate>get("dataVencimento"))
+				.otherwise(root.<LocalDate>get("data"));
 	}
 
 	static Predicate umaLinhaPorCompra(From<?, Gasto> root, CriteriaBuilder cb) {
