@@ -22,11 +22,13 @@ import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.atualizacao.Atualiza
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarPeriodosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarTotaisUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.CriarGastoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.detalhe.GastoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.GastoResumidoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.service.GastoConsultaService;
@@ -97,6 +99,11 @@ public class GastoController {
 	@GetMapping("/{id}")
 	public ApiResponse<GastoResponse> buscarPorId(@PathVariable UUID id) {
 		return presenter.apresentar(GastoResponse.from(gastoService.buscarPorId(id)));
+	}
+
+	@GetMapping("/totais")
+	public ApiResponse<TotalGastosResponse> totalizar(@Valid @ModelAttribute FiltrarTotaisUrlParams filtros) {
+		return presenter.apresentar(gastoConsultaService.totalizar(filtros));
 	}
 
 	@GetMapping("/totais/categoria")

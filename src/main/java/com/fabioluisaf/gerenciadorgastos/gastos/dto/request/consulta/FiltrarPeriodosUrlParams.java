@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record FiltrarPeriodosUrlParams(
 	List<UUID> metodoPagamentoId,
-	List<String> categoria
+	List<String> categoria,
+	String nome
 ) {
 }

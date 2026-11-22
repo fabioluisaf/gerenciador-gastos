@@ -11,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.BuscarGastosPorIntervaloUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarGastosUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarPeriodosUrlParams;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.consulta.FiltrarTotaisUrlParams;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.listagem.PeriodoComGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalCategoriaResponse;
+import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalGastosResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.TotalMetodoPagamentoResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.response.totalizacao.UsoCategoriaResponse;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
@@ -31,12 +33,14 @@ public class GastoConsultaService {
 
 	public List<PeriodoComGastosResponse> listarPeriodosRealizados(FiltrarPeriodosUrlParams filtros) {
 		return gastoRepository.listarPeriodosRealizados(
-				FiltroGastos.porMetodosECategorias(filtros.metodoPagamentoId(), filtros.categoria()));
+				FiltroGastos.porMetodosECategorias(filtros.metodoPagamentoId(), filtros.categoria())
+						.comNome(filtros.nome()));
 	}
 
 	public List<PeriodoComGastosResponse> listarPeriodosPlanejados(FiltrarPeriodosUrlParams filtros) {
 		return gastoRepository.listarPeriodosPlanejados(
-				FiltroGastos.porMetodosECategorias(filtros.metodoPagamentoId(), filtros.categoria()));
+				FiltroGastos.porMetodosECategorias(filtros.metodoPagamentoId(), filtros.categoria())
+						.comNome(filtros.nome()));
 	}
 
 	public Page<Gasto> listarRealizados(FiltrarGastosUrlParams filtros, Pageable pageable) {
@@ -49,7 +53,7 @@ public class GastoConsultaService {
 
 	private Page<Gasto> listar(boolean realizado, FiltrarGastosUrlParams filtros, Pageable pageable) {
 		final var filtro = FiltroGastos.de(filtros.inicio(), filtros.fim(),
-				filtros.metodoPagamentoId(), filtros.categoria(), filtros.faturaId());
+				filtros.metodoPagamentoId(), filtros.categoria(), filtros.faturaId()).comNome(filtros.nome());
 		return gastoRepository.findAll(GastoSpecifications.listagem(realizado, filtro), pageable);
 	}
 
@@ -63,6 +67,11 @@ public class GastoConsultaService {
 			BuscarGastosPorIntervaloUrlParams request, Pageable pageable) {
 				
 		return gastoRepository.totalizarPorMetodoPagamento(request.inicio(), request.fim(), pageable);
+	}
+
+	public TotalGastosResponse totalizar(FiltrarTotaisUrlParams filtros) {
+		return gastoRepository.totalizar(FiltroGastos.de(filtros.inicio(), filtros.fim(),
+				filtros.metodoPagamentoId(), filtros.categoria(), null).comNome(filtros.nome()));
 	}
 
 	public List<UsoCategoriaResponse> listarCategorias() {
