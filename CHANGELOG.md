@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.0
+- Filtro `nome` em `GET /gastos`, `GET /gastos/planejados`, `GET /gastos/periodos` e `GET /gastos/planejados/periodos`: busca o texto em qualquer parte do nome, sem diferenciar maiúsculas nem acentos.
+- `GET /gastos/totais` soma os gastos de um intervalo (`inicio` e `fim` obrigatórios), com os filtros opcionais `metodoPagamentoId`, `categoria` e `nome`; devolve `realizado` e `planejado` (realizado mais planejado). Crédito conta pelo vencimento da fatura e compras parceladas entram pela parcela do período.
+- `GET /backup` baixa um zip com um CSV por tabela do banco (sem a tabela do Flyway), lido numa única transação somente leitura.
+
 ## 2.0.0
 - Gasto precisa ter data ou mês da fatura (`DATA_OU_FATURA_OBRIGATORIA`, validado no corpo da requisição); como só o crédito aceita fatura, fora dele a data passa a ser obrigatória também nos planejados. O banco ganhou a mesma regra (V12).
 - Gastos planejados sem data entram no mês do vencimento da fatura, tanto em `GET /gastos/planejados/periodos` quanto na ordem de `GET /gastos/planejados`; a listagem passa a devolver `dataVencimentoFatura` nos gastos no crédito.
