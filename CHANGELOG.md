@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.1
+- Removidos os avisos de nulidade em `GrupoPlanejado` e `GrupoPlanejadoService`, sem mudança de comportamento.
+
 ## 2.2.0
 - Grupos de gastos planejados: modelos com vários gastos (nome, valor, categoria e descrição), em `/grupos-planejados` (listar, buscar, criar, atualizar e excluir). A migração V13 cria as tabelas dos grupos e dos seus itens.
 - `POST /grupos-planejados/{id}/aplicacoes` cria um gasto planejado para cada item enviado, todos com o mesmo método de pagamento e na mesma data (`data`) ou fatura (`faturaPeriodo`), seguindo as regras da criação de gasto. Os itens vêm no corpo, então valores ajustados e itens deixados de fora não alteram o grupo; se um gasto falhar, nenhum é criado.

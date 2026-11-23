@@ -3,6 +3,7 @@ package com.fabioluisaf.gerenciadorgastos.gastos.model;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.hibernate.annotations.BatchSize;
@@ -47,7 +48,13 @@ public class GrupoPlanejado {
 	}
 
 	public BigDecimal getValorTotal() {
-		return itens.stream().map(ItemGrupoPlanejado::getValor).reduce(BigDecimal.ZERO, BigDecimal::add);
+		var total = BigDecimal.ZERO;
+
+		for (final var item : itens) {
+			total = total.add(Objects.requireNonNull(item.getValor()));
+		}
+
+		return total;
 	}
 
 	@Override

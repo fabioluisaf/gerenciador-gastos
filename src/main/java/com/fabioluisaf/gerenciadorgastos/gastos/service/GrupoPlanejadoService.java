@@ -1,6 +1,7 @@
 package com.fabioluisaf.gerenciadorgastos.gastos.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.AplicarGrupoPlanejadoBody;
-import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.ItemGrupoPlanejadoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.dto.request.criacao.SalvarGrupoPlanejadoBody;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.Gasto;
 import com.fabioluisaf.gerenciadorgastos.gastos.model.GrupoPlanejado;
@@ -67,6 +67,6 @@ public class GrupoPlanejadoService {
 
 	private static void preencher(GrupoPlanejado grupo, SalvarGrupoPlanejadoBody request) {
 		grupo.setNome(request.nome().strip());
-		grupo.substituirItens(request.itens().stream().map(ItemGrupoPlanejadoBody::toEntity).toList());
+		grupo.substituirItens(request.itens().stream().map(item -> Objects.requireNonNull(item).toEntity()).toList());
 	}
 }
