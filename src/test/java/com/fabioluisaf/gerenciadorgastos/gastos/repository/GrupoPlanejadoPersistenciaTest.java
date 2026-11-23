@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,6 @@ class GrupoPlanejadoPersistenciaTest {
 	}
 
 	private static List<String> nomes(GrupoPlanejado grupo) {
-		return grupo.getItens().stream().map(ItemGrupoPlanejado::getNome).toList();
+		return grupo.getItens().stream().map(item -> Objects.requireNonNull(item).getNome()).toList();
 	}
 }
