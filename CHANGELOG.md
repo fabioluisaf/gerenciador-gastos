@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.2
+- Pipeline e Release com as actions do Docker nas versões que rodam em Node 24 (`setup-buildx-action@v4`, `login-action@v4`, `metadata-action@v6`, `build-push-action@v7`), sem o aviso de descontinuação do Node 20. Sem mudança no sistema.
+
 ## 2.2.1
 - Removidos os avisos de nulidade em `GrupoPlanejado` e `GrupoPlanejadoService`, sem mudança de comportamento.
 
