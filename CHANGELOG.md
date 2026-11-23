@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0
+- Grupos de gastos planejados: modelos com vários gastos (nome, valor, categoria e descrição), em `/grupos-planejados` (listar, buscar, criar, atualizar e excluir). A migração V13 cria as tabelas dos grupos e dos seus itens.
+- `POST /grupos-planejados/{id}/aplicacoes` cria um gasto planejado para cada item enviado, todos com o mesmo método de pagamento e na mesma data (`data`) ou fatura (`faturaPeriodo`), seguindo as regras da criação de gasto. Os itens vêm no corpo, então valores ajustados e itens deixados de fora não alteram o grupo; se um gasto falhar, nenhum é criado.
+- A versão (`VERSAO_APP`) aparece no log de inicialização.
+
 ## 2.1.0
 - Filtro `nome` em `GET /gastos`, `GET /gastos/planejados`, `GET /gastos/periodos` e `GET /gastos/planejados/periodos`: busca o texto em qualquer parte do nome, sem diferenciar maiúsculas nem acentos.
 - `GET /gastos/totais` soma os gastos de um intervalo (`inicio` e `fim` obrigatórios), com os filtros opcionais `metodoPagamentoId`, `categoria` e `nome`; devolve `realizado` e `planejado` (realizado mais planejado). Crédito conta pelo vencimento da fatura e compras parceladas entram pela parcela do período.
